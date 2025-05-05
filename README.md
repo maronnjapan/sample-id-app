@@ -22,7 +22,10 @@
 2. `npm run dev`でアプリを起動
 3. [http://localhost:3000](http://localhost:3000)にアクセス
 4. 以下のフローを行うための処理が実行されヘッダー情報などが、画面に出力されます。
-![セッションの開始](./public/2025-05-05_12h31_36.png)
+![セッションの開始](./public/2025-05-05_12h31_36.png)  
+[Device Bound Session Credentials explainer](https://github.com/w3c/webappsec-dbsc/blob/main/reg_and_refresh.svg)より引用
 5. `Cookie Expired`というログが画面に出力されたら、「Fetch Data」をクリックします。
 6. すると、以下のリフレッシュするフローが実行され、リフレッシュを行った結果が画面に出力されます。
-![セッションの更新](./public/2025-05-05_12h33_37.png)
+![セッションの更新](./public/2025-05-05_12h33_37.png)  
+[Device Bound Session Credentials explainer](https://github.com/w3c/webappsec-dbsc/blob/main/reg_and_refresh.svg)より引用
+

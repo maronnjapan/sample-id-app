@@ -35,7 +35,7 @@ export function DbscFrontComponent() {
                         value: item[1]
                     }
                 })
-                if (!cookieString.includes('auth_cookie') && !prev[0].value.endsWith('Cookie Expired')) {
+                if (!cookieString.includes('auth_cookie') && prev[0] && !prev[0].value.endsWith('Cookie Expired')) {
                     return [{ id: sortUlid(), value: 'Cookie Expired' }, ...addCookies, ...prev,]
                 }
                 return [...addCookies, ...prev]

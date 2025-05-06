@@ -1,6 +1,9 @@
 import { monotonicFactory } from 'ulid';
 export const sortUlid = monotonicFactory();
 
+/**
+ * 文字列をWeb Crypto APIで使用するArrayBufferに変換する
+ */
 export const stringToArrayBuffer = (str: string) => {
     const buffer = new ArrayBuffer(str.length);
     const bufferView = new Uint8Array(buffer);
@@ -42,6 +45,11 @@ export const verifySecSessionResponseToken = async (token: string) => {
         hash: 'SHA-256'
     }
     const encoder = new TextEncoder()
+    /**
+     * Web Crypto APIで使用するための公開鍵をインポート
+     * 署名検証に使用するために、公開鍵をインポートする
+     * https://developer.mozilla.org/ja/docs/Web/API/SubtleCrypto/importKey
+     */
     const publicKeyData = await crypto.subtle.importKey('jwk', publicKey, keyOption, true, ['verify']);
     /**
      * 署名を検証

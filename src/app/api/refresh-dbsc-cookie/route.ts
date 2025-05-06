@@ -20,9 +20,11 @@ export async function POST(req: NextRequest) {
 
     if (!token) {
         const challengeValue = randomUUID()
-        console.log(challengeValue, 'challengeValue')
-        console.log(sessionId, 'sessionId')
         const challenge = `"${challengeValue}";id="${sessionId}"`
+        /**
+         * 更新エンドポイントはリトライされるのが前提
+         * リトライされたタイミングで、チャレンジの一致を検証するために保存
+         */
         await prisma.challenge.create({
             data: {
                 challenge: challengeValue
@@ -31,6 +33,12 @@ export async function POST(req: NextRequest) {
         // このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。
         cookieList.set(sortUlid(), `Refresh DBSC Session Start \n\r Sec-Session-Challenge:${challenge}\n\r${(new Date()).toISOString()}`, { path: '/' })
 
+        /**
+         * 2025/05/05時点では、401エラーがリトライのトリガーになる
+         * が、リトライのトリガーが401エラーから403エラーに変更となるプルリクエストがマージされている
+         * https://github.com/w3c/webappsec-dbsc/pull/141
+         * なので、将来的には403エラーを返すようにしないと動かなくなる可能性がある
+         */
         return NextResponse.json(JSON.stringify({ message: 'Unauthorized' }), {
             status: 401,
             statusText: 'Unauthorized',
@@ -51,8 +59,6 @@ export async function POST(req: NextRequest) {
     const [_, payload] = token.split('.')
     const publicKey = getPublicKey(payload)
     const payloadJson = JSON.parse(base64UrlDecode(payload))
-    console.log(payloadJson)
-    console.log(token)
 
     await prisma.challenge.findUniqueOrThrow({
         where: {
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
         }
     })
 
-    // セッションの存在確認
+    /** セッションの存在確認 */
     const session = await prisma.dbscSession.findUnique({
         where: {
             sessionId: sessionId
@@ -76,6 +82,10 @@ export async function POST(req: NextRequest) {
         y: string
     })?.y
 
+    /**
+     * 登録時に受け取った公開鍵と一致するかを確認する
+     * 一致しない場合、異なるデバイスからのリクエストとなるはずなので、エラーとする
+     */
     if (!session || publicKeyX !== publicKey.x || publicKeyY !== publicKey.y) {
         return NextResponse.json(JSON.stringify({ message: 'Unauthorized' }), {
             status: 401,
@@ -83,6 +93,11 @@ export async function POST(req: NextRequest) {
         })
     }
 
+    /** 
+     * 有効期限が短いCookieをセットし直す 
+     * 今回は検証しやすいように10秒で設定しているが、更新の場合も仕様に明確な秒数は指定されていない
+     * ただし、長すぎるとセキュリティ上の問題があるため、短い時間で設定することが推奨されている
+     * */
     cookieList.set('auth_cookie', randomUUID(), {
         maxAge: 10,
         domain: 'localhost',
@@ -94,6 +109,10 @@ export async function POST(req: NextRequest) {
     cookieList.set(sortUlid(), `Refresh DBSC Session Complete\n\r${(new Date()).toISOString()}`, { path: '/' })
 
     return NextResponse.json({
+        /** 
+         * session_identifierは登録時と同じにすること
+         * 同じにしないと登録したセッションと異なるようになってしまい、繰り返し更新してくれなくなる。
+         * */
         "session_identifier": sessionId,
         "refresh_url": "/api/refresh-dbsc-cookie",
         "scope": {
@@ -105,13 +124,11 @@ export async function POST(req: NextRequest) {
         "credentials": [{
             "type": "cookie",
             "name": "auth_cookie",
+            /** 
+             * このattributesはかならずセットしたCookieと同じ設定にする 
+             * 同じにしないと、更新エンドポイントをブラウザが無限に叩き続ける
+             * */
             "attributes": "Domain=localhost; SameSite=Lax; Path=/"
         }]
-    },
-        {
-            headers: {
-                "Cache-Control": "no-store"
-            }
-        }
-    )
+    })
 }

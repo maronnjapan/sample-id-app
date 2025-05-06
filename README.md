@@ -29,3 +29,5 @@
 ![セッションの更新](./public/2025-05-05_12h33_37.png)  
 [Device Bound Session Credentials explainer](https://github.com/w3c/webappsec-dbsc/blob/main/reg_and_refresh.svg)より引用
 
+## 参考資料
+[こちらのブログ](https://zenn.dev/maronn/articles/program-dbsc-app)にて、DBSCに関わるエンドポイントの説明を記載しておりますので、参考にしていただけますと幸いです。

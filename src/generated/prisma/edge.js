@@ -139,7 +139,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/var/www/sample-dbsc-app/src/generated/prisma",
+      "value": "/var/www/sample-id-app/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -153,7 +153,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/var/www/sample-dbsc-app/prisma/schema.prisma",
+    "sourceFilePath": "/var/www/sample-id-app/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -171,7 +171,7 @@ const config = {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://user:password@localhost:5432/dbsc?schema=public"
+        "value": "postgres://user:password@localhost:5432/dbsc"
       }
     }
   },

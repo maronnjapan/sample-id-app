@@ -1,33 +1,27 @@
 import { prisma } from "@/prisma";
+import { InMemoryDB } from "@/storage/in-memory";
 import { sortUlid } from "@/util";
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-    const cookieList = await cookies()
-    const challenge = randomUUID()
+export async function GET(req: NextRequest) {
+    const cookieList = await cookies();
 
-    /** 後続のフローでSec-Session-Responseのpayloadに含まれるjtiと一致するかを確認するためにchallengeをDBに保存する。 */
-    await prisma.challenge.create({
-        data: {
-            challenge
-        }
-    })
+    /**
+     * 認証Cookieが存在しない場合は、401エラーを返す。
+     */
+    const authCookie = cookieList.get('auth_cookie');
+    if (!authCookie) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
 
-    /** 
-     * DBSCが失敗した場合に使用する長期間保持できるCookie 
-     * 参考資料(https://developer.chrome.com/docs/web-platform/device-bound-session-credentials?hl=ja#caveats_and_fallback_behavior)
-     * ただし、DBSCを進めるために必須のものではない
-     * */
-    cookieList.set('auth_cookie', 'cookie', {
-        domain: 'localhost',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 2592000,
-    })
+    const challenge = randomUUID();
+
+    /** 後続のフローでSec-Session-Responseのpayloadに含まれるjtiと一致するかを確認するためにchallengeを保存する。 */
+    await InMemoryDB.set(challenge, challenge, { ex: 60 * 5 });
 
     /**
      * DBSCを開始するための値
@@ -37,15 +31,15 @@ export async function GET() {
      * challengeはデバイスで署名したJWTのjtiに使用される
      * https://w3c.github.io/webappsec-dbsc/#header-sec-session-registration
      */
-    const secSessionRegistration = `(ES256 RS256);path="register-dbsc-cookie";challenge="${challenge}"`
-    // このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。
-    cookieList.set(sortUlid(), `start DBSC Session \n\r Sec-Session-Registration:${secSessionRegistration}\n\r${(new Date()).toISOString()}`, { path: '/' })
+    const secSessionRegistration = `(ES256 RS256);path="register-dbsc-cookie";challenge="${challenge}"`;
 
+    // このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。
+    cookieList.set(sortUlid(), `start DBSC Session \n\r Sec-Session-Registration:${secSessionRegistration}\n\r${(new Date()).toISOString()}`, { path: '/' });
 
     return NextResponse.json({}, {
         /** DBSCを開始するために、レスポンスに「Sec-Session-Registration」を含める*/
         headers: {
             "Sec-Session-Registration": secSessionRegistration,
         }
-    })
+    });
 }

@@ -120,6 +120,14 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  username: 'username',
+  password: 'password',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.DbscSessionScalarFieldEnum = {
   sessionId: 'sessionId',
   publicKey: 'publicKey',
@@ -153,6 +161,7 @@ exports.Prisma.JsonNullValueFilter = {
 
 
 exports.Prisma.ModelName = {
+  User: 'User',
   DbscSession: 'DbscSession',
   Challenge: 'Challenge'
 };

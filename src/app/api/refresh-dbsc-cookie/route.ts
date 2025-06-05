@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/prisma";
+import { InMemoryDB } from "@/storage/in-memory";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,11 +26,7 @@ export async function POST(req: NextRequest) {
          * 更新エンドポイントはリトライされるのが前提
          * リトライされたタイミングで、チャレンジの一致を検証するために保存
          */
-        await prisma.challenge.create({
-            data: {
-                challenge: challengeValue
-            }
-        })
+        await InMemoryDB.set(challengeValue, challengeValue, { ex: 60 * 5 });
         // このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。
         cookieList.set(sortUlid(), `Refresh DBSC Session Start \n\r Sec-Session-Challenge:${challenge}\n\r${(new Date()).toISOString()}`, { path: '/' })
 
@@ -48,6 +45,7 @@ export async function POST(req: NextRequest) {
         })
     }
 
+    /** トークン内の公開鍵を使用して、署名を検証する */
     const isValidPublicKey = await verifySecSessionResponseToken(token)
     if (!isValidPublicKey) {
         return NextResponse.json(JSON.stringify({ message: 'Unauthorized' }), {
@@ -60,11 +58,14 @@ export async function POST(req: NextRequest) {
     const publicKey = getPublicKey(payload)
     const payloadJson = JSON.parse(base64UrlDecode(payload))
 
-    await prisma.challenge.findUniqueOrThrow({
-        where: {
-            challenge: payloadJson.jti
-        }
-    })
+    const isSameChallenge = await InMemoryDB.exists(payloadJson.jti)
+    if (!isSameChallenge) {
+        /** challengeが一致しない場合は401エラーとする */
+        return NextResponse.json(JSON.stringify({ message: 'Unauthorized' }), {
+            status: 401,
+            statusText: 'Unauthorized',
+        })
+    }
 
     /** セッションの存在確認 */
     const session = await prisma.dbscSession.findUnique({
@@ -93,17 +94,24 @@ export async function POST(req: NextRequest) {
         })
     }
 
+
+    const newCookieValue = randomUUID();
+
     /** 
      * 有効期限が短いCookieをセットし直す 
      * 今回は検証しやすいように10秒で設定しているが、更新の場合も仕様に明確な秒数は指定されていない
      * ただし、長すぎるとセキュリティ上の問題があるため、短い時間で設定することが推奨されている
      * */
-    cookieList.set('auth_cookie', randomUUID(), {
+    cookieList.set('auth_cookie', newCookieValue, {
         maxAge: 10,
-        domain: 'localhost',
         sameSite: 'lax',
         path: '/'
     })
+
+    /**
+     * 新しく発行されたCookieの値を使用して、Session Identifierの紐づけを更新する
+     */
+    await InMemoryDB.set(newCookieValue, sessionId, { ex: 15 });
 
     // このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。
     cookieList.set(sortUlid(), `Refresh DBSC Session Complete\n\r${(new Date()).toISOString()}`, { path: '/' })
@@ -128,7 +136,7 @@ export async function POST(req: NextRequest) {
              * このattributesはかならずセットしたCookieと同じ設定にする 
              * 同じにしないと、更新エンドポイントをブラウザが無限に叩き続ける
              * */
-            "attributes": "Domain=localhost; SameSite=Lax; Path=/"
+            "attributes": "SameSite=Lax; Path=/"
         }]
     })
 }

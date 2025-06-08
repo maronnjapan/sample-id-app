@@ -18,14 +18,19 @@
   - バージョンはNext.jsとPrismaが動けば何でもいいかなと思います。(v20.11.1で動作することは確認しています。)
 
 ## 動かし方
-1. `npm install`を実行
-2. `npm run dev`でアプリを起動
-3. [http://localhost:3000](http://localhost:3000)にアクセス
-4. 以下のフローを行うための処理が実行されヘッダー情報などが、画面に出力されます。
+1. `docker compose up -d`でDBコンテナを起動します。
+2. .env.exampleをコピーし、.envファイルに名前を変更します。
+3. `npm run prisma:push`を実行し、DBの準備を行います。
+4. `npm install`を実行
+5. `npm run dev`でアプリを起動
+6. [http://localhost:3000](http://localhost:3000)にアクセス
+
+## 画面の動きについて
+1. アプリが起動できたら以下のフローを行うための処理が実行されヘッダー情報などが、画面に出力されます。
 ![セッションの開始](./public/2025-05-05_12h31_36.png)  
 [Device Bound Session Credentials explainer](https://github.com/w3c/webappsec-dbsc/blob/main/reg_and_refresh.svg)より引用
-5. `Cookie Expired`というログが画面に出力されたら、「Fetch Data」をクリックします。
-6. すると、以下のリフレッシュするフローが実行され、リフレッシュを行った結果が画面に出力されます。
+2. `Cookie Expired`というログが画面に出力されたら、「Fetch Data」をクリックします。
+3. すると、以下のリフレッシュするフローが実行され、リフレッシュを行った結果が画面に出力されます。
 ![セッションの更新](./public/2025-05-05_12h33_37.png)  
 [Device Bound Session Credentials explainer](https://github.com/w3c/webappsec-dbsc/blob/main/reg_and_refresh.svg)より引用
 

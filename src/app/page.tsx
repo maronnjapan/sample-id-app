@@ -1,8 +1,14 @@
-import { DbscFrontComponent } from "@/components/DbscFrontComponent";
-import { getUserStatus } from "./actions";
+
+import { auth } from "@/auth";
+import { LoginForm } from "@/components/LoginForm";
+import { pagesPath } from "@/lib/$path";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
-  const status = await getUserStatus()
+  const session = await auth()
 
-  return <DbscFrontComponent isLogin={status.status === 'AUTHED'} />
+  if (session) {
+    return redirect(pagesPath.token_exchange.$url().pathname)
+  }
+  return <LoginForm />
 }

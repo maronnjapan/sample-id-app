@@ -1,26 +1,32 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER: test
+      KEYCLOAK_PASSWORD: test
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command: ["start-dev"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: dbsc
+      POSTGRES_DB: keycloak
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-  serverless-redis-http:
-    ports:
-      - "8079:80"
-    image: hiett/serverless-redis-http:latest
-    environment:
-      SRH_MODE: env
-      SRH_TOKEN: example_token
-      SRH_CONNECTION_STRING: "redis://redis:6379"
 
 volumes:
   postgres_data:

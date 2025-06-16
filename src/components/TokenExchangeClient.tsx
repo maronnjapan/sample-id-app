@@ -3,27 +3,47 @@
 import { useState } from 'react';
 import { decodeJWTPayload, copyToClipboard, TokenPayload } from '@/lib/token-utils';
 
+/** Token Exchange デモクライアントコンポーネントのプロパティ */
 interface TokenExchangeClientProps {
   session: any;
 }
 
+/**
+ * Token Exchange デモクライアントコンポーネント
+ * セッション情報を受け取り、Token Exchangeの実行とトークンの比較表示を行う
+ */
 export function TokenExchangeClient({
   session
 }: TokenExchangeClientProps) {
+  /** トークンのコピー成功状態を管理 */
   const [copySuccess, setCopySuccess] = useState<{ [key: string]: boolean }>({});
+  /** 選択されたスコープ */
   const [scope, setScope] = useState('test-delegate');
+  /** 選択されたオーディエンス */
   const [audience, setAudience] = useState('');
-  const [tokenExchangeResult, setTokenExchangeResult] = useState(null);
-  const [tokenExchangeError, setTokenExchangeError] = useState(null);
+  /** Token Exchangeの結果 */
+  const [tokenExchangeResult, setTokenExchangeResult] = useState<any>(null);
+  /** Token Exchangeのエラー */
+  const [tokenExchangeError, setTokenExchangeError] = useState<string | null>(null);
+  /** Token Exchange実行中のローディング状態 */
   const [isLoading, setIsLoading] = useState(false);
 
+  /** スコープの選択肢 */
   const scopeOptions = ['test-delegate'];
+  /** オーディエンスの選択肢 */
   const audienceOptions = ['test-exchange-client'];
 
+  /**
+   * テキストをクリップボードにコピーする処理
+   * @param text コピーするテキスト
+   * @param key コピー成功状態を管理するためのキー
+   */
   const handleCopy = async (text: string, key: string) => {
     try {
       await copyToClipboard(text);
+      /** コピー成功状態を設定 */
       setCopySuccess({ ...copySuccess, [key]: true });
+      /** 2秒後にコピー成功状態をリセット */
       setTimeout(() => {
         setCopySuccess(prev => ({ ...prev, [key]: false }));
       }, 2000);
@@ -32,18 +52,25 @@ export function TokenExchangeClient({
     }
   };
 
+  /**
+   * Token Exchange実行処理
+   * 選択されたスコープとオーディエンスでToken Exchangeを実行する
+   */
   const handleTokenExchange = async () => {
+    /** ローディング状態を開始し、前回の結果をクリア */
     setIsLoading(true);
     setTokenExchangeResult(null);
     setTokenExchangeError(null);
 
     try {
+      /** Token Exchange APIにリクエストを送信 */
       const response = await fetch('/api/token-exchange', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          /** 空文字の場合はundefinedにして送信しない */
           scope: scope || undefined,
           audience: audience || undefined,
         }),
@@ -51,22 +78,28 @@ export function TokenExchangeClient({
 
       const data = await response.json();
 
+      /** Token Exchange成功時 */
       if (response.ok) {
         setTokenExchangeResult(data);
       } else {
+        /** Token Exchange失敗時はエラー詳細も含めて表示 */
         setTokenExchangeError(data.error + (data.details ? ` - ${data.details}` : ''));
       }
     } catch (error) {
+      /** ネットワークエラーなどの予期しないエラー */
       setTokenExchangeError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
+      /** ローディング状態を終了 */
       setIsLoading(false);
     }
   };
 
+  /** 元のアクセストークンのペイロードをデコード */
   const originalTokenPayload: TokenPayload | null = session?.accessToken
     ? decodeJWTPayload(session.accessToken)
     : null;
 
+  /** 交換後のアクセストークンのペイロードをデコード */
   const exchangedTokenPayload: TokenPayload | null = tokenExchangeResult?.access_token
     ? decodeJWTPayload(tokenExchangeResult.access_token)
     : null;

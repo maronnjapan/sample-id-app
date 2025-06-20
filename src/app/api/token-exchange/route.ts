@@ -37,8 +37,7 @@ export async function POST(request: NextRequest) {
       'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
       'subject_token': session.accessToken,
       /** 
-       * 要求するトークンタイプ（アクセストークン）- Keycloakではアクセストークンのみ対応
-       * RFC 8693 Section 3: https://datatracker.ietf.org/doc/html/rfc8693#section-3
+       * 要求するトークンタイプ(今回はアクセストークン固定)
        */
       'requested_token_type': 'urn:ietf:params:oauth:token-type:access_token',
       /** 

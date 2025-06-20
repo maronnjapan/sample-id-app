@@ -18,7 +18,7 @@ export function TokenExchangeClient({
   /** トークンのコピー成功状態を管理 */
   const [copySuccess, setCopySuccess] = useState<{ [key: string]: boolean }>({});
   /** 選択されたスコープ */
-  const [scope, setScope] = useState('test-delegate');
+  const [scope, setScope] = useState('te-exchange-scope');
   /** 選択されたオーディエンス */
   const [audience, setAudience] = useState('');
   /** Token Exchangeの結果 */
@@ -29,9 +29,9 @@ export function TokenExchangeClient({
   const [isLoading, setIsLoading] = useState(false);
 
   /** スコープの選択肢 */
-  const scopeOptions = ['test-delegate'];
+  const scopeOptions = ['te-exchange-scope'];
   /** オーディエンスの選択肢 */
-  const audienceOptions = ['test-exchange-client'];
+  const audienceOptions = ['oauth-token-exchange-client-part2'];
 
   /**
    * テキストをクリップボードにコピーする処理

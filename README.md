@@ -5,10 +5,8 @@
 
 ## 技術スタック
 - **Framework**: Next.js 15.3.1 (React 19.0.0)
-- **認証**: NextAuth.js 5.0.0-beta.28 + Keycloak
-- **スタイリング**: Tailwind CSS 4
+- **認証**: NextAuth.js 5.0.0-beta.28(Auth.js) + Keycloak
 - **言語**: TypeScript
-- **その他**: Prisma (DB), Upstash Redis, pathpida
 
 ## 主要機能
 
@@ -74,21 +72,25 @@ src/
 
 ## 環境変数
 ```
-KEYCLOAK_CLIENT_ID=your-client-id
-KEYCLOAK_CLIENT_SECRET=your-client-secret
-KEYCLOAK_URL=http://localhost:8080/realms/your-realm
-NEXTAUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=http://localhost:3000
+# Keycloak設定
+# 作成したクライアントのID
+KEYCLOAK_CLIENT_ID=oauth-token-exchange-client
+# Keycloakでコピーしたシークレットの値を設定
+KEYCLOAK_CLIENT_SECRET=ddW4XKYyIJQpdyH01iwJcs2F83lSjJhj
+# `http://localhost:8080/realms/作成したレルム名`とする
+KEYCLOAK_URL=http://localhost:8080/realms/oauth-token-exchange
+
+# Auth.js設定
+# AUTH_SECRETはnpx auth secretで生成したものを使用します https://cli.authjs.dev
+AUTH_SECRET=your-nextauth-secret
 ```
 
 ## 開発コマンド
 - `npm run dev`: 開発サーバー起動（Turbopack使用）
 - `npm run build`: プロダクションビルド
-- `npm run lint`: ESLintチェック
-- `npm run prisma:push`: Prismaスキーマをデータベースにプッシュ
 
 
 ## 注意事項
 - audienceを設定するとscopeのダウングレードが期待通りに動作しない場合がある
 - Keycloakの設定でToken Exchange機能を有効にする必要がある
-- 本番環境では適切なセキュリティ設定を行うこと
+- 検証用のアプリなので、セキュリティ的には弱い部分が多々ある

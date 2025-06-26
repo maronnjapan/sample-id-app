@@ -135,10 +135,6 @@ exports.Prisma.DbscSessionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.ChallengeScalarFieldEnum = {
-  challenge: 'challenge'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -162,8 +158,7 @@ exports.Prisma.JsonNullValueFilter = {
 
 exports.Prisma.ModelName = {
   User: 'User',
-  DbscSession: 'DbscSession',
-  Challenge: 'Challenge'
+  DbscSession: 'DbscSession'
 };
 
 /**

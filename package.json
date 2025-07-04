@@ -1,0 +1,24 @@
+{
+  "name": "sample-id-app",
+  "version": "1.0.0",
+  "description": "このプロジェクトはID関連について試した内容を保存したリポジトリです。   各種内容とブランチは以下の通りです。",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "server": "tsx src/server/mcp-server.ts",
+    "client": "node dist/client/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

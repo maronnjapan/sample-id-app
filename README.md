@@ -1,7 +1,9 @@
 # Sample ID App - Keycloak Token Exchange Demo
 
 ## プロジェクト概要
-このプロジェクトは、KeycloakとNext.jsを使用したOAuth Token Exchangeのデモアプリケーションです。ユーザー認証とトークン交換機能を実装しており、Keycloakを用いたセキュアな認証フローを体験できます。
+このプロジェクトは、KeycloakとNext.jsを使用したOAuth Token Exchangeのデモアプリケーションです。ユーザー認証とトークン交換機能を実装しており、Keycloakを用いたセキュアな認証フローを体験できます。  
+このブランチに関するブログ記事も書いていますので、良ければ参考にしてください。  
+https://zenn.dev/maronn/articles/token-exchnage-with-keycloak
 
 ## 技術スタック
 - **Framework**: Next.js 15.3.1 (React 19.0.0)

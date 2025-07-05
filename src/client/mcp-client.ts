@@ -1,11 +1,9 @@
 
 import { SendServerRepository } from './send-server-repository';
 import { exec } from 'child_process';
-import fs from 'fs';
-import { SystemKeyring } from './system-keyring';
+import { MemoryStorage } from './memory-storage';
 
-export const CODE_FILE = '/tmp/temp-code.txt';
-const keyring = new SystemKeyring();
+const memoryStorage = MemoryStorage.getInstance();
 
 
 interface MCPRequest {
@@ -22,37 +20,7 @@ interface MCPResponse {
   error?: any;
 }
 
-export const createCodePromise = (): Promise<string> => {
-  return new Promise<string>(async (resolve) => {
-    const checkCode = async () => {
-      // システムキーリングから取得を試行
-      try {
-        const code = await keyring.retrieve();
-        if (code) {
-          resolve(code);
-          return;
-        }
-      } catch (error) {
-        console.error('Keyring retrieval error:', error);
-      }
-
-      // フォールバック: ファイルベース
-      if (fs.existsSync(CODE_FILE)) {
-        try {
-          const code = fs.readFileSync(CODE_FILE, 'utf8');
-          fs.unlinkSync(CODE_FILE);
-          resolve(code);
-        } catch (error) {
-          console.error('File retrieval error:', error);
-          setTimeout(checkCode, 100);
-        }
-      } else {
-        setTimeout(checkCode, 100);
-      }
-    };
-    checkCode();
-  });
-};
+// 認可コード用の関数は不要になったため削除
 
 /**
  * MCPクライアントクラス
@@ -94,8 +62,18 @@ export class MCPClient {
   }
 
   private async handleMCPRequest(request: MCPRequest, token?: string): Promise<MCPResponse> {
+    // 既存のアクセストークンがあるかチェック
+    let accessToken = token;
+    if (!accessToken) {
+      const cachedToken = memoryStorage.getAccessToken();
+      if (cachedToken) {
+        accessToken = cachedToken;
+        console.log('Using cached access token from memory');
+      }
+    }
+
     const response = await this.httpClient.makeRequest(request.method, request.params,
-      token ? { 'Authorization': `Bearer ${token}` } : undefined
+      accessToken ? { 'Authorization': `Bearer ${accessToken}` } : undefined
     );
 
     const wwwAuthenticateHeader = response.headers.get('www-authenticate');
@@ -149,37 +127,29 @@ export class MCPClient {
         /** Step 4: ブラウザで認可画面を開く */
         await this.openBrowserAndConfirm(authUrl.toString());
 
-        /** Step 5: 認可コードを取得 */
-        const authorizationCode = await createCodePromise();
+        /** Step 5: アクセストークンが取得されるまで待機 */
+        const waitForToken = (): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const checkToken = () => {
+              const token = memoryStorage.getAccessToken();
+              if (token) {
+                resolve(token);
+                return;
+              }
+              setTimeout(checkToken, 100);
+            };
+            checkToken();
+            
+            // 30秒でタイムアウト
+            setTimeout(() => {
+              reject(new Error('Timeout waiting for access token'));
+            }, 30000);
+          });
+        };
 
-        /** Step 6: 認可コードをアクセストークンに交換 */
+        const accessToken = await waitForToken();
 
-        /** Basic認証用のクライアント認証情報を準備 */
-        const authCredentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-        const tokenResponse = await fetch(authServerConfig.token_endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${authCredentials}`,
-          },
-          body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            code: authorizationCode,
-            redirect_uri: redirectUri,
-            resource: 'http://localhost:3000',
-          }).toString(),
-        });
-
-        if (!tokenResponse.ok) {
-          throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
-        }
-
-        const tokenData: any = await tokenResponse.json();
-
-        const accessToken = tokenData.access_token;
-
-        /** Step 7: アクセストークンを使ってMCPサーバーにリクエスト */
+        /** Step 6: アクセストークンを使ってMCPサーバーにリクエスト */
         return this.handleMCPRequest(request, accessToken);
       }
     }

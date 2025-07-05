@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "server": "tsx src/server/mcp-server.ts",
+    "http-server": "tsx src/client/simple-http-server.ts",
     "client": "node dist/client/index.js",
+    "exec:test": "npm run build && echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": {\"name\": \"calculator\", \"arguments\": {\"expression\": \"1+1\"}}}' | node dist/client/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

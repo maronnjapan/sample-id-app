@@ -8,32 +8,21 @@ class SendServerRepository {
     this.serverUrl = serverUrl;
   }
 
-  async makeRequest(method: string, params: any = {}, oriRequest?: any): Promise<any> {
+  async makeRequest(method: string, params: any = {}, headers?: RequestInit['headers']): Promise<Response> {
     const request = {
       jsonrpc: "2.0",
       id: this.requestId++,
       method,
       params,
-      oriRequest
     };
 
     const response = await fetch(`${this.serverUrl}/mcp`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(headers ?? {}) },
       body: JSON.stringify(request),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result: any = await response.json();
-
-    if (result.error) {
-      throw new Error(`MCP error: ${result.error.message}`);
-    }
-
-    return result.result;
+    return response
   }
 }
 

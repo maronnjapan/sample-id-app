@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sample-calculator": {
+      "command": "node",
+      "args": ["dist/client/index.js"],
+      "cwd": "/var/www/sample-id-app"
+    }
+  }
+}

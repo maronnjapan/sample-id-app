@@ -10,11 +10,11 @@ export class MemoryStorage {
   private static instance: MemoryStorage;
   private sharedKey: Buffer;
   private encryptedAccessToken: string | null = null;
+  private state: string | null = null;
 
   private constructor() {
     // プロセス起動時にランダム共有鍵を生成
     this.sharedKey = crypto.randomBytes(32);
-    console.log('Generated new shared key for this session');
   }
 
   static getInstance(): MemoryStorage {
@@ -33,16 +33,22 @@ export class MemoryStorage {
     try {
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-256-cbc', this.sharedKey, iv);
-      
+
       let encrypted = cipher.update(token, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       this.encryptedAccessToken = iv.toString('hex') + ':' + encrypted;
-      console.log('Access token encrypted and stored in memory');
     } catch (error) {
       console.error('Access token encryption failed:', error);
       throw new Error('Failed to encrypt access token');
     }
+  }
+
+  /**
+   * stateパラメータをメモリに保存
+   */
+  storeState(state: string): void {
+    this.state = state;
   }
 
   /**
@@ -57,16 +63,30 @@ export class MemoryStorage {
       const [ivHex, encryptedHex] = this.encryptedAccessToken.split(':');
       const iv = Buffer.from(ivHex, 'hex');
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.sharedKey, iv);
-      
+
       let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       console.error('Access token decryption failed:', error);
       this.encryptedAccessToken = null; // エラー時は削除
       return null;
     }
+  }
+
+  /**
+   * stateパラメータを取得
+   */
+  getState(): string | null {
+    return this.state;
+  }
+
+  /**
+   * stateパラメータをクリア
+   */
+  clearState(): void {
+    this.state = null;
   }
 
   // hasCode() メソッドは不要になったため削除
@@ -83,7 +103,7 @@ export class MemoryStorage {
    */
   clear(): void {
     this.encryptedAccessToken = null;
-    console.log('Memory storage cleared');
+    this.state = null;
   }
 
   /**
@@ -92,6 +112,6 @@ export class MemoryStorage {
   regenerateKey(): void {
     this.sharedKey = crypto.randomBytes(32);
     this.encryptedAccessToken = null;
-    console.log('Shared key regenerated, storage cleared');
+    this.state = null;
   }
 }

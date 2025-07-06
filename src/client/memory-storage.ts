@@ -11,6 +11,8 @@ export class MemoryStorage {
   private sharedKey: Buffer;
   private encryptedAccessToken: string | null = null;
   private state: string | null = null;
+  private codeVerifier: string | null = null;
+  private codeChallenge: string | null = null;
 
   private constructor() {
     // プロセス起動時にランダム共有鍵を生成
@@ -52,6 +54,33 @@ export class MemoryStorage {
   }
 
   /**
+   * PKCEのcode_verifierとcode_challengeを生成・保存
+   */
+  generateAndStorePKCE(): { codeVerifier: string; codeChallenge: string } {
+    const codeVerifier = crypto.randomBytes(32).toString('base64url');
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+    
+    this.codeVerifier = codeVerifier;
+    this.codeChallenge = codeChallenge;
+    
+    return { codeVerifier, codeChallenge };
+  }
+
+  /**
+   * code_challengeを取得
+   */
+  getCodeChallenge(): string | null {
+    return this.codeChallenge;
+  }
+
+  /**
+   * code_verifierを取得
+   */
+  getCodeVerifier(): string | null {
+    return this.codeVerifier;
+  }
+
+  /**
    * 暗号化されたアクセストークンを復号化して取得
    */
   getAccessToken(): string | null {
@@ -89,6 +118,14 @@ export class MemoryStorage {
     this.state = null;
   }
 
+  /**
+   * PKCEデータをクリア
+   */
+  clearPKCE(): void {
+    this.codeVerifier = null;
+    this.codeChallenge = null;
+  }
+
   // hasCode() メソッドは不要になったため削除
 
   /**
@@ -104,6 +141,8 @@ export class MemoryStorage {
   clear(): void {
     this.encryptedAccessToken = null;
     this.state = null;
+    this.codeVerifier = null;
+    this.codeChallenge = null;
   }
 
   /**
@@ -113,5 +152,7 @@ export class MemoryStorage {
     this.sharedKey = crypto.randomBytes(32);
     this.encryptedAccessToken = null;
     this.state = null;
+    this.codeVerifier = null;
+    this.codeChallenge = null;
   }
 }

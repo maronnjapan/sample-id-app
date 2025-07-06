@@ -30,8 +30,7 @@ app.use(express.json());
  */
 async function validateToken(token: string): Promise<boolean> {
   try {
-    console.log('Starting token validation...');
-    
+
     /** Auth0のJWKS (JSON Web Key Set) エンドポイントからJWT署名検証用の公開鍵を取得 */
     const jwksResponse = await fetch('https://mcp-authorization-server.jp.auth0.com/.well-known/jwks.json');
     if (!jwksResponse.ok) {
@@ -39,14 +38,11 @@ async function validateToken(token: string): Promise<boolean> {
     }
     /** JWKSレスポンスをJSONとして解析 */
     const jwks: any = await jwksResponse.json();
-    console.log('JWKS fetched successfully');
 
     /** JWTトークンをピリオドで分割してヘッダー、ペイロード、署名に分割 */
     const parts = token.split('.');
-    console.log('Token parts length:', parts.length);
     /** JWTは必ず3つのパーツ（ヘッダー、ペイロード、署名）から構成される */
     if (parts.length !== 3) {
-      console.log('Invalid token format - expected 3 parts');
       return false;
     }
 
@@ -56,67 +52,49 @@ async function validateToken(token: string): Promise<boolean> {
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
     /** JWT署名部分（Base64URLエンコード済み） */
     const signature = parts[2];
-    
-    console.log('Token header:', header);
-    console.log('Token payload:', payload);
+
 
     /** JWTペイロードの基本的なクレーム検証 */
     const currentTime = Date.now() / 1000;
-    console.log('Current time:', currentTime, 'Token exp:', payload.exp);
     /** トークンの有効期限(expクレーム)を現在時刻と比較して期限切れをチェック */
     if (!payload.exp || payload.exp < currentTime) {
-      console.log('Token expired or no exp claim');
       return false;
     }
 
-    console.log('Token issuer:', payload.iss);
     /** トークンの発行者(issクレーム)がAuth0のドメインと一致するか検証 */
     if (payload.iss !== 'https://mcp-authorization-server.jp.auth0.com/') {
-      console.log('Invalid issuer, expected: https://mcp-authorization-server.jp.auth0.com/');
       return false;
     }
 
-    console.log('Token audience:', payload.aud);
     /** トークンのオーディエンス(audクレーム)にこのMCPサーバーのURLが含まれているか検証 */
     if (!payload.aud || !payload.aud.includes('http://localhost:3000')) {
-      console.log('Invalid audience, expected to include: http://localhost:3000');
       return false;
     }
 
     /** JWTヘッダーから鍵ID(kid)を取得して署名検証用の鍵を特定 */
     const kid = header.kid;
-    console.log('Token kid:', kid);
     if (!kid) {
-      console.log('No kid in header');
       return false;
     }
 
     /** JWKSからkidに一致する公開鍵情報（JWK）を検索 */
     const jwk = jwks.keys.find((key: any) => key.kid === kid);
-    console.log('Found JWK for kid:', !!jwk);
     if (!jwk) {
-      console.log('No matching JWK found for kid:', kid);
       return false;
     }
 
     /** JWTヘッダーのアルゴリズムがRSA-SHA256であることを確認 */
-    console.log('Token algorithm:', header.alg);
     if (header.alg !== 'RS256') {
-      console.log('Unsupported algorithm, expected RS256');
       return false;
     }
 
     /** JWKからNode.jsのcryptoモジュールで使用可能なRSA公開鍵オブジェクトを構築 */
-    console.log('Creating public key from JWK...');
     const publicKey = jwkToPublicKey(jwk);
-    console.log('Public key created successfully');
 
     /** JWT署名の対象データ（ヘッダー + "." + ペイロード）を構築 */
     const signatureData = parts[0] + '.' + parts[1];
-    console.log('Signature data length:', signatureData.length);
 
     /** RSA-SHA256アルゴリズムでJWTのデジタル署名を検証 */
-    console.log('Verifying signature...');
     const isSignatureValid = crypto.verify(
       /** 署名アルゴリズム: RSA-SHA256 */
       'RSA-SHA256',
@@ -132,18 +110,14 @@ async function validateToken(token: string): Promise<boolean> {
       Buffer.from(signature, 'base64url')
     );
 
-    console.log('Signature validation result:', isSignatureValid);
     /** デジタル署名が無効な場合はトークンを拒否 */
     if (!isSignatureValid) {
-      console.log('Signature validation failed');
       return false;
     }
 
-    console.log('Token validation successful');
     return true;
   } catch (error) {
     /** トークン検証中の任意のエラー（ネットワークエラー、パースエラー等）をキャッチ */
-    console.error('Token validation error:', error);
     return false;
   }
 }
@@ -165,7 +139,7 @@ function jwkToPublicKey(jwk: any): crypto.KeyObject {
     /** キーのフォーマットをJWKとして指定 */
     format: 'jwk'
   });
-  
+
   return publicKey;
 }
 
@@ -226,25 +200,10 @@ app.post("/mcp", async (req: Request, res: Response) => {
   /** リクエストのHTTPヘッダー（Authorizationヘッダー等を含む） */
   const headers = req.headers;
 
-
-  /** 
-   * Claude AIからの初期化リクエストの例:
-   * {
-   *   "method": "initialize",
-   *     "params": {
-   *     "protocolVersion": "2024-11-05",
-   *       "capabilities": { },
-   *     "clientInfo": {
-   *       "name": "claude-ai",
-   *         "version": "0.1.0"
-   *     }
-   *   }
-   */
-
   /**
    * MCP初期化メソッドの処理
    * 
-   * Claude AIがMCPサーバーとの接続を確立するための初期ハンドシェイク。
+   * Claude がMCPサーバーとの接続を確立するための初期ハンドシェイク。
    * サーバーの機能、バージョン情報、対応プロトコルバージョンを通知。
    * このレスポンスがないとClaudeはMCPサーバーとして認識しない。
    */
@@ -286,8 +245,9 @@ app.post("/mcp", async (req: Request, res: Response) => {
   /**
    * ツール実行メソッドの処理（OAuth2認証必須）
    * 
-   * Claude AIが実際にツールを呼び出す際に使用されるメソッド。
-   * このメソッドはOAuth2アクセストークンによる認証が必要。
+   * Claude が実際にツールを呼び出す際に使用されるメソッド。
+   * このメソッドはアクセストークンの検証が必要であり、
+   * 認証に失敗した場合は401 Unauthorizedエラーを返す。
    */
   if (request.method === "tools/call") {
     /** HTTPリクエストからAuthorizationヘッダーを取得 */
@@ -346,6 +306,8 @@ app.post("/mcp", async (req: Request, res: Response) => {
       /** 
        * JavaScriptのFunctionコンストラクタで数式を安全に評価
        * "use strict"で厳格モードを有効化してセキュリティを向上
+       * とはいえ、実際のアプリケーションでは
+       * 数式評価ライブラリを使用することを推奨
        */
       const result = Function(`"use strict"; return (${args.expression})`)();
       res.json({

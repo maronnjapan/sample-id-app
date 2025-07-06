@@ -141,21 +141,13 @@ export class MCPClient {
    * @param token オプションのアクセストークン（リトライ時に使用）
    * @returns MCPサーバーからのレスポンス
    */
-  private async handleMCPRequest(request: MCPRequest, token?: string): Promise<MCPResponse> {
+  private async handleMCPRequest(request: MCPRequest): Promise<MCPResponse> {
     /** アクセストークンの取得: パラメータかメモリキャッシュから */
-    let accessToken = token;
-    if (!accessToken) {
-      /** メモリストレージから保存済みのアクセストークンを取得 */
-      const cachedToken = memoryStorage.getAccessToken();
-      if (cachedToken) {
-        accessToken = cachedToken;
-        console.log('Using cached access token from memory');
-      }
-    }
+    const cachedAccessToken = memoryStorage.getAccessToken()
 
     /** MCPサーバーにHTTPリクエストを送信（アクセストークンがある場合はBearerトークンで認証） */
     const response = await this.httpClient.makeRequest(request.method, request.params,
-      accessToken ? { 'Authorization': `Bearer ${accessToken}` } : undefined
+      cachedAccessToken ? { 'Authorization': `Bearer ${cachedAccessToken}` } : undefined
     );
 
     /** OAuth2リソースサーバーからのWWW-Authenticateヘッダーを取得 */
@@ -169,6 +161,7 @@ export class MCPClient {
       if (resourceMetadata) {
         const resourceMetadataUrl = resourceMetadata[1];
 
+        /** リソースメタデータのURLから、JSONを取得する */
         const metadataResponse = await fetch(resourceMetadataUrl);
 
         if (!metadataResponse.ok) {
@@ -177,12 +170,17 @@ export class MCPClient {
 
         const metadataJson: any = await metadataResponse.json();
 
+        /** 
+         * リソースメタデータから認可サーバーのURLを取得
+         * 本来であれば複数の認可サーバーがある可能性があり、どれを使用するかの処理が必要だが
+         * ここでは最初のものを使用する
+         */
         const authorizationServerUrl = metadataJson.authorization_servers[0];
         if (!authorizationServerUrl) {
           throw new Error('No authorization servers found in resource metadata');
         }
 
-        /** Step 1: 認可サーバーの設定情報を取得 */
+        /** 認可サーバーの設定情報を取得 */
         const authServerConfigUrl = `${authorizationServerUrl}/.well-known/oauth-authorization-server`;
         const authServerConfigResponse = await fetch(authServerConfigUrl);
 
@@ -191,25 +189,39 @@ export class MCPClient {
         }
 
         const authServerConfig: any = await authServerConfigResponse.json();
-        console.error('Auth server config:', authServerConfig);
+        /** 認可サーバーの設定から認可エンドポイントURLを取得 */
+        const authUrl = new URL(authServerConfig.authorization_endpoint);
 
         /** Step 2: Authorization Code フローのためのパラメータを準備 */
         const clientId = process.env.CLIENT_ID || '';
+        /** 認可コードを処理するために用意しているMCPクライアントのURLをリダイレクト先に指定 */
         const redirectUri = 'http://localhost:8000/verify';
         const scope = 'openid profile';
         const state = Math.random().toString(36).substring(2, 15);
 
-        // stateパラメータをメモリに保存
+        /** stateパラメータをメモリに保存 */
         memoryStorage.storeState(state);
 
+        /** PKCE (Proof Key for Code Exchange) パラメータを生成・保存 */
+        const { codeChallenge } = memoryStorage.generateAndStorePKCE();
+
         /** Step 3: 認可URLを構築 */
-        const authUrl = new URL(authServerConfig.authorization_endpoint);
         authUrl.searchParams.set('response_type', 'code');
         authUrl.searchParams.set('client_id', clientId);
         authUrl.searchParams.set('redirect_uri', redirectUri);
         authUrl.searchParams.set('scope', scope);
         authUrl.searchParams.set('state', state);
+        authUrl.searchParams.set("resource", "http://localhost:3000");
+        /** 
+         * Auth0の仕様に合わせてaudienceパラメータを設定
+         * これを設定しないと、Auth0から返ってくるアクセストークンのpayloadが空になる
+         * なので、標準仕様ではないはずだが必ず設定する必要がある
+         */
         authUrl.searchParams.set('audience', 'http://localhost:3000');
+
+        /** PKCE パラメータを追加 */
+        authUrl.searchParams.set('code_challenge', codeChallenge);
+        authUrl.searchParams.set('code_challenge_method', 'S256');
 
         /** Step 4: ブラウザで認可画面を開く */
         await this.openBrowserAndConfirm(authUrl.toString());
@@ -223,7 +235,7 @@ export class MCPClient {
                 resolve(token);
                 return;
               }
-              setTimeout(checkToken, 100);
+              setTimeout(checkToken, 500);
             };
             checkToken();
 
@@ -234,10 +246,10 @@ export class MCPClient {
           });
         };
 
-        const accessToken = await waitForToken();
+        await waitForToken();
 
         /** Step 6: アクセストークンを使ってMCPサーバーにリクエスト */
-        return await this.handleMCPRequest(request, accessToken);
+        return await this.handleMCPRequest(request);
       }
     }
 
@@ -260,16 +272,25 @@ export class MCPClient {
     return new Promise((resolve) => {
       let command = '';
 
+      /** プラットフォームごとにブラウザを開くコマンドを設定 */
+      /** WSL上でLinuxを使用している場合はPowerShellを使用 */
       if (process.platform === 'linux' && process.env.WSL_DISTRO_NAME) {
         command = `powershell.exe -Command "Start-Process '${url}'"`;
-      } else if (process.platform === 'darwin') {
+      }
+      /** macOSではopenコマンドを使用 */
+      else if (process.platform === 'darwin') {
         command = `open "${url}"`;
-      } else if (process.platform === 'win32') {
+      }
+      /** Windowsではstartコマンドを使用 */
+      else if (process.platform === 'win32') {
         command = `start "" "${url}"`;
-      } else {
+      }
+      /** Linuxではxdg-openを使用 */
+      else {
         command = `xdg-open "${url}"`;
       }
 
+      /** ブラウザを開くためのコマンドを実行 */
       exec(command, () => {
         resolve();
       });

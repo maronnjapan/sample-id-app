@@ -110,6 +110,9 @@ app.get("/verify", async (req: Request, res: Response) => {
     /** OAuth2 Client Credentials をBase64エンコードしてBasic認証ヘッダーを準備 */
     const authCredentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
+    /** PKCEのcode_verifierをメモリストレージから取得 */
+    const codeVerifier = memoryStorage.getCodeVerifier();
+
     /** 認可コードをアクセストークンに交換するHTTPリクエストを送信 */
     const tokenResponse = await fetch(authServerConfig.token_endpoint, {
       method: 'POST',
@@ -128,6 +131,8 @@ app.get("/verify", async (req: Request, res: Response) => {
         redirect_uri: redirectUri,
         /** アクセスするリソースサーバーのURI（MCPサーバー） */
         resource: 'http://localhost:3000',
+        /** PKCEのcode_verifierパラメータ */
+        ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
       }).toString(),
     });
 
@@ -150,6 +155,10 @@ app.get("/verify", async (req: Request, res: Response) => {
 
     /** 取得したアクセストークンを暗号化してメモリストレージに保存 */
     memoryStorage.storeAccessToken(accessToken);
+
+    /** PKCEデータをクリア（セキュリティのため） */
+    memoryStorage.clearPKCE();
+
     console.log('Access token obtained and stored in memory');
 
     /** 認可成功をユーザーに通知するHTMLレスポンス */

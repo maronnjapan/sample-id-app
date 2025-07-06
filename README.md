@@ -4,31 +4,44 @@ TypeScriptで実装したModel Context Protocol (MCP) のHTTPクライアント�
 
 ## 機能
 
-- **HTTPサーバー**: Express.jsベースのMCPサーバー
-- **HTTPクライアント**: fetch APIを使用するMCPクライアント
+- **MCPサーバー**: TypeScriptで実装したMCPサーバー
+- **MCPクライアント**: 標準入力からJSONリクエストを受け取って処理するクライアント
 - **Calculator Tool**: 数式計算機能（例: "2 + 3 * 4"）
 
 ## セットアップ
 
-```bash
-# 依存関係のインストール
-npm install
+### 1. 依存関係のインストール
 
-# TypeScriptのビルド（オプション）
+```bash
+npm install
+```
+
+### 2. 環境変数の設定
+
+`.env`ファイルを作成してAuth0のクライアントIDとクライアントシークレットを設定してください：
+
+```bash
+CLIENT_ID="YOUR_AUTH0_CLIENT_ID"
+CLIENT_SECRET="YOUR_AUTH0_CLIENT_SECRET"
+```
+
+### 3. TypeScriptのビルド
+
+```bash
 npm run build
 ```
 
 ## 使い方
 
-### 1. サーバーを起動
+### 1. MCPサーバーを起動
 
 ```bash
 npm run server
 ```
 
-サーバーが http://localhost:3000 で起動します。
+**注意:** MCPサーバーは先に起動しておく必要があります。
 
-### 2. クライアントをテスト（別ターミナル）
+### 2. クライアントをテスト
 
 ```bash
 npm run client
@@ -36,105 +49,61 @@ npm run client
 
 ## 動作確認
 
-サーバーが正常に起動していることを確認：
-
 ```bash
-curl http://localhost:3000/health
+npm run exec:test
 ```
 
-手動でMCPリクエストを送信：
-
-```bash
-# ツール一覧を取得
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "tools/list"
-  }'
-
-# 計算ツールを呼び出し
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 2,
-    "method": "tools/call",
-    "params": {
-      "name": "calculator",
-      "arguments": {
-        "expression": "2 + 3 * 4"
-      }
-    }
-  }'
-```
+このコマンドでプロジェクトのビルドとテストを実行します。
 
 ## Claude Desktopでの使用方法
 
-このMCPサーバーをClaude Desktopで使用するには、Claude Desktopの設定ファイルに追加する必要があります。
+このMCPサーバーをClaude Desktopで使用するには、Claude Desktop設定ファイルに追加する必要があります。
 
-### 1. Claude Desktop設定ファイルの場所
+### WSL環境での設定
 
-**macOS:**
-```bash
-~/Library/Application Support/Claude/claude_desktop_config.json
-```
-
-**Windows:**
-```bash
-%APPDATA%\Claude\claude_desktop_config.json
-```
-
-### 2. 設定ファイルの編集
-
-設定ファイルに以下の内容を追加してください：
+このプロジェクトがWSLにあって、WindowsにClaude Desktopをインストールしている場合、以下の設定で動作します：
 
 ```json
 {
   "mcpServers": {
     "sample-calculator": {
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "/path/to/sample-id-app"
+      "command": "wsl",
+      "args": [
+        "-d",
+        "Ubuntu",
+        "-e",
+        "bash",
+        "-c",
+        "cd プロジェクトへのWSL上のパス && npm run client"
+      ]
     }
   }
 }
 ```
 
-**注意:** `cwd`の部分は、このプロジェクトの実際のパスに変更してください。
+### 一般的な設定
 
-### 3. 使用手順
-
-1. **プロジェクトをビルド:**
-   ```bash
-   npm run build
-   ```
-
-2. **Claude Desktopを再起動**
-
-3. **Claude Desktopで使用:**
-   - 新しい会話を開始
-   - 計算に関する質問をする（例: "2 + 3 * 4を計算して"）
-   - MCPツールが自動的に使用されます
-
-### HTTPサーバー版の使用
-
-HTTPサーバー版を使用する場合は、以下の設定も可能です：
-
-```json
-{
-  "mcpServers": {
-    "sample-calculator-http": {
-      "command": "node",
-      "args": ["dist/http-server.js"],
-      "cwd": "/path/to/sample-id-app"
-    }
-  }
-}
-```
+Claude Desktop設定ファイルの場所は環境によって異なります。具体的な設定方法についてはClaude Desktopの公式ドキュメントを参照してください。
 
 ## ファイル構成
 
-- `src/http-server.ts` - MCPサーバー実装
-- `src/http-client.ts` - MCPクライアント実装
+```
+src/
+├── client/
+│   ├── index.ts                    - MCPクライアントのエントリーポイント
+│   ├── mcp-client.ts              - MCPクライアント実装
+│   ├── memory-storage.ts          - メモリベースのストレージ実装
+│   ├── send-server-repository.ts  - サーバーとの通信を管理
+│   └── simple-http-server.ts      - 簡単なHTTPサーバー実装
+└── server/
+    └── mcp-server.ts              - MCPサーバー実装
+```
+
+### 主要ファイルの説明
+
+- **src/server/mcp-server.ts**: MCPサーバーのメイン実装。Calculator toolを提供
+- **src/client/index.ts**: MCPクライアントのエントリーポイント。標準入力からJSONリクエストを受け取って処理
+- **src/client/mcp-client.ts**: MCPクライアントの実装
+- **src/client/memory-storage.ts**: メモリベースのストレージ実装（暗号化機能付き）
+- **src/client/send-server-repository.ts**: サーバーとの通信を管理するリポジトリ
+- **src/client/simple-http-server.ts**: 簡単なHTTPサーバー実装

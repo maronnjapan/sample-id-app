@@ -12,6 +12,7 @@
     "db:migrate": "npx prisma migrate dev"
   },
   "dependencies": {
+    "@auth0/nextjs-auth0": "^4.8.0",
     "@prisma/client": "^6.7.0",
     "@upstash/redis": "^1.35.0",
     "next": "15.3.1",

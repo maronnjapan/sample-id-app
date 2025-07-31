@@ -4,7 +4,6 @@ import { Auth0Client } from "@auth0/nextjs-auth0/server";
 import { OnCallbackContext, SessionData } from "@auth0/nextjs-auth0/types";
 import { NextResponse } from "next/server";
 import { sortUlid } from "@/util";
-import { cookies } from "next/headers";
 
 export const auth0 = new Auth0Client({
     authorizationParameters: {

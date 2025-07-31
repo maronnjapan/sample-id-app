@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
     await InMemoryDB.set(sessionId, JSON.stringify(
         { accessToken: authorizationObj.accessToken, refreshToken: authorizationObj.refreshToken }
     ), { ex: 60 * 60 * 24 * 30 });
+    await InMemoryDB.del(authorization);
 
     /** このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。 */
     cookieList.set(sortUlid(), `Register DBSC Session \n\r Sec-Session-Response:${token}\n\r${(new Date()).toISOString()}`, { path: '/' })

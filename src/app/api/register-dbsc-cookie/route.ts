@@ -1,6 +1,7 @@
 import { prisma } from "@/prisma";
 import { InMemoryDB } from "@/storage/in-memory";
 import { base64UrlDecode, getPublicKey, sortUlid, verifySecSessionResponseToken } from "@/util";
+import { SessionData } from "@auth0/nextjs-auth0/types";
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,16 +45,20 @@ export async function POST(req: NextRequest) {
     const cookieList = await cookies()
 
     /**
-     * 認証した時に設定されたCookieが存在するかを確認
+     * 認証した時に設定されたIDトークンが存在するかを確認
      * 存在しない場合は401エラーを返す
      */
-    const authCookie = cookieList.get('auth_cookie')
-    if (!authCookie) {
-        return NextResponse.json(JSON.stringify({ message: 'No auth cookie' }), {
+    const authorization = payloadJson.authorization;
+    const authorizationValue = await InMemoryDB.get(authorization)
+    if (!authorization || !authorizationValue) {
+        return NextResponse.json(JSON.stringify({ message: 'No ID token' }), {
             status: 401,
             statusText: 'Unauthorized',
         })
     }
+
+    const authorizationObj = JSON.parse(JSON.stringify(authorizationValue)) as SessionData['tokenSet']
+
 
     const sessionId = randomUUID()
 
@@ -74,22 +79,6 @@ export async function POST(req: NextRequest) {
         }
     })
 
-    /**
-     * 認証の時に設定した値からユーザーIDを取得
-     * 取得できない場合は401エラーを返す
-     */
-    const userId = await InMemoryDB.get(authCookie.value);
-    if (!userId) {
-        return NextResponse.json(JSON.stringify({ message: 'ログイン情報が存在しません' }), {
-            status: 401,
-            statusText: 'Unauthorized',
-        })
-    }
-    /** 
-     * 認証Cookieを削除する
-     * DBSCのフローでは、認証した時に設定したCookieは使用しないため、削除する
-     */
-    await InMemoryDB.del(authCookie.value)
     /** 
   * 有効期限が短いCookieをセットし直す 
   * 今回は検証しやすいように10秒で設定しているが、仕様に明確な秒数は指定されていない
@@ -112,8 +101,11 @@ export async function POST(req: NextRequest) {
      * しかし、今回はそこまでの実装は行わないので、15秒で有効期限を設定していて無効化の対応をしている
      */
     await InMemoryDB.set(newCookieValue, sessionId, { ex: 15 });
-    await InMemoryDB.set(sessionId, userId, { ex: 60 * 60 * 24 * 30 });
+    await InMemoryDB.set(sessionId, JSON.stringify(
+        { accessToken: authorizationObj.accessToken, refreshToken: authorizationObj.refreshToken }
+    ), { ex: 60 * 60 * 24 * 30 });
 
+    /** このCookieセットはフロントで表示させるための実装なので、DBSCには何も関係がない。 */
     cookieList.set(sortUlid(), `Register DBSC Session \n\r Sec-Session-Response:${token}\n\r${(new Date()).toISOString()}`, { path: '/' })
 
     return NextResponse.json({

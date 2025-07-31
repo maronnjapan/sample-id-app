@@ -1,5 +1,5 @@
 
-import type { NextRequest } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
 import { cookies } from "next/headers";
 
@@ -17,6 +17,9 @@ export async function middleware(request: NextRequest) {
                 return
             }
             if (process.env.AUTH0_CLIENT_ID && ck.name.includes(process.env.AUTH0_CLIENT_ID)) {
+                return
+            }
+            if (request.nextUrl.searchParams.get('cookieKey') === ck.name) {
                 return
             }
             cookie.delete(ck.name)

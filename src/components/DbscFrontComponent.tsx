@@ -5,6 +5,12 @@ import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 
 export function DbscFrontComponent({ isLogin }: { isLogin?: boolean }) {
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (url.search) {
+            window.history.replaceState({}, '', url.pathname);
+        }
+    }
     const [isLoggedIn, setIsLoggedIn] = useState(isLogin || false);
 
     // State for DBSC cookie tracking

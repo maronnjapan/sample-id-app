@@ -1,0 +1,64 @@
+name: Okta TOTP Setup and LDAP Authentication
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-existing-totp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete existing TOTP factor
+        run: |
+          FACTORS=$(curl -s -X GET \
+            "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors" \
+            -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
+            -H "Accept: application/json") && \
+          TOTP_FACTOR_ID=$(echo $FACTORS | jq -r '.[] | select(.factorType=="token:software:totp") | .id') && \
+          if [ ! -z "$TOTP_FACTOR_ID" ]; then \
+            curl -X DELETE \
+              "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors/${TOTP_FACTOR_ID}" \
+              -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}"; \
+          fi
+
+  enroll-totp:
+    runs-on: ubuntu-latest
+    needs: delete-existing-totp
+    outputs:
+      shared-secret: ${{ steps.enroll.outputs.shared-secret }}
+    steps:
+      - name: Install oathtool
+        run: sudo apt-get update && sudo apt-get install -y oathtool
+
+      - name: Enroll TOTP
+        id: enroll
+        run: |
+          ENROLL_RESPONSE=$(curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors" \
+            -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d '{ "factorType": "token:software:totp", "provider": "OKTA" }') && \
+          FACTOR_ID=$(echo $ENROLL_RESPONSE | jq -r '.id') && \
+          SHARED_SECRET=$(echo $ENROLL_RESPONSE | jq -r '._embedded.activation.sharedSecret') && \
+          OTP=$(oathtool --totp -b "$SHARED_SECRET") && \
+          curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors/${FACTOR_ID}/lifecycle/activate" \
+            -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "{ \"passCode\": \"${OTP}\" }" && \
+          echo "shared-secret=${SHARED_SECRET}" >> $GITHUB_OUTPUT
+
+  ldap-authentication:
+    runs-on: ubuntu-latest
+    needs: enroll-totp
+    steps:
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y oathtool ldap-utils
+
+      - name: Perform LDAP authentication
+        run: |
+          export OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }} && \
+          export OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET") && \
+          ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \
+            -D "uid=${{ secrets.LDAP_UID }},dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
+            -w "${{ secrets.USER_PASSWORD }},${OTP}" \
+            -b "dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
+            "(objectClass=person)"

@@ -11,15 +11,18 @@ jobs:
     steps:
       - name: Delete existing TOTP factor
         run: |
+          # 対象ユーザーの認証要素を取得する
           FACTORS=$(curl -s -X GET \
             "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors" \
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
-            -H "Accept: application/json") && \
-          TOTP_FACTOR_ID=$(echo $FACTORS | jq -r '.[] | select(.factorType=="token:software:totp") | .id') && \
-          if [ ! -z "$TOTP_FACTOR_ID" ]; then \
+            -H "Accept: application/json")
+          # 取得した認証要素から、TOTPに該当する要素のIDを取得する
+          TOTP_FACTOR_ID=$(echo $FACTORS | jq -r '.[] | select(.factorType=="token:software:totp") | .id') 
+          # もしTOTP要素が存在する場合は削除する
+          if [ ! -z "$TOTP_FACTOR_ID" ]; then
             curl -X DELETE \
               "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors/${TOTP_FACTOR_ID}" \
-              -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}"; \
+              -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}"; 
           fi
 
   enroll-totp:
@@ -60,7 +63,7 @@ jobs:
         run: |
           export OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }}
           export OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
-          
+
           for attempt in 1 2 3; do
             echo "LDAP authentication attempt $attempt"
             

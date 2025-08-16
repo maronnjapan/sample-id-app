@@ -29,27 +29,36 @@ jobs:
     runs-on: ubuntu-latest
     needs: delete-existing-totp
     outputs:
+      # 取得したOTPを生成するためのシークレットを出力し、次のジョブで使用できるようにする
       shared-secret: ${{ steps.enroll.outputs.shared-secret }}
     steps:
       - name: Install oathtool
+        # TOTPを生成するためのツールをインストールする
         run: sudo apt-get update && sudo apt-get install -y oathtool
 
       - name: Enroll TOTP
         id: enroll
         run: |
+          # 対象ユーザーの認証要素としてTOTPを登録する(有効化作業が別途必要)
           ENROLL_RESPONSE=$(curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors" \
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            -d '{ "factorType": "token:software:totp", "provider": "OKTA" }') && \
-          FACTOR_ID=$(echo $ENROLL_RESPONSE | jq -r '.id') && \
-          SHARED_SECRET=$(echo $ENROLL_RESPONSE | jq -r '._embedded.activation.sharedSecret') && \
-          OTP=$(oathtool --totp -b "$SHARED_SECRET") && \
+            -d '{ "factorType": "token:software:totp", "provider": "OKTA" }')
+
+          # 登録したTOTPのIDとTOTP生成のためのシークレットを取得する
+          FACTOR_ID=$(echo $ENROLL_RESPONSE | jq -r '.id') 
+          SHARED_SECRET=$(echo $ENROLL_RESPONSE | jq -r '._embedded.activation.sharedSecret')
+
+          # OTPを生成する
+          OTP=$(oathtool --totp -b "$SHARED_SECRET") 
+          # 登録したTOTPによる認証を有効化するために、生成したOTPを使用して有効化リクエストを送信する
           curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors/${FACTOR_ID}/lifecycle/activate" \
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            -d "{ \"passCode\": \"${OTP}\" }" && \
+            -d "{ \"passCode\": \"${OTP}\" }"
+          # Okta LDAP Interfaceでの認証を行うために、TOTP生成用のシークレットを次のジョブで使用できるようにする
           echo "shared-secret=${SHARED_SECRET}" >> $GITHUB_OUTPUT
 
   ldap-authentication:
@@ -61,12 +70,16 @@ jobs:
 
       - name: Perform LDAP authentication
         run: |
-          export OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }}
-          export OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
+          OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }}
+          # 認証用のOTPを生成する
+          OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
 
+          # リトライ処理をするためにループ処理を記載
           for attempt in 1 2 3; do
             echo "LDAP authentication attempt $attempt"
             
+            # Okta LDAP Interfaceにリクエストを送信して認証を試みる
+            # ldapsearchが成功した場合はループを抜ける
             ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \
               -D "uid=${{ secrets.LDAP_UID }},dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
               -w "${{ secrets.USER_PASSWORD }},${OTP}" \
@@ -82,7 +95,8 @@ jobs:
               sleep 2
               continue
             }
-            
+
+            # 全てのLDAP認証試行が失敗した場合はエラーを出力
             echo "All LDAP authentication attempts failed"
             exit 1
           done

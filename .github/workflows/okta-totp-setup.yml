@@ -58,10 +58,28 @@ jobs:
 
       - name: Perform LDAP authentication
         run: |
-          export OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }} && \
-          export OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET") && \
-          ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \
-            -D "uid=${{ secrets.LDAP_UID }},dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
-            -w "${{ secrets.USER_PASSWORD }},${OTP}" \
-            -b "dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
-            "(objectClass=person)"
+          export OKTA_TOTP_SECRET=${{ needs.enroll-totp.outputs.shared-secret }}
+          export OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
+          
+          for attempt in 1 2 3; do
+            echo "LDAP authentication attempt $attempt"
+            
+            ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \
+              -D "uid=${{ secrets.LDAP_UID }},dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
+              -w "${{ secrets.USER_PASSWORD }},${OTP}" \
+              -b "dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
+              "(objectClass=person)" && {
+                echo "LDAP authentication successful"
+                break
+              }
+            
+            echo "LDAP authentication failed (attempt $attempt)"
+            [ $attempt -lt 3 ] && {
+              echo "Waiting 2 seconds before retry..."
+              sleep 2
+              continue
+            }
+            
+            echo "All LDAP authentication attempts failed"
+            exit 1
+          done

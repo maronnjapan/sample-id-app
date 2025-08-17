@@ -32,7 +32,7 @@ jobs:
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y oathtool ldap-utils
 
-      - name: Enroll TOTP
+      - name: Perform LDAP authentication
         run: |
           # 対象ユーザーの認証要素としてTOTPを登録する(有効化作業が別途必要)
           # API仕様書（https://developer.okta.com/docs/api/openapi/okta-management/management/tag/UserFactor/#tag/UserFactor/operation/enrollFactor）
@@ -56,9 +56,6 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{ \"passCode\": \"${OTP}\" }"
 
-      - name: Perform LDAP authentication
-        run: |
-          echo $OKTA_TOTP_SECRET
           # 認証用のOTPを生成する
           OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
 

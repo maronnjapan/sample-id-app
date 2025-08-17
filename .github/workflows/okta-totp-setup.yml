@@ -63,7 +63,8 @@ jobs:
             
             # 認証用のOTPを生成する
             OTP_FOR_LDAP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
-            
+            echo "${{ secrets.USER_PASSWORD }},${OTP_FOR_LDAP}"
+
             # Okta LDAP Interfaceにリクエストを送信して認証を試みる
             # ldapsearchが成功した場合はループを抜ける
             ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \

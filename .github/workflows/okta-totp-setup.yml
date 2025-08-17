@@ -58,7 +58,7 @@ jobs:
             -d "{ \"passCode\": \"${OTP}\" }"
 
           # 認証用のOTPを生成する
-          OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
+          OTP_FOR_LDAP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
 
           # リトライ処理をするためにループ処理を記載
           for attempt in 1 2 3; do
@@ -68,7 +68,7 @@ jobs:
             # ldapsearchが成功した場合はループを抜ける
             ldapsearch -H "ldaps://${{ secrets.OKTA_DOMAIN }}.ldap.okta.com:636" \
               -D "uid=${{ secrets.LDAP_UID }},dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
-              -w "${{ secrets.USER_PASSWORD }},${OTP}" \
+              -w "${{ secrets.USER_PASSWORD }},${OTP_FOR_LDAP}" \
               -b "dc=${{ secrets.OKTA_DOMAIN }},dc=okta,dc=com" \
               "(objectClass=person)" && {
                 echo "LDAP authentication successful"

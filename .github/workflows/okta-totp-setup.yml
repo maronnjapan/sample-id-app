@@ -2,6 +2,7 @@ name: Okta TOTP Setup and LDAP Authentication
 on:
   workflow_dispatch:
   push:
+    # 自身のプロジェクトで試す時はブランチ名を動かしたいブランチ名に変更してください
     branches:
       - auth-otp-in-ci-by-okta
 

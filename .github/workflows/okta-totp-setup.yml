@@ -40,6 +40,7 @@ jobs:
         id: enroll
         run: |
           # 対象ユーザーの認証要素としてTOTPを登録する(有効化作業が別途必要)
+          # API仕様書（https://developer.okta.com/docs/api/openapi/okta-management/management/tag/UserFactor/#tag/UserFactor/operation/enrollFactor）
           ENROLL_RESPONSE=$(curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors" \
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
             -H "Accept: application/json" \
@@ -53,6 +54,7 @@ jobs:
           # OTPを生成する
           OTP=$(oathtool --totp -b "$SHARED_SECRET") 
           # 登録したTOTPによる認証を有効化するために、生成したOTPを使用して有効化リクエストを送信する
+          # API仕様書（https://developer.okta.com/docs/api/openapi/okta-management/management/tag/UserFactor/#tag/UserFactor/operation/activateFactor）
           curl -s -X POST "https://${{ secrets.OKTA_DOMAIN }}.okta.com/api/v1/users/${{ secrets.USER_ID }}/factors/${FACTOR_ID}/lifecycle/activate" \
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
             -H "Accept: application/json" \

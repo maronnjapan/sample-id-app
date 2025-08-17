@@ -45,7 +45,7 @@ jobs:
 
           # 登録したTOTPのIDとTOTP生成のためのシークレットを取得する
           FACTOR_ID=$(echo $ENROLL_RESPONSE | jq -r '.id') 
-          export OKTA_TOTP_SECRET=$(echo $ENROLL_RESPONSE | jq -r '._embedded.activation.sharedSecret')
+          OKTA_TOTP_SECRET=$(echo $ENROLL_RESPONSE | jq -r '._embedded.activation.sharedSecret')
 
           # OTPを生成する
           OTP=$(oathtool --totp -b "$OKTA_TOTP_SECRET") 
@@ -57,12 +57,12 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{ \"passCode\": \"${OTP}\" }"
 
-          # 認証用のOTPを生成する
-          OTP_FOR_LDAP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
-
           # リトライ処理をするためにループ処理を記載
           for attempt in 1 2 3; do
             echo "LDAP authentication attempt $attempt"
+            
+            # 認証用のOTPを生成する
+            OTP_FOR_LDAP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
             
             # Okta LDAP Interfaceにリクエストを送信して認証を試みる
             # ldapsearchが成功した場合はループを抜ける

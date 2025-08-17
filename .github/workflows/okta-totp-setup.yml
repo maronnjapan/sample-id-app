@@ -18,6 +18,7 @@ jobs:
             -H "Authorization: SSWS ${{ secrets.OKTA_API_TOKEN }}" \
             -H "Accept: application/json")
           # 取得した認証要素から、TOTPに該当する要素のIDを取得する
+          echo $FACTORS 
           TOTP_FACTOR_ID=$(echo $FACTORS | jq -r '.[] | select(.factorType=="token:software:totp") | .id') 
           # もしTOTP要素が存在する場合は削除する
           if [ ! -z "$TOTP_FACTOR_ID" ]; then

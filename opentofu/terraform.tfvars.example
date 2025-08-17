@@ -4,4 +4,4 @@ client_id      = "IaC用のOktaアプリケーションのクライアントID"
 scopes         = ["okta.apps.manage"]
 private_key_id = "対象の鍵のKID"
 private_key_file_path    = "秘密鍵のファイルパス"
-ci_user_password = "CIユーザー用のパスワード"
+ci_user_password = "CIユーザー用のOktaに設定するパスワード"

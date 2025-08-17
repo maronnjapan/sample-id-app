@@ -57,13 +57,16 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{ \"passCode\": \"${OTP}\" }"
 
+          # TOTP有効化後、新しいOTPウィンドウまで待機
+          echo "Waiting for new OTP window..."
+          sleep 35
+
           # リトライ処理をするためにループ処理を記載
           for attempt in 1 2 3; do
             echo "LDAP authentication attempt $attempt"
             
             # 認証用のOTPを生成する
             OTP_FOR_LDAP=$(oathtool --totp -b "$OKTA_TOTP_SECRET")
-            echo "${{ secrets.USER_PASSWORD }},${OTP_FOR_LDAP}"
 
             # Okta LDAP Interfaceにリクエストを送信して認証を試みる
             # ldapsearchが成功した場合はループを抜ける

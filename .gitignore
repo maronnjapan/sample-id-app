@@ -50,3 +50,5 @@ next-env.d.ts
 /.next
 
 /dist
+
+/opentofu

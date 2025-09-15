@@ -48,3 +48,9 @@ yarn-error.log*
 next-env.d.ts
 
 /.next
+
+/dist
+
+/opentofu
+
+/proxy-oauth-token-request

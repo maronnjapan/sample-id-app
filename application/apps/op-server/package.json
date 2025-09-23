@@ -1,0 +1,43 @@
+{
+  "name": "op-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc && cpx 'src/generated/**/*' dist/generated",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "script": "ts-node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.0",
+  "dependencies": {
+    "@koa/router": "^14.0.0",
+    "@prisma/client": "6.16.2",
+    "dotenv": "^17.2.2",
+    "koa": "^3.0.1",
+    "koa-body": "^6.0.1",
+    "koa-mount": "^4.2.0",
+    "nanoid": "^5.1.6",
+    "oidc-provider": "^9.5.1",
+    "ts-pattern": "^5.8.0"
+  },
+  "devDependencies": {
+    "@types/koa": "^3.0.0",
+    "@types/koa-mount": "^4.0.5",
+    "@types/koa__router": "^12.0.4",
+    "@types/oidc-provider": "^9.5.0",
+    "@types/pako": "^2.0.4",
+    "cpx": "^1.5.0",
+    "eslint": "^9.36.0",
+    "prisma": "^6.16.2"
+  }
+}

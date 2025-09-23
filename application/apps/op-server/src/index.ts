@@ -9,36 +9,9 @@ const app = new Koa()
 
 const { PORT = 3001, ISSUER = `http://localhost:${PORT}` } = process.env;
 
-async function tokenExchangeHandler(ctx: KoaContextWithOIDC) {
-    // console.log(ctx.oidc);
-    // console.log('リクエストボディ', ctx.oidc.params);
-    // console.log('リクエストボディ2', ctx.oidc.body);
-    // console.log('ヘッダー', ctx.oidc.ctx.request.header);
-    // console.log('Authorizationヘッダー', ctx.oidc.ctx.request.header.authorization);
-    ctx.body = { success: true, message: 'token exchange success' };
-}
-
 let server: Server | undefined = undefined;
 getConfiguration().then((configuration) => {
     const provider = new Provider(ISSUER, configuration);
-    const parameters = [
-        'audience',
-        'resource',
-        'scope',
-        'requested_token_type',
-        'subject_token',
-        'subject_token_type',
-        'actor_token',
-        'actor_token_type',
-    ];
-    const allowedDuplicateParameters = ['audience', 'resource'];
-    const grantType = 'urn:ietf:params:oauth:grant-type:token-exchange';
-    provider.registerGrantType(
-        grantType,
-        tokenExchangeHandler,
-        parameters,
-        allowedDuplicateParameters,
-    );
 
     app.use(route(provider).routes());
     app.use(mount(provider));

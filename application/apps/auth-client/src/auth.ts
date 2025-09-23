@@ -24,8 +24,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
         jwt: async ({ token, account, user, session
         }) => {
-            console.log('JWT callback - account:', account)
-
             if (account?.provider !== MY_PROVIDER_ID) {
                 return token
             }

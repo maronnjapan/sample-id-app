@@ -17,6 +17,9 @@ export const route = (provider: Provider) => {
             uid, prompt, params, session,
         } = await provider.interactionDetails(ctx.req, ctx.res);
         const client = await provider.Client.find(params.client_id as string);
+        if (!client) {
+            return ctx.throw(400, 'Unknown client');
+        }
 
         match(prompt.name)
             .with('login', () => {

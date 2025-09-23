@@ -1,4 +1,3 @@
-import { get } from "http";
 
 export const Config = {
     // Auth0 Configuration

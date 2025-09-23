@@ -1,7 +1,7 @@
 require('dotenv').config();
 const initConfig = () => {
     if (!process.env.FRONTEND_URL) {
-        throw new Error('FRONTEND_URL is not defined');
+        throw new Error('FRONTEND_URL is not defined.');
     }
 
     return {

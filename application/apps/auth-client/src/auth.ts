@@ -16,14 +16,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     callbacks: {
         session: async ({ session, token, user, newSession }) => {
-            console.log(user)
-            console.log(token)
-            console.log(session)
-            console.log(newSession)
             return {
                 ...session,
-                // accessToken: token.accessToken, 
-                // idToken: token.idToken
+                accessToken: token.accessToken,
+                idToken: token.idToken
             }
         },
         jwt: async ({ token, account, user, session

@@ -1,0 +1,23 @@
+{
+  "name": "notify-user-block",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "handle:event-stream": "tsx scripts/create-event-stream.ts",
+    "gen-private-key": "tsx scripts/gen-private-key.ts",
+    "gen:private-key": "tsx scripts/gen-private-key.ts"
+  },
+  "dependencies": {
+    "hono": "^4.9.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "@types/node": "^24.7.2",
+    "auth0": "^5.0.0",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.20.6",
+    "wrangler": "^4.4.0"
+  }
+}

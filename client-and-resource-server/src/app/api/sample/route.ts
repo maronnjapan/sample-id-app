@@ -3,16 +3,6 @@ import { Redis } from '@upstash/redis';
 import { createRemoteJWKSet, errors, jwtVerify } from 'jose'
 
 const redis = Redis.fromEnv();
-const getJwks = (() => {
-    let jwks: ReturnType<typeof createRemoteJWKSet> | null = null
-    return () => {
-        if (!jwks) {
-            const domain = Config.auth0Domain
-            jwks = createRemoteJWKSet(new URL(`https://${domain}/.well-known/jwks.json`))
-        }
-        return jwks
-    }
-})
 
 export async function GET(request: Request) {
     const headerValue = request.headers.get('Authorization') || request.headers.get('authorization')
@@ -29,10 +19,14 @@ export async function GET(request: Request) {
         const domain = Config.auth0Domain
         const audience = Config.appApiAudience
 
-        const { payload } = await jwtVerify(accessToken, getJwks()(), {
-            issuer: `https://${domain}/`,
-            audience
-        })
+        const { payload } = await jwtVerify(
+            accessToken,
+            createRemoteJWKSet(new URL(`https://${Config.auth0Domain}`, `/.well-known/jwks.json`)),
+            {
+                issuer: `https://${domain}/`,
+                audience
+            }
+        )
 
         const userId = typeof payload.sub === 'string' ? payload.sub : undefined
         if (!userId) {

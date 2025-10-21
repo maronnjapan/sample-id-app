@@ -7,7 +7,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "handle:event-stream": "tsx scripts/create-event-stream.ts",
     "gen-private-key": "tsx scripts/gen-private-key.ts",
-    "gen:private-key": "tsx scripts/gen-private-key.ts"
+    "gen:private-key": "tsx scripts/gen-private-key.ts",
+    "set:secrets": "chmod +x ./scripts/set-secrets-in-cloudflare.sh && ./scripts/set-secrets-in-cloudflare.sh"
   },
   "dependencies": {
     "hono": "^4.9.11"

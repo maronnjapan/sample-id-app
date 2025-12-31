@@ -9,3 +9,4 @@
 - OktaのSWAをWebアプリと統合したもの：[practice-okta-swa-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/practice-okta-swa-app)
 - Auth0のEvent Streamを使用してユーザーのブロック通知をリソースサーバーに通知するもの：[notification-blocked-userブランチ](https://github.com/maronnjapan/sample-id-app/tree/notification-blocked-user)
 - OAuthの同意疲れを体験するアプリ：[many-oauth-consent-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/many-oauth-consent-app)
+- AWS OIDC FederationでGitHub ActionsからTerraformを実行する設定：[linked-aws-and-auth0-by-event-streamブランチ](https://github.com/maronnjapan/sample-id-app/tree/linked-aws-and-auth0-by-event-stream)

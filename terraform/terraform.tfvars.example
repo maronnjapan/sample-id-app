@@ -1,0 +1,10 @@
+# AWS設定
+aws_region = "ap-northeast-1"
+
+# GitHub設定
+github_org    = "your-github-org-or-username"
+github_repo   = "your-repo-name"
+github_branch = "linked-aws-and-auth0-by-event-stream"
+
+# IAMロール名
+oidc_role_name = "GitHubActionsOIDCRole"

@@ -57,9 +57,6 @@ dist
 
 .wrangler
 
-# direnv
-.direnv
-
 # terraform
 **/.terraform/*
 *.tfstate

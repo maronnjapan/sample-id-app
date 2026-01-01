@@ -1,16 +1,39 @@
 # mise設定ファイル
-# Nix環境は .envrc と shell.nix で管理されます
 
+# 必要なツールとバージョンを定義
+[tools]
+terraform = "1.6.0"
+awscli = "2.15.0"  # AWS CLI v2
+
+# 環境変数の設定（オプション）
 [env]
-# 環境変数の設定（必要に応じて）
 # AWS_REGION = "ap-northeast-1"
+# AWS_PROFILE = "my-sso-profile"
 
+# タスク定義
 [tasks.setup]
-description = "開発環境のセットアップ"
+description = "開発環境のセットアップ確認"
 run = """
-echo "Nix環境が有効になっています"
-echo "AWS SSOを設定する場合は: aws configure sso"
+echo "======================================"
+echo "開発環境セットアップ完了！"
+echo "======================================"
+echo ""
+echo "インストール済みツール:"
+echo "  - Terraform: $(terraform version | head -n1)"
+echo "  - AWS CLI: $(aws --version | cut -d' ' -f1)"
+echo ""
+echo "次のステップ:"
+echo "  1. AWS SSOを設定: aws configure sso"
+echo "  2. SSOログイン: mise run sso-login"
+echo "  3. Terraform初期化: mise run tf-init"
+echo ""
+echo "詳細は terraform/README.md を参照してください"
+echo "======================================"
 """
+
+[tasks.sso-login]
+description = "AWS SSOログイン"
+run = "aws sso login --profile ${AWS_PROFILE:-default}"
 
 [tasks.tf-init]
 description = "Terraformの初期化"
@@ -24,6 +47,6 @@ run = "cd terraform && terraform plan"
 description = "Terraformの適用"
 run = "cd terraform && terraform apply"
 
-[tasks.sso-login]
-description = "AWS SSOログイン"
-run = "aws sso login --profile ${AWS_PROFILE:-default}"
+[tasks.tf-destroy]
+description = "Terraformリソースの削除"
+run = "cd terraform && terraform destroy"

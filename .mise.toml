@@ -4,6 +4,7 @@
 [tools]
 terraform = "1.14.3"
 awscli = "2.27.41"  # AWS CLI v2
+wrangler = "4.54.0"
 "aqua:auth0/auth0-cli" = "latest"
 
 [tasks.setup]

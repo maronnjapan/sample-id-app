@@ -2,51 +2,17 @@
 
 # 必要なツールとバージョンを定義
 [tools]
-terraform = "1.6.0"
-awscli = "2.15.0"  # AWS CLI v2
+terraform = "1.14.3"
+awscli = "2.27.41"  # AWS CLI v2
+"aqua:auth0/auth0-cli" = "latest"
 
-# 環境変数の設定（オプション）
-[env]
-# AWS_REGION = "ap-northeast-1"
-# AWS_PROFILE = "my-sso-profile"
-
-# タスク定義
 [tasks.setup]
-description = "開発環境のセットアップ確認"
+description = "ツールのインストールとProviderをセットアップ"
 run = """
-echo "======================================"
-echo "開発環境セットアップ完了！"
-echo "======================================"
-echo ""
-echo "インストール済みツール:"
-echo "  - Terraform: $(terraform version | head -n1)"
-echo "  - AWS CLI: $(aws --version | cut -d' ' -f1)"
-echo ""
-echo "次のステップ:"
-echo "  1. AWS SSOを設定: aws configure sso"
-echo "  2. SSOログイン: mise run sso-login"
-echo "  3. Terraform初期化: mise run tf-init"
-echo ""
-echo "詳細は terraform/README.md を参照してください"
-echo "======================================"
+chmod 775 ./setup.sh
+chmod 775 ./init-auth0.sh
+chmod 775 ./init-aws.sh
+chmod 775 ./aws/update-eventbus.sh
+chmod 775 ./resource-app/setup-deploy.sh
+bash ./setup.sh
 """
-
-[tasks.sso-login]
-description = "AWS SSOログイン"
-run = "aws sso login --profile ${AWS_PROFILE:-default}"
-
-[tasks.tf-init]
-description = "Terraformの初期化"
-run = "cd terraform && terraform init"
-
-[tasks.tf-plan]
-description = "Terraformプランの実行"
-run = "cd terraform && terraform plan"
-
-[tasks.tf-apply]
-description = "Terraformの適用"
-run = "cd terraform && terraform apply"
-
-[tasks.tf-destroy]
-description = "Terraformリソースの削除"
-run = "cd terraform && terraform destroy"

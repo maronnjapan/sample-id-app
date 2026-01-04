@@ -15,3 +15,9 @@ variable "project_name" {
   type        = string
   default     = "sample-id-app"
 }
+
+variable "external_api_urls" {
+  description = "List of external API URLs to POST events to"
+  type        = list(string)
+  default     = []
+}

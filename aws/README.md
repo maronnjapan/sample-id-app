@@ -57,7 +57,7 @@ aws configure sso
 ```
 SSO session name (Recommended): my-sso-session
 SSO start URL [None]: https://d-xxxxxxxxxx.awsapps.com/start
-SSO region [None]: ap-northeast-1
+SSO region [None]: us-east-1
 SSO registration scopes [None]: sso:account:access
 
 # ブラウザが開いて認証を求められます

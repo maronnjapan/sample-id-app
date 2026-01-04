@@ -1,0 +1,8 @@
+# AWS設定
+aws_region  = "us-east-1"
+aws_account_id = "12桁のAWSアカウントIDを入力してください"
+
+# Auth0設定
+auth0_domain = "your-tenant.auth0.com"
+auth0_client_id = "Terraform用のAuth0アプリのClientID"
+auth0_client_secret = "Terraform用のAuth0アプリのClientSecret"

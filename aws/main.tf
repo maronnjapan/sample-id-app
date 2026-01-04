@@ -247,7 +247,7 @@ resource "aws_lambda_event_source_mapping" "sqs" {
   depends_on = [aws_iam_role_policy.lambda_sqs]
 }
 
-# # ============================================
+# ============================================
 # EventBridge Bus
 # ============================================
 data "aws_cloudwatch_event_bus" "example" {
@@ -306,54 +306,9 @@ resource "aws_cloudwatch_metric_alarm" "dlq" {
     QueueName = aws_sqs_queue.dlq.name
   }
 
-  # 通知先（必要に応じてSNSトピックを設定）
-  # alarm_actions = [aws_sns_topic.alerts.arn]
 
   tags = {
     Name    = "${var.project_name}-dlq-alarm"
     Project = var.project_name
   }
-}
-
-# ============================================
-# Outputs
-# ============================================
-output "sqs_main_queue_url" {
-  description = "SQS main queue URL"
-  value       = aws_sqs_queue.main.url
-}
-
-output "sqs_main_queue_arn" {
-  description = "SQS main queue ARN"
-  value       = aws_sqs_queue.main.arn
-}
-
-output "sqs_dlq_url" {
-  description = "SQS DLQ URL"
-  value       = aws_sqs_queue.dlq.url
-}
-
-output "sqs_dlq_arn" {
-  description = "SQS DLQ ARN"
-  value       = aws_sqs_queue.dlq.arn
-}
-
-output "lambda_function_name" {
-  description = "Lambda function name"
-  value       = aws_lambda_function.main.function_name
-}
-
-output "lambda_function_arn" {
-  description = "Lambda function ARN"
-  value       = aws_lambda_function.main.arn
-}
-
-output "eventbridge_rule_name" {
-  description = "EventBridge rule name"
-  value       = aws_cloudwatch_event_rule.main.name
-}
-
-output "eventbridge_rule_arn" {
-  description = "EventBridge rule ARN"
-  value       = aws_cloudwatch_event_rule.main.arn
 }

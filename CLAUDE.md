@@ -1,82 +1,70 @@
-# EventBridge → SQS → Lambda 構成仕様
+# CLAUDE.md
 
-## アーキテクチャ概要
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Auth0 → AWS EventBridge → SQS → Lambda integration for processing user events. The system streams Auth0 events (e.g., user.updated) to AWS EventBridge, queues them in SQS, and processes them via Lambda to call external APIs.
+
+Includes a demo Cloudflare Workers application (`resource-app/`) with Auth0 authentication.
+
+## Architecture
+
 ```
-EventBridge
-    ↓
-SQS (メインキュー)
-    ↓
-Lambda → 外部API
-    ↓ (3回失敗後)
-SQS (DLQ) → 手動再処理
+Auth0 Event Stream → AWS EventBridge → SQS (main queue) → Lambda → External APIs
+                                              ↓ (after 3 failures)
+                                       SQS (DLQ) → manual reprocessing
 ```
 
-## 要件
+## Development Commands
 
-- 外部APIレイテンシ: 3秒
-- リトライ: 最大3回（3回失敗でDLQへ）
-- 失敗時: DLQで手動再処理
-- 順序性: 不要
-- 想定イベント数: 約20件/日（検証用途）
+### Initial Setup
+```bash
+mise run setup    # Install tools (Terraform, AWS CLI, Wrangler, Auth0 CLI) and configure providers
+```
 
-## コンポーネント設定仕様
+### Auth0 Terraform (`auth0/`)
+```bash
+cd auth0
+terraform init && terraform apply
+```
 
-### SQS メインキュー
+### AWS Terraform (`aws/`)
+```bash
+cd aws
+bash update-eventbus.sh           # Link Auth0 event source to EventBridge
+terraform init && terraform apply
+```
 
-| 項目 | 値 | 備考 |
-|------|-----|------|
-| visibility_timeout_seconds | 90 | Lambda timeout × 6 |
-| message_retention_seconds | 345600 | 4日 |
-| receive_wait_time_seconds | 20 | ロングポーリング |
-| redrive_policy.maxReceiveCount | 3 | DLQ移動までのリトライ回数 |
+### Cloudflare Workers App (`resource-app/`)
+```bash
+cd resource-app
+pnpm install
+pnpm run dev              # Development server
+pnpm run build            # Build for production
+pnpm run deploy           # Build and deploy to Cloudflare Workers
+pnpm run drizzle:generate # Generate Drizzle migrations
+pnpm run drizzle:migrate  # Apply migrations to local D1
+bash setup-deploy.sh      # Full setup and deploy (creates D1, Auth0 app, deploys)
+```
 
-### SQS DLQ
+## Tech Stack
 
-| 項目 | 値 | 備考 |
-|------|-----|------|
-| visibility_timeout_seconds | 90 | 再処理時も同じLambda使用想定 |
-| message_retention_seconds | 1209600 | 14日（手動対応の猶予） |
+- **Infrastructure**: Terraform with Auth0 and AWS providers
+- **Tool Management**: mise (see `.mise.toml` for versions)
+- **resource-app**: Cloudflare Workers, Vike (React SSR), Hono, Drizzle ORM, ts-rest, Auth.js
 
-### Lambda
+## AWS Component Configuration
 
-| 項目 | 値 | 備考 |
-|------|-----|------|
-| timeout | 15 | 外部API 3秒 + 余裕 |
-| memory_size | 128 | API呼び出しのみなので最小構成 |
-| reserved_concurrent_executions | 5 | 検証段階なので絞る |
+| Component | Key Settings |
+|-----------|-------------|
+| SQS Main Queue | visibility_timeout=90s, retention=4d, maxReceiveCount=3 |
+| SQS DLQ | retention=14d |
+| Lambda | timeout=15s, memory=128MB, runtime=nodejs20.x |
+| EventBridge | Captures `aws.partner/auth0.com/*` events |
 
-### Lambda SQSトリガー (event_source_mapping)
+## Lambda Implementation Notes
 
-| 項目 | 値 | 備考 |
-|------|-----|------|
-| batch_size | 1 | 1件ずつ処理 |
-| enabled | true | - |
-
-### EventBridge → SQS
-
-| 項目 | 値 | 備考 |
-|------|-----|------|
-| target | SQSメインキュー | DLQではなくメインキューへ |
-
-## リトライ動作
-
-1. Lambda処理失敗 → 例外をthrow
-2. SQSが90秒後に再配信
-3. 3回失敗後、DLQへ移動
-4. DLQのメッセージは手動で再処理（AWS Console or CLI）
-
-## 監視
-
-- CloudWatch Alarm: DLQの `ApproximateNumberOfMessagesVisible > 0` で通知
-
-## Lambda実装方針
-
-- 成功時: 正常終了（メッセージ自動削除）
-- 失敗時: 例外をthrow（SQSが再配信）
-- 外部API呼び出しのtimeoutは10秒に設定
-
-## Terraform実装時の注意
-
-- SQS → DLQ の redrive_policy 設定を忘れない
-- Lambda実行ロールに SQS の ReceiveMessage, DeleteMessage, GetQueueAttributes 権限付与
-- EventBridge → SQS の権限（SQSキューポリシー）を設定
+- Success: normal return (message auto-deleted from SQS)
+- Failure: throw exception (SQS redelivers after 90s, max 3 retries before DLQ)
+- External API timeout: 10s

@@ -250,8 +250,9 @@ resource "aws_lambda_event_source_mapping" "sqs" {
 # ============================================
 # EventBridge Bus
 # ============================================
+# update-eventbus.shを実行することで自動で設定されます。
 data "aws_cloudwatch_event_bus" "example" {
-  name = "aws.partner/auth0.com/nextjs-blog-15455dd9-f099-4c92-90e1-075ed4a4f532/auth0.events"
+  name = "aws.partner/auth0.com/~/auth0.events"
 }
 
 # ============================================

@@ -23,11 +23,80 @@ echo_error() {
 # 設定値
 AUTH0_APP_NAME="${AUTH0_APP_NAME:-resource-app}"
 D1_DATABASE_NAME="${D1_DATABASE_NAME:-MY_VIKE_DEMO_DATABASE}"
-CLOUDFLARE_WORKER_NAME="${CLOUDFLARE_WORKER_NAME:-resource-app}"
 
 # スクリプトのディレクトリに移動
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# ===============================
+# Cloudflare D1 データベースの作成
+# ===============================
+echo_info "Cloudflare D1 データベースを作成中..."
+
+# Wrangler にログインしているか確認
+if ! wrangler whoami &> /dev/null; then
+    echo_warn "Wrangler にログインしていません。ログインしてください。"
+    wrangler login
+fi
+
+# D1 データベースが既に存在するか確認
+EXISTING_DB=$(wrangler d1 list --json | jq -r ".[] | select(.name == \"$D1_DATABASE_NAME\") | .uuid")
+
+if [ -n "$EXISTING_DB" ] && [ "$EXISTING_DB" != "null" ]; then
+    echo_warn "D1 データベース '$D1_DATABASE_NAME' は既に存在します (UUID: $EXISTING_DB)"
+    D1_DATABASE_ID="$EXISTING_DB"
+else
+    # D1 データベースを作成
+    wrangler d1 create "$D1_DATABASE_NAME" --binding DB
+
+    if [ $? -ne 0 ]; then
+        echo_error "D1 データベースの作成に失敗しました"
+        exit 1
+    fi
+
+    echo_info "D1 データベースを作成しました (UUID: $D1_DATABASE_ID)"
+fi
+
+# wrangler.jsonc の migrations_dir を設定
+echo_info "wrangler.jsonc の migrations_dir を設定中..."
+TEMP_FILE=$(mktemp)
+jq '.d1_databases[0].migrations_dir = "database/migrations"' wrangler.jsonc > "$TEMP_FILE" && mv "$TEMP_FILE" wrangler.jsonc
+
+# ===============================
+# D1 マイグレーションの実行
+# ===============================
+echo_info "D1 マイグレーションを実行中（リモート）..."
+
+wrangler d1 migrations apply "$D1_DATABASE_NAME" --remote
+
+if [ $? -eq 0 ]; then
+    echo_info "マイグレーションが完了しました"
+else
+    echo_error "マイグレーションに失敗しました"
+    exit 1
+fi
+
+# ===============================
+# Cloudflare Workers へのデプロイ
+# ===============================
+echo_info "Cloudflare Workers へデプロイ中..."
+
+pnpm install
+
+# ビルドとデプロイ
+if ! DEPLOY_LOG=$(pnpm run deploy 2>&1); then
+    echo "$DEPLOY_LOG"
+    echo_error "デプロイに失敗しました"
+    exit 1
+fi
+WORKER_URL=$(printf "%s\n" "$DEPLOY_LOG" | grep -oE 'https://[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.workers\.dev' | tail -n1)
+
+if [ -n "$WORKER_URL" ]; then
+    echo_info "デプロイが完了しました"
+else
+    echo_error "デプロイに失敗しました"
+    exit 1
+fi
 
 # ===============================
 # Auth0 ログインとテナント選択
@@ -87,10 +156,10 @@ AUTH0_APP_OUTPUT=$(auth0 apps create \
     --name "$AUTH0_APP_NAME" \
     --type "regular" \
     --description "Resource App for Cloudflare Workers" \
-    --callbacks "http://localhost:3000/api/auth/callback/auth0,https://${CLOUDFLARE_WORKER_NAME}.workers.dev/api/auth/callback/auth0" \
-    --logout-urls "http://localhost:3000,https://${CLOUDFLARE_WORKER_NAME}.workers.dev" \
-    --origins "http://localhost:3000,https://${CLOUDFLARE_WORKER_NAME}.workers.dev" \
-    --web-origins "http://localhost:3000,https://${CLOUDFLARE_WORKER_NAME}.workers.dev" \
+    --callbacks "http://localhost:3000/api/auth/callback/auth0,${WORKER_URL}/api/auth/callback/auth0" \
+    --logout-urls "http://localhost:3000,${WORKER_URL}" \
+    --origins "http://localhost:3000,${WORKER_URL}" \
+    --web-origins "http://localhost:3000,${WORKER_URL}" \
     --reveal-secrets \
     --json)
 
@@ -110,7 +179,7 @@ echo_info "  Domain: $AUTH0_DOMAIN"
 # ===============================
 # Auth0 API の作成とアプリへの紐づけ
 # ===============================
-AUTH0_API_IDENTIFIER="https://${CLOUDFLARE_WORKER_NAME}.workers.dev"
+AUTH0_API_IDENTIFIER="${WORKER_URL}"
 AUTH0_API_NAME="${AUTH0_APP_NAME}-api"
 
 echo_info "Auth0 API '$AUTH0_API_NAME' を作成中..."
@@ -165,69 +234,6 @@ EOF
 echo_info ".env ファイルを作成しました"
 
 # ===============================
-# Cloudflare D1 データベースの作成
-# ===============================
-echo_info "Cloudflare D1 データベースを作成中..."
-
-# Wrangler にログインしているか確認
-if ! wrangler whoami &> /dev/null; then
-    echo_warn "Wrangler にログインしていません。ログインしてください。"
-    wrangler login
-fi
-
-# D1 データベースが既に存在するか確認
-EXISTING_DB=$(wrangler d1 list --json | jq -r ".[] | select(.name == \"$D1_DATABASE_NAME\") | .uuid")
-
-if [ -n "$EXISTING_DB" ] && [ "$EXISTING_DB" != "null" ]; then
-    echo_warn "D1 データベース '$D1_DATABASE_NAME' は既に存在します (UUID: $EXISTING_DB)"
-    D1_DATABASE_ID="$EXISTING_DB"
-else
-    # D1 データベースを作成
-    wrangler d1 create "$D1_DATABASE_NAME" --binding DB
-
-    if [ $? -ne 0 ]; then
-        echo_error "D1 データベースの作成に失敗しました"
-        exit 1
-    fi
-
-    echo_info "D1 データベースを作成しました (UUID: $D1_DATABASE_ID)"
-fi
-
-# wrangler.jsonc の migrations_dir を設定
-echo_info "wrangler.jsonc の migrations_dir を設定中..."
-TEMP_FILE=$(mktemp)
-jq '.d1_databases[0].migrations_dir = "database/migrations"' wrangler.jsonc > "$TEMP_FILE" && mv "$TEMP_FILE" wrangler.jsonc
-
-# ===============================
-# D1 マイグレーションの実行
-# ===============================
-echo_info "D1 マイグレーションを実行中（リモート）..."
-
-wrangler d1 migrations apply "$D1_DATABASE_NAME" --remote
-
-if [ $? -eq 0 ]; then
-    echo_info "マイグレーションが完了しました"
-else
-    echo_error "マイグレーションに失敗しました"
-    exit 1
-fi
-
-# ===============================
-# Cloudflare Workers へのデプロイ
-# ===============================
-echo_info "Cloudflare Workers へデプロイ中..."
-
-# ビルドとデプロイ
-pnpm run deploy
-
-if [ $? -eq 0 ]; then
-    echo_info "デプロイが完了しました"
-else
-    echo_error "デプロイに失敗しました"
-    exit 1
-fi
-
-# ===============================
 # Cloudflare Workers シークレットの設定
 # ===============================
 echo_info "Cloudflare Workers シークレットを設定中..."
@@ -254,7 +260,7 @@ pnpm run deploy
 # ===============================
 echo_info "AWS Terraform tfvars を更新中..."
 
-DEPLOYED_URL="https://${CLOUDFLARE_WORKER_NAME}.workers.dev/api/user/blocked"
+DEPLOYED_URL="${WORKER_URL}/api/user/blocked"
 AWS_TFVARS_PATH="$SCRIPT_DIR/../aws/terraform.tfvars"
 
 if [ -f "$AWS_TFVARS_PATH" ]; then
@@ -282,7 +288,7 @@ echo "  Name: $D1_DATABASE_NAME"
 echo "  UUID: $D1_DATABASE_ID"
 echo ""
 echo_info "Cloudflare Workers:"
-echo "  URL: https://${CLOUDFLARE_WORKER_NAME}.workers.dev"
+echo "  URL: $WORKER_URL"
 echo ""
 echo_info "ローカル開発を開始するには:"
 echo "  pnpm run dev"

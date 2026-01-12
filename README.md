@@ -16,30 +16,6 @@
 
 [ドキュメント](https://mise.jdx.dev/getting-started.html#installing-mise-cli)を参考にしてmiseをインストールしてください。
 
-#### シェル統合の設定
-
-miseを自動的に有効化するため、シェル設定ファイルに以下を追加：
-
-```bash
-# ~/.bashrc または ~/.bash_profile の場合
-echo 'eval "$(mise activate bash)"' >> ~/.bashrc
-
-# ~/.zshrc の場合
-echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
-
-# fishの場合
-echo 'mise activate fish | source' >> ~/.config/fish/config.fish
-```
-
-設定後、シェルを再起動またはリロード：
-
-```bash
-# bashの場合
-source ~/.bashrc
-
-# zshの場合
-source ~/.zshrc
-```
 
 ### プロジェクトのセットアップ
 以下のタスクを実行して、必要なツールをインストールし、Auth0およびAWSのProviderをセットアップします。  

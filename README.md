@@ -1,3 +1,9 @@
+## このリポジトリについて
+このリポジトリはAuth0のEvent Streamの設定とEvent Streamが発行したイベントを受け取るAWS EventBridgeの設定をスクリプトとTerraformで行うプロジェクトです。  
+また、上記に加えてEventBridgeから先のSQS、Lambda、通知先アプリの設定もスクリプトやTerraformで行えるようになっています。  
+このリポジトリのセットアップを行った場合、以下の構成となります。     
+<img width="921" height="411" alt="architecture-diagram" src="https://github.com/user-attachments/assets/abd0eaa2-bb4a-45c8-bf7f-fcf4743f8c15" />  
+詳細な説明は[こちらのブログ](https://zenn.dev/maronn/articles/auth0-and-eventbridge-integrate)にて記載していますので、参考にしていただけますと幸いです。  
 
 ## セットアップ手順
 ### 前提条件

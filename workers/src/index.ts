@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Bindings } from './types';
 import payment from './routes/payment';
+import { renderPaymentPage } from './views/payment';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -10,6 +11,11 @@ app.use('/*', cors());
 
 // ヘルスチェック
 app.get('/health', (c) => c.json({ status: 'ok' }));
+
+// 支払いUI
+app.get('/', (c) => {
+  return c.html(renderPaymentPage());
+});
 
 // 支払いAPI
 app.route('/api/payment', payment);

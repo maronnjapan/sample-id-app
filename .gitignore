@@ -56,3 +56,12 @@ dist
 /proxy-oauth-token-request
 
 .wrangler
+
+# terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example

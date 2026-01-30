@@ -492,31 +492,36 @@ export function renderPaymentPage(): string {
       resetStatusUI();
     });
 
-    function startPolling(paymentId) {
-      pollInterval = setInterval(async () => {
-        try {
-          const response = await fetch('/api/payment/' + paymentId + '/status');
-          const data = await response.json();
+    async function pollStatus(paymentId) {
+      try {
+        const response = await fetch('/api/payment/' + paymentId + '/status');
+        const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(data.error_description || 'エラーが発生しました');
-          }
-
-          updateStatusUI(data);
-
-          if (['completed', 'rejected', 'expired'].includes(data.status)) {
-            stopPolling();
-            stopCountdown();
-          }
-
-          if (data.expires_in !== undefined) {
-            expiresIn = data.expires_in;
-          }
-
-        } catch (error) {
-          console.error('Polling error:', error);
+        if (!response.ok) {
+          throw new Error(data.error_description || 'エラーが発生しました');
         }
-      }, 3000);
+
+        updateStatusUI(data);
+
+        if (['completed', 'rejected', 'expired'].includes(data.status)) {
+          stopPolling();
+          stopCountdown();
+        }
+
+        if (data.expires_in !== undefined) {
+          expiresIn = data.expires_in;
+        }
+
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }
+
+    function startPolling(paymentId) {
+      // 即座に初回実行
+      pollStatus(paymentId);
+      // 3秒ごとに繰り返し
+      pollInterval = setInterval(() => pollStatus(paymentId), 3000);
     }
 
     function stopPolling() {

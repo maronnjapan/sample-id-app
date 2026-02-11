@@ -14,3 +14,12 @@ variable "okta_api_token" {
   type        = string
   sensitive   = true
 }
+
+variable "stepup_redirect_uris" {
+  description = "Redirect URIs to register on the step-up OAuth app"
+  type        = list(string)
+  default = [
+    "http://localhost:8787/callback",
+    "http://localhost:8787"
+  ]
+}

@@ -4,7 +4,7 @@ export function renderPaymentPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CIBA Payment - 支払い承認</title>
+  <title>Step-up Authentication Payment</title>
   <style>
     * {
       box-sizing: border-box;
@@ -319,8 +319,8 @@ export function renderPaymentPage(): string {
 <body>
   <div class="container">
     <div class="header">
-      <h1>CIBA Payment Demo</h1>
-      <p>Okta Verifyで承認する支払いシステム</p>
+      <h1>Step-up Auth Payment Demo</h1>
+      <p>Okta Verify Push を必須にした再認証フロー</p>
     </div>
 
     <div class="error-message" id="errorMessage"></div>
@@ -428,20 +428,23 @@ export function renderPaymentPage(): string {
     const submitBtn = document.getElementById('submitBtn');
     const resetBtn = document.getElementById('resetBtn');
 
-    let pollInterval = null;
-    let countdownInterval = null;
-    let expiresIn = 300;
+    resetStatusUI();
+    initializeFromQuery();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideError();
 
-      const userEmail = document.getElementById('userEmail').value;
-      const amount = parseInt(document.getElementById('amount').value, 10);
-      const description = document.getElementById('description').value;
+      const userEmailInput = document.getElementById('userEmail');
+      const amountInput = document.getElementById('amount');
+      const descriptionInput = document.getElementById('description');
+      const userEmail = userEmailInput instanceof HTMLInputElement ? userEmailInput.value : '';
+      const amountValue = amountInput instanceof HTMLInputElement ? amountInput.value : '0';
+      const description = descriptionInput instanceof HTMLInputElement ? descriptionInput.value : '';
+      const amount = parseInt(amountValue, 10);
 
       submitBtn.disabled = true;
-      submitBtn.textContent = '処理中...';
+      submitBtn.textContent = 'Oktaへリダイレクト中...';
 
       try {
         const response = await fetch('/api/payment/initiate', {
@@ -451,102 +454,74 @@ export function renderPaymentPage(): string {
         });
 
         const data = await response.json();
-
         if (!response.ok) {
           throw new Error(data.error_description || 'エラーが発生しました');
         }
 
-        // Show status section
-        form.style.display = 'none';
-        statusSection.style.display = 'block';
-
-        // Update phone message
-        document.getElementById('phoneMessage').textContent =
-          '¥' + amount.toLocaleString() + 'の支払いを承認';
-
-        // Store payment info
-        document.getElementById('detailPaymentId').textContent = data.payment_id;
-        document.getElementById('detailAmount').textContent = '¥' + amount.toLocaleString();
-        document.getElementById('detailDescription').textContent = description;
-
-        // Start polling
-        expiresIn = data.expires_in;
-        startPolling(data.payment_id);
-        startCountdown();
-
+        window.location.href = data.authorize_url;
       } catch (error) {
-        showError(error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        showError(message);
         submitBtn.disabled = false;
         submitBtn.textContent = '支払いを開始';
       }
     });
 
     resetBtn.addEventListener('click', () => {
-      stopPolling();
-      stopCountdown();
-      form.style.display = 'block';
-      form.reset();
-      statusSection.style.display = 'none';
-      submitBtn.disabled = false;
-      submitBtn.textContent = '支払いを開始';
-      resetStatusUI();
+      window.location.href = '/';
     });
 
-    async function pollStatus(paymentId) {
+    async function loadPaymentStatus(paymentId, fallback) {
       try {
-        const response = await fetch('/api/payment/' + paymentId + '/status');
+        const response = await fetch(`/api/payment/${paymentId}/status`);
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error_description || 'エラーが発生しました');
+          throw new Error(data.error_description || 'ステータスの取得に失敗しました');
         }
 
+        document.getElementById('detailPaymentId').textContent = paymentId;
+        document.getElementById('detailAmount').textContent = data.amount
+          ? '¥' + Number(data.amount).toLocaleString()
+          : '-';
+        document.getElementById('detailDescription').textContent = data.description || '-';
         updateStatusUI(data);
-
-        if (['completed', 'rejected', 'expired'].includes(data.status)) {
-          stopPolling();
-          stopCountdown();
-        }
-
-        if (data.expires_in !== undefined) {
-          expiresIn = data.expires_in;
-        }
-
       } catch (error) {
-        console.error('Polling error:', error);
-      }
-    }
-
-    function startPolling(paymentId) {
-      // 即座に初回実行
-      pollStatus(paymentId);
-      // 3秒ごとに繰り返し
-      pollInterval = setInterval(() => pollStatus(paymentId), 3000);
-    }
-
-    function stopPolling() {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-      }
-    }
-
-    function startCountdown() {
-      document.getElementById('countdownTime').textContent = expiresIn;
-      countdownInterval = setInterval(() => {
-        expiresIn = Math.max(0, expiresIn - 1);
-        document.getElementById('countdownTime').textContent = expiresIn;
-        if (expiresIn <= 0) {
-          stopCountdown();
+        if (fallback) {
+          updateStatusUI({ status: fallback.status, reason: fallback.reason });
         }
-      }, 1000);
+        const message = error instanceof Error ? error.message : String(error);
+        showError(message);
+      }
     }
 
-    function stopCountdown() {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
+    function initializeFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('status');
+      const paymentId = params.get('payment');
+      const reason = params.get('reason');
+
+      if (!status) {
+        return;
       }
+
+      if (status === 'error') {
+        showError(reason || '認証でエラーが発生しました');
+        return;
+      }
+
+      showStatusSection();
+
+      if (paymentId) {
+        loadPaymentStatus(paymentId, { status, reason });
+      } else {
+        updateStatusUI({ status, reason });
+      }
+    }
+
+    function showStatusSection() {
+      form.style.display = 'none';
+      statusSection.style.display = 'block';
     }
 
     function updateStatusUI(data) {
@@ -557,23 +532,15 @@ export function renderPaymentPage(): string {
       const countdown = document.getElementById('countdown');
       const statusDetails = document.getElementById('statusDetails');
 
-      switch (data.status) {
-        case 'pending_approval':
-          statusIcon.className = 'status-icon pending';
-          statusIcon.innerHTML = '<div class="spinner"></div>';
-          statusTitle.textContent = '承認待ち';
-          statusMessage.textContent = 'スマートフォンのOkta Verifyを確認してください';
-          phoneIllustration.style.display = 'block';
-          countdown.style.display = 'block';
-          break;
+      countdown.style.display = 'none';
 
+      switch (data.status) {
         case 'completed':
           statusIcon.className = 'status-icon completed';
           statusIcon.innerHTML = '&#10004;';
           statusTitle.textContent = '支払い完了';
-          statusMessage.textContent = '支払いが正常に完了しました';
+          statusMessage.textContent = 'Okta Verify で承認されたため支払いを完了しました';
           phoneIllustration.style.display = 'none';
-          countdown.style.display = 'none';
           statusDetails.style.display = 'block';
           if (data.completed_at) {
             document.getElementById('detailCompletedRow').style.display = 'flex';
@@ -581,25 +548,32 @@ export function renderPaymentPage(): string {
               new Date(data.completed_at).toLocaleString('ja-JP');
           }
           break;
-
         case 'rejected':
           statusIcon.className = 'status-icon rejected';
           statusIcon.innerHTML = '&#10008;';
           statusTitle.textContent = '支払い拒否';
-          statusMessage.textContent = data.reason || 'ユーザーが承認を拒否しました';
+          statusMessage.textContent = data.reason || 'Okta Verifyで拒否されました';
           phoneIllustration.style.display = 'none';
-          countdown.style.display = 'none';
           statusDetails.style.display = 'block';
+          document.getElementById('detailCompletedRow').style.display = 'none';
           break;
-
         case 'expired':
           statusIcon.className = 'status-icon expired';
           statusIcon.innerHTML = '&#8987;';
           statusTitle.textContent = 'タイムアウト';
-          statusMessage.textContent = data.reason || '承認がタイムアウトしました';
+          statusMessage.textContent = data.reason || '期限内に承認されませんでした';
           phoneIllustration.style.display = 'none';
-          countdown.style.display = 'none';
           statusDetails.style.display = 'block';
+          document.getElementById('detailCompletedRow').style.display = 'none';
+          break;
+        default:
+          statusIcon.className = 'status-icon pending';
+          statusIcon.innerHTML = '<div class="spinner"></div>';
+          statusTitle.textContent = '承認待ち';
+          statusMessage.textContent = 'Okta Verify で承認を完了してください';
+          phoneIllustration.style.display = 'block';
+          statusDetails.style.display = 'none';
+          document.getElementById('detailCompletedRow').style.display = 'none';
           break;
       }
     }
@@ -609,11 +583,15 @@ export function renderPaymentPage(): string {
       document.getElementById('statusIcon').innerHTML = '<div class="spinner"></div>';
       document.getElementById('statusTitle').textContent = '承認待ち';
       document.getElementById('statusMessage').textContent =
-        'スマートフォンのOkta Verifyを確認してください';
-      document.getElementById('phoneIllustration').style.display = 'block';
-      document.getElementById('countdown').style.display = 'block';
+        'Okta Verify で承認を完了してください';
+      document.getElementById('phoneIllustration').style.display = 'none';
+      document.getElementById('countdown').style.display = 'none';
       document.getElementById('statusDetails').style.display = 'none';
       document.getElementById('detailCompletedRow').style.display = 'none';
+      document.getElementById('detailPaymentId').textContent = '-';
+      document.getElementById('detailAmount').textContent = '-';
+      document.getElementById('detailDescription').textContent = '-';
+      document.getElementById('detailCompletedAt').textContent = '-';
     }
 
     function showError(message) {

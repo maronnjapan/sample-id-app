@@ -1,6 +1,7 @@
-name = "ciba-payment-demo"
+name = "payment-app-by-factors-api"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-11-17"
+compatibility_flags = ["nodejs_compat"]
 
 # 有料プラン設定
 # CPU時間: 最大30秒
@@ -8,10 +9,11 @@ compatibility_date = "2024-01-01"
 
 [vars]
 OKTA_DOMAIN = "dev-123456.okta.com"
+OKTA_MGMT_CLIENT_ID = "0oa1234567890abcdef1"
+OKTA_MGMT_KID = "your-key-id"
 
 # シークレットは `wrangler secret put` で設定
-# OKTA_CLIENT_ID
-# OKTA_CLIENT_SECRET
+# OKTA_MGMT_PRIVATE_KEY
 
 [[kv_namespaces]]
 binding = "PAYMENT_STORE"

@@ -65,3 +65,6 @@ dist
 terraform.tfvars
 *.tfvars
 !terraform.tfvars.example
+
+# generated Okta management keys
+secure-keys/

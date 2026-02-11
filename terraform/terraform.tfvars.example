@@ -1,3 +1,15 @@
 okta_org_name  = "dev-123456"
 okta_base_url  = "okta.com"
 okta_api_token = "your-api-token-here"
+
+# Redirect URIs should point to your Worker (or local) callback endpoint.
+stepup_redirect_uris = [
+  "https://your-worker.workers.dev/callback",
+  "https://your-worker.workers.dev"
+]
+
+# After running `node scripts/generate-okta-mgmt-key.mjs`, paste the contents of
+# secure-keys/okta-mgmt-public-jwks.json below. The `kid` that script prints must
+# also be configured on the Worker (OKTA_MGMT_KID).
+factors_service_jwks = <<EOF
+{ "keys": [] }

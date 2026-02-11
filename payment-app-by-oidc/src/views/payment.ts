@@ -473,7 +473,7 @@ export function renderPaymentPage(): string {
 
     async function loadPaymentStatus(paymentId, fallback) {
       try {
-        const response = await fetch(`/api/payment/${paymentId}/status`);
+        const response = await fetch('/api/payment/' + paymentId + '/status');
         const data = await response.json();
 
         if (!response.ok) {

@@ -37,6 +37,11 @@ export interface FactorVerifyResponse {
     poll: { href: string };
     cancel: { href: string };
   };
+  _embedded?: {
+    challenge?: {
+      correctAnswer: number;
+    };
+  };
 }
 
 export interface FactorPollResponse {

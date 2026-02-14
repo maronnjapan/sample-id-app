@@ -1,0 +1,88 @@
+{
+    "factorResult": "WAITING",
+    "expiresAt": "2026-02-14T06:20:40.000Z",
+    "profile": {
+        "credentialId": "example@example.com",
+        "deviceType": "SmartPhone_Android",
+        "keys": [
+            {
+                "kty": "RSA",
+                "use": "sig",
+                "kid": "default",
+                "jwkType": "proofOfPossession",
+                "e": "AQAB\n",
+                "n": "AM6-ChJiQ6Y5SPge9egWUWXajeQZR9fHdxA03ToxT6UmrGUQkZb72MdN9EhD7BD47jGnFhPulN6o\nRZbxm-aLJbK6AYRtz6l_odqaOvV46By7DzMlIUWz-swXqH9hCG-0qqRkxqjb8PIsqB32l7k_dWU5\nDtSasl5JPvnxzS_5vDvUqD5b4g1kIA7hMl0mD6lXoX4OBRvKbCafQLF0DEq9x9wpVqzw0e5bGEr7\nAEU8q0lw5Oelz-2XlJiLVJ-jcCeqqxLQ7lctUw8lkzAvsBdAHcxsnU9NXzlPAVkBZIDnIXuRcLjd\nHKhcq0VBZGAUHU8oL4XadJyAroFL5Nn7m-f1DSU=\n"
+            },
+            {
+                "kty": "RSA",
+                "use": "sig",
+                "kid": "default",
+                "jwkType": "userVerificationBioOrPin",
+                "e": "AQAB\n",
+                "n": "AMcKX5-vkIRyNw20k7TDxteHQEvn51g_FATBp3mUlhAyj5DJFxJqPnLpE3KPvATq6eV-KHRLzsz3\n-NPvJ7AF2nUCRuVvaKoWQifyxEljOnRjACUL8urk2LsDQ6lRQQpRsDQEjyZN6ImlybP0YrB0gEo6\ncktV3rMZBkMtqEmbwxsB61B2VHG1lPsTKc9-MFimziUKDiQKDUKVdn0oGXZaEfhP8FHcwGDgOnQO\nPoCqbOCsG7PYtyinBNM8DUsxLAI-hGO8bfJm9dfmeJUiIWODdcw4GAc3jKKnnsxZPt4_CqlT85d5\nxsGWp9oI3QufeDVKdn6CawXDtVN57a3fSI91HI8=\n"
+            }
+        ],
+        "name": "OPPO A55s 5G",
+        "platform": "ANDROID",
+        "version": "12:2023-11-05"
+    },
+    "factors": [
+        {
+            "id": "opf1017j0ay6W44dD698",
+            "factorType": "push",
+            "provider": "OKTA",
+            "vendorName": "OKTA",
+            "status": "ACTIVE",
+            "created": "2026-02-11T13:13:44.000Z",
+            "lastUpdated": "2026-02-11T13:13:44.000Z",
+            "profile": {
+                "credentialId": "example@example.com",
+                "deviceType": "SmartPhone_Android",
+                "keys": [
+                    {
+                        "kty": "RSA",
+                        "use": "sig",
+                        "kid": "default",
+                        "jwkType": "proofOfPossession",
+                        "e": "AQAB\n",
+                        "n": "AM6-ChJiQ6Y5SPge9egWUWXajeQZR9fHdxA03ToxT6UmrGUQkZb72MdN9EhD7BD47jGnFhPulN6o\nRZbxm-aLJbK6AYRtz6l_odqaOvV46By7DzMlIUWz-swXqH9hCG-0qqRkxqjb8PIsqB32l7k_dWU5\nDtSasl5JPvnxzS_5vDvUqD5b4g1kIA7hMl0mD6lXoX4OBRvKbCafQLF0DEq9x9wpVqzw0e5bGEr7\nAEU8q0lw5Oelz-2XlJiLVJ-jcCeqqxLQ7lctUw8lkzAvsBdAHcxsnU9NXzlPAVkBZIDnIXuRcLjd\nHKhcq0VBZGAUHU8oL4XadJyAroFL5Nn7m-f1DSU=\n"
+                    },
+                    {
+                        "kty": "RSA",
+                        "use": "sig",
+                        "kid": "default",
+                        "jwkType": "userVerificationBioOrPin",
+                        "e": "AQAB\n",
+                        "n": "AMcKX5-vkIRyNw20k7TDxteHQEvn51g_FATBp3mUlhAyj5DJFxJqPnLpE3KPvATq6eV-KHRLzsz3\n-NPvJ7AF2nUCRuVvaKoWQifyxEljOnRjACUL8urk2LsDQ6lRQQpRsDQEjyZN6ImlybP0YrB0gEo6\ncktV3rMZBkMtqEmbwxsB61B2VHG1lPsTKc9-MFimziUKDiQKDUKVdn0oGXZaEfhP8FHcwGDgOnQO\nPoCqbOCsG7PYtyinBNM8DUsxLAI-hGO8bfJm9dfmeJUiIWODdcw4GAc3jKKnnsxZPt4_CqlT85d5\nxsGWp9oI3QufeDVKdn6CawXDtVN57a3fSI91HI8=\n"
+                    }
+                ],
+                "name": "OPPO A55s 5G",
+                "platform": "ANDROID",
+                "version": "12:2023-11-05"
+            }
+        }
+    ],
+    "_links": {
+        "cancel": {
+            "href": "https://integrator-9180109.okta.com/api/v1/users/00u1017ivfcLyicT0698/factors/opf1017j0ay6W44dD698/transactions/v2mst.q5v-89J_SbKAOJm2mH3Qhg",
+            "hints": {
+                "allow": [
+                    "DELETE"
+                ]
+            }
+        },
+        "poll": {
+            "href": "https://integrator-9180109.okta.com/api/v1/users/00u1017ivfcLyicT0698/factors/opf1017j0ay6W44dD698/transactions/v2mst.q5v-89J_SbKAOJm2mH3Qhg",
+            "hints": {
+                "allow": [
+                    "GET"
+                ]
+            }
+        }
+    },
+    "_embedded": {
+        "challenge": {
+            "correctAnswer": 1
+        }
+    }
+}

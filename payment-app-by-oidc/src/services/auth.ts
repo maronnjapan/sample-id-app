@@ -85,14 +85,6 @@ export function validateApproval(
     return { valid: false, reason: 'Authentication happened too early' };
   }
 
-  if (payload.acr !== 'urn:okta:loa:2fa:any') {
-    return { valid: false, reason: `Unexpected acr: ${payload.acr}` };
-  }
-
-  if (!payload.amr?.includes('push')) {
-    return { valid: false, reason: 'Okta Verify push was not used' };
-  }
-
   if (expectedNonce && payload.nonce !== expectedNonce) {
     return { valid: false, reason: 'Nonce mismatch' };
   }

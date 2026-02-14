@@ -38,9 +38,24 @@ payment.post('/initiate', async (c) => {
   }
 
   // Factors API を呼び出してプッシュ承認を開始
-  const userId = await getUserId(c.env, user_email);
-  const factorId = await getPushFactorId(c.env, userId);
-  const verifyResponse = await sendPushVerification(c.env, userId, factorId);
+  let userId: string;
+  let factorId: string;
+  let verifyResponse: Awaited<ReturnType<typeof sendPushVerification>>;
+  try {
+    userId = await getUserId(c.env, user_email);
+    factorId = await getPushFactorId(c.env, userId);
+    verifyResponse = await sendPushVerification(c.env, userId, factorId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Factors API error:', message);
+    return c.json(
+      {
+        error: 'factors_api_error',
+        error_description: message,
+      },
+      502
+    );
+  }
 
   const paymentId = generatePaymentId();
   const expiresAt = new Date(verifyResponse.expiresAt);
@@ -61,6 +76,10 @@ payment.post('/initiate', async (c) => {
   // KVに保存 (TTL: 10分)
   await savePaymentRecord(c.env, record, 600);
 
+  console.log("verifyResponse:", JSON.stringify(verifyResponse));
+  const correctAnswer = verifyResponse._embedded?.challenge?.correctAnswer;
+  console.log("correctAnswer:", correctAnswer);
+
   return c.json(
     {
       payment_id: paymentId,
@@ -70,7 +89,10 @@ payment.post('/initiate', async (c) => {
         0,
         Math.floor((expiresAt.getTime() - Date.now()) / 1000)
       ),
-      message: 'スマートフォンのOkta Verifyで承認してください',
+      message: correctAnswer != null
+        ? `スマートフォンのOkta Verifyで「${correctAnswer}」を選択してください`
+        : 'スマートフォンのOkta Verifyで承認してください',
+      ...(correctAnswer != null && { correct_answer: correctAnswer }),
     },
     202
   );

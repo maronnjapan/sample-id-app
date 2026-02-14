@@ -3,18 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-11-17"
 compatibility_flags = ["nodejs_compat"]
 
-# 有料プラン設定
-# CPU時間: 最大30秒
-# リクエスト時間: 最大5分
-
-[vars]
-OKTA_DOMAIN = "dev-123456.okta.com"
-APP_BASE_URL = "http://localhost:8787"
-
-# シークレットは `wrangler secret put` で設定
-# OKTA_CLIENT_ID
-# OKTA_CLIENT_SECRET
+[observability]
+enabled = true
 
 [[kv_namespaces]]
 binding = "PAYMENT_STORE"
-id = "your-kv-namespace-id"
+id = "af72ad0c1d7c439a94e042b887672c04"

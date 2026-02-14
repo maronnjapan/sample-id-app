@@ -463,6 +463,9 @@ export function renderPaymentPage(): string {
         // Update phone message
         document.getElementById('phoneMessage').textContent =
           '¥' + amount.toLocaleString() + 'の支払いを承認';
+        
+        document.getElementById('statusMessage').textContent =
+          data.message || 'スマートフォンのOkta Verifyを確認してください';
 
         // Store payment info
         document.getElementById('detailPaymentId').textContent = data.payment_id;
@@ -562,7 +565,7 @@ export function renderPaymentPage(): string {
           statusIcon.className = 'status-icon pending';
           statusIcon.innerHTML = '<div class="spinner"></div>';
           statusTitle.textContent = '承認待ち';
-          statusMessage.textContent = 'スマートフォンのOkta Verifyを確認してください';
+          statusMessage.textContent = data.message || 'スマートフォンのOkta Verifyを確認してください';
           phoneIllustration.style.display = 'block';
           countdown.style.display = 'block';
           break;

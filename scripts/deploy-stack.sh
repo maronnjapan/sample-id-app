@@ -28,37 +28,6 @@ install_dependencies() {
   fi
 }
 
-read_kv_binding_id() {
-  local app_dir=$1
-  local config="$app_dir/wrangler.toml"
-  awk '
-    BEGIN { in_kv = 0; target = 0 }
-    /^\[\[/ {
-      in_kv = ($0 ~ /^\[\[kv_namespaces\]\]/)
-      target = 0
-    }
-    in_kv && $0 ~ /^[[:space:]]*binding[[:space:]]*=[[:space:]]*"PAYMENT_STORE"/ { target = 1 }
-    in_kv && target && $0 ~ /^[[:space:]]*id[[:space:]]*=/ {
-      line = $0
-      gsub(/^[[:space:]]*id[[:space:]]*=[[:space:]]*"/, "", line)
-      gsub(/"[[:space:]]*$/, "", line)
-      print line
-      exit
-    }
-  ' "$config"
-}
-
-require_valid_kv_binding() {
-  local app_dir=$1
-  local id
-  id=$(read_kv_binding_id "$app_dir")
-  if [ -z "$id" ] || [ "$id" = "your-kv-namespace-id" ]; then
-    echo "Error: PAYMENT_STORE KV binding id is not set in $app_dir/wrangler.toml" >&2
-    echo "Set a valid id first (wrangler.toml), then rerun this script." >&2
-    exit 1
-  fi
-}
-
 extract_workers_url() {
   sed -nE 's#.*(https://[[:alnum:]._-]+\.workers\.dev).*#\1#p' | head -n1
 }
@@ -101,6 +70,30 @@ read_tf_output() {
   (cd "$TERRAFORM_DIR" && terraform output -json) | jq -er ".[\"$key\"].value"
 }
 
+create_kv_namespace() {
+  local app_dir=$1
+  local binding=$2
+  local output
+
+  echo "Creating KV namespace '$binding' for $(basename "$app_dir")..."
+  if ! output=$(cd "$app_dir" && pnpm exec wrangler kv namespace create "$binding" 2>&1); then
+    printf '%s\n' "$output" >&2
+    exit 1
+  fi
+  printf '%s\n' "$output"
+
+  local ns_id
+  ns_id=$(printf '%s\n' "$output" | sed -nE 's/.*id = "([^"]+)".*/\1/p' | head -n1)
+  if [ -z "$ns_id" ]; then
+    echo "Error: Failed to extract KV namespace ID from wrangler output." >&2
+    exit 1
+  fi
+
+  echo "Updating wrangler.toml with KV namespace ID: $ns_id"
+  sed -i "s/id = \"your-kv-namespace-id\"/id = \"$ns_id\"/" "$app_dir/wrangler.toml"
+  printf '%s\n' "$ns_id"
+}
+
 put_secret() {
   local app_dir=$1
   local key=$2
@@ -118,8 +111,9 @@ main() {
   install_dependencies "$OIDC_APP_DIR"
   install_dependencies "$FACTORS_APP_DIR"
 
-  require_valid_kv_binding "$OIDC_APP_DIR"
-  require_valid_kv_binding "$FACTORS_APP_DIR"
+  echo "Creating KV namespaces..."
+  create_kv_namespace "$OIDC_APP_DIR" "PAYMENT_STORE_OIDC" > /dev/null
+  create_kv_namespace "$FACTORS_APP_DIR" "PAYMENT_STORE_FACTOR" > /dev/null
 
   local oidc_worker_url
   oidc_worker_url=$(deploy_and_get_url "$OIDC_APP_DIR" | tail -n1)
@@ -139,6 +133,7 @@ main() {
   put_secret "$OIDC_APP_DIR" OKTA_DOMAIN "$okta_domain"
   put_secret "$OIDC_APP_DIR" OKTA_CLIENT_ID "$stepup_client_id"
   put_secret "$OIDC_APP_DIR" OKTA_CLIENT_SECRET "$stepup_client_secret"
+  put_secret "$OIDC_APP_DIR" APP_BASE_URL "$oidc_worker_url"
 
   put_secret "$FACTORS_APP_DIR" OKTA_DOMAIN "$okta_domain"
   put_secret "$FACTORS_APP_DIR" OKTA_MGMT_CLIENT_ID "$factors_client_id"

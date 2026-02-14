@@ -89,6 +89,17 @@ resource "okta_app_oauth" "factors_service" {
   }
 }
 
+resource "okta_app_oauth_api_scope" "factors_service_scopes" {
+  app_id = okta_app_oauth.factors_service.id
+  issuer = "https://${var.okta_org_name}.${var.okta_base_url}"
+  scopes = ["okta.users.read", "okta.users.manage", "okta.factors.read", "okta.factors.manage"]
+}
+
+resource "okta_app_oauth_role_assignment" "factors_service_role" {
+  client_id = okta_app_oauth.factors_service.client_id
+  type      = "HELP_DESK_ADMIN"
+}
+
 resource "okta_user" "demo" {
   first_name = "Demo"
   last_name  = "User"

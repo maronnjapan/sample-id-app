@@ -63,7 +63,7 @@ async function getManagementAccessToken(env: Bindings): Promise<string> {
     throw new Error(`Failed to obtain management token: ${errorText}`);
   }
 
-  const data = (await response.json()) as { access_token: string; expires_in: number };
+  const data = (await response.json()) as { access_token: string; expires_in: number; scope?: string };
   cachedAccessToken = {
     token: data.access_token,
     exp: now + Math.max(data.expires_in - 30, 30),
@@ -90,11 +90,14 @@ async function authorizedFetch(
 export async function getUserId(env: Bindings, email: string): Promise<string> {
   const response = await authorizedFetch(
     env,
-    `/api/v1/users/${encodeURIComponent(email)}`
+    `/api/v1/users/${email}`
   );
 
   if (!response.ok) {
-    throw new Error(`User lookup failed for ${email}`);
+    const errorText = await response.text();
+    throw new Error(
+      `User lookup failed for ${email} (${response.status}): ${errorText}`
+    );
   }
 
   const user = (await response.json()) as { id: string };
@@ -104,7 +107,8 @@ export async function getUserId(env: Bindings, email: string): Promise<string> {
 export async function getPushFactorId(env: Bindings, userId: string): Promise<string> {
   const response = await authorizedFetch(env, `/api/v1/users/${userId}/factors`);
   if (!response.ok) {
-    throw new Error('Unable to fetch user factors');
+    const errorText = await response.text();
+    throw new Error(`Unable to fetch user factors (${response.status}): ${errorText}`);
   }
 
   const factors = (await response.json()) as Array<{
@@ -134,7 +138,9 @@ export async function sendPushVerification(
     `/api/v1/users/${userId}/factors/${factorId}/verify`,
     {
       method: 'POST',
-      body: '{}',
+      body: JSON.stringify({
+        useNumberMatchingChallenge: true
+      }),
     }
   );
 

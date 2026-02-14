@@ -39,15 +39,6 @@ read_kv_binding_id() {
   ' "$config"
 }
 
-delete_secret() {
-  local app_dir=$1
-  local key=$2
-  if (cd "$app_dir" && pnpm exec wrangler secret delete "$key"); then
-    echo "Deleted secret $key for $(basename "$app_dir")"
-  else
-    echo "Secret $key missing for $(basename "$app_dir"), skipping" >&2
-  fi
-}
 
 delete_worker() {
   local app_dir=$1
@@ -56,6 +47,12 @@ delete_worker() {
   else
     echo "Worker $(basename "$app_dir") may already be removed" >&2
   fi
+}
+
+reset_kv_binding_id() {
+  local app_dir=$1
+  sed -i 's/id = "[0-9a-f]\{32\}"/id = "your-kv-namespace-id"/' "$app_dir/wrangler.toml"
+  echo "Reset KV namespace ID in $(basename "$app_dir")/wrangler.toml"
 }
 
 delete_kv_namespace_if_configured() {
@@ -73,6 +70,8 @@ delete_kv_namespace_if_configured() {
   else
     echo "KV namespace $id may already be removed" >&2
   fi
+
+  reset_kv_binding_id "$app_dir"
 }
 
 main() {
@@ -84,15 +83,6 @@ main() {
     terraform init -input=false
     terraform destroy -auto-approve -input=false
   )
-
-  delete_secret "$OIDC_APP_DIR" OKTA_DOMAIN || true
-  delete_secret "$OIDC_APP_DIR" OKTA_CLIENT_ID || true
-  delete_secret "$OIDC_APP_DIR" OKTA_CLIENT_SECRET || true
-
-  delete_secret "$FACTORS_APP_DIR" OKTA_DOMAIN || true
-  delete_secret "$FACTORS_APP_DIR" OKTA_MGMT_CLIENT_ID || true
-  delete_secret "$FACTORS_APP_DIR" OKTA_MGMT_KID || true
-  delete_secret "$FACTORS_APP_DIR" OKTA_MGMT_PRIVATE_KEY || true
 
   delete_worker "$OIDC_APP_DIR" || true
   delete_worker "$FACTORS_APP_DIR" || true

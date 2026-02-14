@@ -21,7 +21,7 @@ output "okta_domain" {
 
 output "okta_private_key" {
   description = "Okta Private Key for Client Authentication"
-  value       = tls_private_key.rsa.private_key_pem
+  value       = tls_private_key.rsa.private_key_pem_pkcs8
   sensitive   = true
 }
 

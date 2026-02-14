@@ -137,6 +137,7 @@ export async function handleOidcCallback(
   try {
     const tokens = await exchangeCodeForTokens(c.env, code);
     const payload = await verifyIdToken(c.env, tokens.id_token);
+    console.log("payload:", JSON.stringify(payload))
     const validation = validateApproval(
       payload,
       new Date(record.created_at).getTime(),

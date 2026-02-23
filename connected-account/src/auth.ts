@@ -215,12 +215,20 @@ export async function deleteConnectedAccount(params: {
   }
 }
 
+export interface FederatedTokenResponse {
+  access_token: string
+  scope: string
+  expires_in: number
+  issued_token_type: string
+  token_type: string
+}
+
 export async function exchangeTokenByRefreshToken(params: {
   domain: string
   clientId: string
   clientSecret: string
   refreshToken: string
-}) {
+}): Promise<FederatedTokenResponse> {
 
   const res = await fetch(`https://${params.domain}/oauth/token`, {
     method: 'POST',
@@ -239,5 +247,5 @@ export async function exchangeTokenByRefreshToken(params: {
     const body = await res.text()
     throw new Error(`Token exchange failed (${res.status}): ${body}`)
   }
-  return res.json() as Promise<TokenResponse>
+  return res.json() as Promise<FederatedTokenResponse>
 } 

@@ -202,6 +202,9 @@ app.get('/dashboard', async (c) => {
   const execInfo = getCookie(c, 'exec_list')
   const execList = execInfo ? JSON.parse(execInfo) : []
 
+  const refreshExecInfo = getCookie(c, 'refresh_exec_list')
+  const refreshExecList = refreshExecInfo ? JSON.parse(refreshExecInfo) : []
+
   const { connected, disconnected } = c.req.query()
 
   let accounts: ConnectedAccount[] = []
@@ -268,6 +271,60 @@ app.get('/dashboard', async (c) => {
               )}
             </div>
           </div>
+          {/* 実行説明 */}
+          <div class="card" style="margin-top:24px;background:#f1f5f9;">
+            <h2 class="card-title">アカウント連携実行ログ</h2>
+            <p class="card-description">
+              連携開始・完了の各ステップで、クライアントが Auth0 API に対してどのようなリクエストを送っているかを記録しています。(            <a href='https://auth0.com/docs/secure/call-apis-on-users-behalf/token-vault/connected-accounts-for-token-vault'>ドキュメント</a>)
+            </p>
+
+            {execList.length === 0 ? (
+              <p style="color:#64748b;">まだAPIコールは実行されていません。</p>
+            ) : (
+              <ol style="padding-left:16px;color:#64748b;">
+                {execList.map((exec: any, index: number) => (
+                  <li key={index} style="margin-bottom:16px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+                    <p style="font-weight:600;color:#1e293b;margin-bottom:8px;">{exec.description}</p>
+                    {exec.imageUrl && (
+                      <img
+                        src={exec.imageUrl}
+                        alt={exec.description}
+                        style="max-width:100%;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;"
+                      />
+                    )}
+                    <p style="margin-bottom:6px;">
+                      <strong>エンドポイント：</strong>
+                      <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;font-size:0.8rem;">{exec.method} {exec.endpoint}</code>
+                    </p>
+                    {exec.requestHeaders && (
+                      <>
+                        <p style="margin-bottom:4px;font-weight:600;color:#475569;">リクエストヘッダー</p>
+                        <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                          {JSON.stringify(exec.requestHeaders, null, 2)}
+                        </pre>
+                      </>
+                    )}
+                    {exec.requestBody && (
+                      <>
+                        <p style="margin-bottom:4px;font-weight:600;color:#475569;">リクエストボディ</p>
+                        <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                          {JSON.stringify(exec.requestBody, null, 2)}
+                        </pre>
+                      </>
+                    )}
+                    {exec.responseBody && (
+                      <>
+                        <p style="margin-bottom:4px;font-weight:600;color:#475569;">レスポンスボディ</p>
+                        <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                          {JSON.stringify(exec.responseBody, null, 2)}
+                        </pre>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
 
         {/* 連携済みアカウント詳細 */}
@@ -299,11 +356,13 @@ app.get('/dashboard', async (c) => {
           </div>
         )}
 
+
+
         {/* リフレッシュトークン交換 */}
         <div class="card" style="grid-column: 1 / -1;">
           <h2 class="card-title">リフレッシュトークン交換</h2>
           <p class="card-description">
-            Auth0 セッションのリフレッシュトークンを使って新しいアクセストークンを取得します。
+            Auth0 セッションのリフレッシュトークンを使って外部プロバイダのアクセストークンを取得します。
           </p>
           <button id="exchange-refresh-btn" class="btn btn-secondary">
             トークンを交換する
@@ -312,43 +371,57 @@ app.get('/dashboard', async (c) => {
             id="exchange-refresh-result"
             style="display:none;margin-top:12px;padding:12px;background:#0f172a;color:#e2e8f0;border-radius:8px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;"
           />
-        </div>
 
-        {/* 実行説明 */}
-        <div class="card" style="grid-column: 1 / -1;">
-          <h2 class="card-title">⚙️ 実行された API コール</h2>
-          <p class="card-description">
-            連携開始・完了の各ステップで、クライアントが Auth0 API に対してどのようなリクエストを送っているかを記録しています。
-          </p>
-          {execList.length === 0 ? (
-            <p style="color:#64748b;">まだAPIコールは実行されていません。</p>
-          ) : (
-            <ol style="padding-left:16px;color:#64748b;">
-              {execList.map((exec: any, index: number) => (
-                <li key={index} style="margin-bottom:8px;">
-                  <p>{exec.description}</p>
-                  <strong>エンドポイント：{exec.method} {exec.endpoint}</strong>
-                  {exec.requestBody && (
-                    <>
-                      <p>リクエストボディ</p>
-                      <pre style="margin-top:4px;padding:8px;background:#0f172a;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
-                        {JSON.stringify(exec.requestBody, null, 2)}
-                      </pre>
-                    </>)
-                  }
-                  {exec.responseBody && (
-                    <>
-                      <p>レスポンスボディ</p>
-                      <pre style="margin-top:4px;padding:8px;background:#0f172a;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
-                        {JSON.stringify(exec.responseBody, null, 2)}
-                      </pre>
-                    </>
+          {/* 実行ログ */}
+          <div class="card" style="margin-top:24px;background:#f1f5f9;">
+            <h2 class="card-title">リフレッシュトークン交換実行ログ</h2>
+            <p class="card-description">
+              Auth0 リフレッシュトークンを外部プロバイダのアクセストークンへ変換するステップで、クライアントが Auth0 API に対してどのようなリクエストを送っているかを記録しています。(
+              <a href='https://auth0.com/docs/secure/tokens/token-vault/refresh-token-exchange-with-token-vault'>ドキュメント</a>)
+            </p>
 
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
+            <div id="refresh-exec-log">
+              {refreshExecList.length === 0 ? (
+                <p style="color:#64748b;">まだAPIコールは実行されていません。</p>
+              ) : (
+                <ol style="padding-left:16px;color:#64748b;">
+                  {refreshExecList.map((exec: any, index: number) => (
+                    <li key={index} style="margin-bottom:16px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+                      <p style="font-weight:600;color:#1e293b;margin-bottom:8px;">{exec.description}</p>
+                      <p style="margin-bottom:6px;">
+                        <strong>エンドポイント：</strong>
+                        <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;font-size:0.8rem;">{exec.method} {exec.endpoint}</code>
+                      </p>
+                      {exec.requestHeaders && (
+                        <>
+                          <p style="margin-bottom:4px;font-weight:600;color:#475569;">リクエストヘッダー</p>
+                          <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                            {JSON.stringify(exec.requestHeaders, null, 2)}
+                          </pre>
+                        </>
+                      )}
+                      {exec.requestBody && (
+                        <>
+                          <p style="margin-bottom:4px;font-weight:600;color:#475569;">リクエストボディ</p>
+                          <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                            {JSON.stringify(exec.requestBody, null, 2)}
+                          </pre>
+                        </>
+                      )}
+                      {exec.responseBody && (
+                        <>
+                          <p style="margin-bottom:4px;font-weight:600;color:#475569;">レスポンスボディ</p>
+                          <pre style="margin-top:4px;padding:8px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;">
+                            {JSON.stringify(exec.responseBody, null, 2)}
+                          </pre>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -359,7 +432,16 @@ app.post('/exchange-refresh', async (c) => {
   const session = getSession(getCookie(c, 'session'))
   if (!session) return c.redirect('/login')
 
-  let refreshResult: string | null = null
+  const requestBody = {
+    client_id: c.env.AUTH0_CLIENT_ID,
+    client_secret: '***',
+    subject_token: '(Auth0リフレッシュトークン)',
+    grant_type: 'urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token',
+    subject_token_type: 'urn:ietf:params:oauth:token-type:refresh_token',
+    requested_token_type: 'http://auth0.com/oauth/token-type/federated-connection-access-token',
+    connection: 'google-oauth2',
+  }
+
   try {
     const newToken = await exchangeTokenByRefreshToken({
       domain: c.env.AUTH0_DOMAIN,
@@ -368,12 +450,30 @@ app.post('/exchange-refresh', async (c) => {
       refreshToken: session.refreshToken!,
     })
 
-    refreshResult = `新しいアクセストークン: ${newToken.access_token.slice(0, 20)}... (有効期限: ${newToken.expires_in}秒)`
-  } catch (err) {
-    refreshResult = `リフレッシュトークンの交換に失敗: ${String(err)}`
-  }
+    const execInfo = {
+      description: 'リフレッシュトークンを使って外部プロバイダのアクセストークンを取得',
+      method: 'POST',
+      endpoint: '/oauth/token',
+      requestHeaders: { 'Content-Type': 'application/json' },
+      requestBody,
+      responseBody: {
+        access_token: `${newToken.access_token.slice(0, 20)}...`,
+        scope: newToken.scope,
+        expires_in: newToken.expires_in,
+        issued_token_type: newToken.issued_token_type,
+        token_type: newToken.token_type,
+      },
+    }
 
-  return c.json({ success: true, refreshResult })
+    setCookie(c, 'refresh_exec_list', JSON.stringify([execInfo]), {
+      httpOnly: true,
+      sameSite: 'Lax',
+    })
+
+    return c.json({ success: true, execInfo })
+  } catch (err) {
+    return c.json({ success: false, error: String(err) })
+  }
 })
 
 // ─── Connected Accounts: 連携開始 (Google) ────────────────────────────────────
@@ -401,9 +501,14 @@ app.get('/connect/google-oauth2', async (c) => {
     const connectUrl = `${result.connect_uri}?ticket=${result.connect_params.ticket}`
 
     const execInitiateInfo = {
-      description: 'Token Vaultの連携開始APIを呼び出して、Auth0から連携用のURIとパラメータを取得',
+      description: 'Token Vaultの設定開始',
       method: 'POST',
       endpoint: INITIATE_CONNECT_ACCOUNT_PATH,
+      imageUrl: '/images/initiate-connect-account.png',
+      requestHeaders: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ログイン時に取得したアクセストークン`,
+      },
       requestBody: {
         connection: 'google-oauth2',
         redirect_uri: c.env.AUTH0_CONNECT_CALLBACK_URL,
@@ -414,9 +519,10 @@ app.get('/connect/google-oauth2', async (c) => {
     }
 
     const execTicketInfo = {
-      description: 'Token Vaultにおける初期設定が完了した後、Auth0が発行する連携用のURIにリダイレクト。ユーザーはこのURIでGoogleの認可画面に遷移し、認可を完了させる',
+      description: 'Auth0発行の連携URLにリダイレクト',
       method: 'Redirect',
       endpoint: connectUrl,
+      imageUrl: '/images/redirect-connect.png',
     }
 
 
@@ -486,10 +592,16 @@ app.get('/connect/callback', async (c) => {
 
     const preExecList = getCookie(c, 'exec_list')
     const execList = preExecList ? JSON.parse(preExecList) : []
+
     const execCompleteInfo = {
-      description: 'リダイレクトのconnect_codeを使って、連携完了APIを呼び出し。これによりGoogleアカウントとの連携が確定し、アクセストークンがToken Vaultに保存される',
+      description: 'connect_codeを使って、連携を完了させる',
       method: 'POST',
       endpoint: COMPLETE_CONNECT_ACCOUNT_PATH,
+      imageUrl: '/images/setup-connect.png',
+      requestHeaders: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ログイン時に取得したアクセストークン`,
+      },
       requestBody: {
         auth_session: authSession,
         connect_code: connectCode,

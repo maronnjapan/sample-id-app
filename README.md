@@ -1,6 +1,8 @@
 # Okta CIBA Alternative - Payment Approval Demo
 
-Okta が CIBA (Client Initiated Backchannel Authentication) をカスタム認可サーバーなしではサポートしていない問題に対し、2つの代替アプローチで決済承認フローを実現するデモアプリケーション。
+Okta が CIBA (Client Initiated Backchannel Authentication) をカスタム認可サーバーなしではサポートしていない問題に対し、2つの代替アプローチで決済承認フローを実現するデモアプリケーション。  
+内容の概要などは以下のブログにて解説しています。  
+https://web.maronn-room.com/maronn2/articles/okta-alternative-ciba
 
 ## アプローチ
 

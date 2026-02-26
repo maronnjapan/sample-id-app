@@ -10,3 +10,4 @@
 - Auth0のEvent Streamを使用してユーザーのブロック通知をリソースサーバーに通知するもの：[notification-blocked-userブランチ](https://github.com/maronnjapan/sample-id-app/tree/notification-blocked-user)
 - OAuthの同意疲れを体験するアプリ：[many-oauth-consent-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/many-oauth-consent-app)
 - Auth0とAWSのEventBridgeを連携を行うための設定リポジトリ:[linked-aws-and-auth0-by-event-streamブランチ](https://github.com/maronnjapan/sample-id-app/tree/linked-aws-and-auth0-by-event-stream)
+- OktaでCIBAの代替アプリを動かすためのアプリとTerraform:[ciba-with-oktaブランチ](https://github.com/maronnjapan/sample-id-app/tree/ciba-with-okta)

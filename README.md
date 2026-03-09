@@ -9,6 +9,7 @@
 - [Auth0 CLI](https://auth0.com/docs/deploy-monitor/auth0-cli) がインストール済みであること
 - Cloudflare アカウントが作成済みであること
 - [wrangler コマンド](https://developers.cloudflare.com/workers/wrangler/install-and-update/) がインストール済みで、`wrangler login` でログイン済みであること
+- [Terraform](https://developer.hashicorp.com/terraform/install) または [OpenTofu](https://opentofu.org/docs/intro/install/) がインストール済みであること
 - `jq` がインストール済みであること
 - `pnpm` がインストール済みであること
 
@@ -20,12 +21,10 @@ Auth0 ダッシュボードで **Applications > APIs** を開き、「Auth0 My A
 
 この操作はダッシュボードからのみ実行可能です。セットアップスクリプトを実行する前に、必ずこの手順を完了させてください。
 
-### 2. Google connection の設定
+### 2. Google Cloud Console で OAuth クライアントを作成
 
-Auth0 ダッシュボードで Google connection を設定します。
+以下の手順で Google OAuth クライアントを作成し、認証情報を控えておいてください。セットアップスクリプト実行時に入力を求められます。
 
-#### 2-1. Google Cloud Console で OAuth クライアントを作成
-以下のサイトを元にGoogle OAuthクライアントを作成してください。
 1. [Google Cloud Console](https://console.cloud.google.com/) を開く
 2. **APIs & Services > Credentials** を開く
 3. **+ CREATE CREDENTIALS > OAuth client ID** をクリック
@@ -33,18 +32,7 @@ Auth0 ダッシュボードで Google connection を設定します。
 5. Authorized redirect URIs に `https://<your-auth0-domain>/login/callback` を追加
 6. 作成後、**Client ID** と **Client Secret** を控えておく
 
-#### 2-2. Auth0 ダッシュボードで Google connection を設定
-
-1. Auth0 ダッシュボードで **Authentication > Social** を開く
-2. `Google / Gmail` をクリック（存在しない場合は `+ Create Connection` から追加）
-3. Google Cloud Console で取得した **Client ID** と **Client Secret** を入力する
-4. `Purpose` を `Connected Accounts for Token Vault` に変更する
-![Auth0のSocialでgoogle-oauth2のpurposeをConnected Accounts for Token Vaultに変更](doc/images/google-social-purpose.png)
-5. Save をクリック
-
-> **注意**: Purpose の変更は必須です。`Standard Authentication` のままでは連携時に `The specified connection does not support connected accounts or is not active` エラーが発生します。
-
-> アプリへの紐づけ（Applications タブでの有効化）はセットアップスクリプトが自動で行うため、ダッシュボードでの操作は不要です。
+> **注意**: Auth0 ダッシュボードでの Google connection の設定（Client ID / Secret の入力、Purpose の変更、アプリへの紐づけ）はセットアップスクリプトが Terraform で自動的に行います。手動での設定は不要です。
 
 ### 3. セットアップスクリプトの実行
 
@@ -57,15 +45,15 @@ cd connected-account
 
 スクリプトは以下の処理を自動で行います。
 
-1. **Auth0 CLI へのログイン** — 必要なスコープでログインします。複数テナントがある場合は、使用するテナントを選択します。
-2. **Auth0 アプリケーションの作成** — `connected-account-token-vault` という名前の Regular Web Application を作成します。コールバック URL にはローカル開発用の `http://localhost:5173` が設定されます。
-3. **テストユーザーの作成** — `test@example.com` のテストユーザーを作成します（既に存在する場合はスキップ）。パスワードはスクリプト実行中に対話形式で入力します。
-4. **My Account API (Token Vault) の設定** — アプリケーションに対して `create/read/delete:me:connected_accounts` スコープの Client Grant を付与し、Token Vault 用の grant_type を追加します。
-5. **Google connection の設定確認** — ダッシュボードでの手動設定完了を確認するプロンプトが表示されます（手順 2 が完了していれば Enter を押して続行）。
+1. **前提条件のチェック** — `jq`、`pnpm`、`wrangler`、`auth0`、`terraform`（または `tofu`）がインストールされているか確認します。
+2. **Auth0 CLI へのログイン** — 必要なスコープでログインします。複数テナントがある場合は、使用するテナントを選択します。
+3. **Terraform provider 用 M2M アプリの作成** — Terraform が Auth0 リソースを管理するための Machine-to-Machine アプリケーションを作成し、Management API への Client Grant を付与します。
+4. **対話形式での入力収集** — テストユーザーのパスワードと、手順 2 で控えた Google OAuth2 の Client ID / Client Secret の入力を求めます。
+5. **Terraform apply（1回目）** — Auth0 上に Regular Web Application（`connected-account-token-vault`）、テストユーザー（`test@example.com`）、Google connection（Connected Accounts 有効）、Token Vault 用の Client Grant を作成します。
 6. **`.dev.vars` の生成** — ローカル開発用の環境変数ファイルを `connected-account/.dev.vars` に生成します。
 7. **Cloudflare Workers へのデプロイ** — 依存関係をインストールし、Cloudflare Workers にデプロイします。
-8. **Cloudflare Workers シークレットの設定** — Auth0 の認証情報と Workers の URL を Cloudflare Secrets に設定します。
-9. **Auth0 アプリのコールバック URL の更新** — デプロイ先の Workers URL をコールバック URL に追加します。
+8. **Cloudflare Workers シークレットの設定** — Auth0 の認証情報とコールバック URL を Cloudflare Secrets に設定します。
+9. **Terraform apply（2回目）** — デプロイ先の Workers URL を Auth0 アプリのコールバック URL に追加します。
 
 ### 4. 動作確認
 

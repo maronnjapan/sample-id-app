@@ -50,7 +50,6 @@ app.get('/', (c) => {
   return c.render(
     <div class="container center-content">
       <div class="hero">
-        <div class="hero-icon">🔐</div>
         <h1>Auth0 Token Vault</h1>
         <h2>Connected Account デモ</h2>
         <p class="hero-description">
@@ -225,7 +224,6 @@ app.get('/dashboard', async (c) => {
       {/* ヘッダー */}
       <header class="dashboard-header">
         <div class="header-brand">
-          <span class="brand-icon">🔐</span>
           <span class="brand-name">Token Vault Demo</span>
         </div>
         <a href="/logout" class="btn btn-ghost btn-sm">ログアウト</a>
@@ -233,13 +231,13 @@ app.get('/dashboard', async (c) => {
 
       {/* 通知 */}
       {connected && (
-        <div class="alert alert-success">✅ Google アカウントの連携が完了しました。</div>
+        <div class="alert alert-success">Google アカウントの連携が完了しました。</div>
       )}
       {disconnected && (
-        <div class="alert alert-info">🔓 Google アカウントの連携を解除しました。</div>
+        <div class="alert alert-info">Google アカウントの連携を解除しました。</div>
       )}
       {fetchError && (
-        <div class="alert alert-error">⚠️ 連携アカウントの取得に失敗しました: {fetchError}</div>
+        <div class="alert alert-error">連携アカウントの取得に失敗しました: {fetchError}</div>
       )}
 
       <div class="dashboard-grid">

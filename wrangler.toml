@@ -1,0 +1,13 @@
+name = "oidc-provider"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ISSUER = "https://oidc-provider.example.com"
+
+# ローカル開発用のKVネームスペース
+[[kv_namespaces]]
+binding = "OIDC_STORE"
+id = "oidc-store-id"
+preview_id = "oidc-store-preview-id"

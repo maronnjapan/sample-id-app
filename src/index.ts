@@ -19,7 +19,7 @@ let providerCache: InstanceType<typeof Provider> | null = null;
 let cachedIssuer: string | null = null;
 
 function getProvider(env: Env): InstanceType<typeof Provider> {
-  const issuer = env.ISSUER || "https://oidc-provider.example.com";
+  const issuer = env.ISSUER || "http://localhost:8787";
 
   if (providerCache && cachedIssuer === issuer) {
     return providerCache;
@@ -34,6 +34,11 @@ function getProvider(env: Env): InstanceType<typeof Provider> {
   // Koa (oidc-provider) を Node.js HTTP サーバーとして起動
   provider.listen(8080);
 
+  // サーバーエラーをログ出力
+  provider.on("server_error", (_ctx: unknown, err: unknown) => {
+    console.error("[oidc-provider] server_error:", err);
+  });
+
   providerCache = provider;
   cachedIssuer = issuer;
 
@@ -47,8 +52,7 @@ export default {
     // Provider を初期化（初回のみ）
     getProvider(env);
 
-    // cloudflare:node の httpServerHandler が
-    // Workers の fetch リクエストを node:http サーバーに転送する
+    // OP（node-oidc-provider）が処理
     return handler.fetch!(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

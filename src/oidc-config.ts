@@ -19,7 +19,7 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
         client_id: "sample-client",
         client_secret: "sample-client-secret",
         grant_types: ["authorization_code", "refresh_token"],
-        redirect_uris: ["https://example.com/callback"],
+        redirect_uris: ["http://localhost:3000/callback"],
         response_types: ["code" as const],
         scope: "openid profile email",
         token_endpoint_auth_method:
@@ -42,14 +42,14 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
           use: "sig",
           alg: "RS256",
           // 以下は開発用のサンプル鍵です。本番では適切な鍵を使用してください。
+          n: "oBGicO6mJIUjM79KxXd3wM6NBcip_9hVVceLAYfB4Rb-QRxa4H4mdRl2jCQGcMhOwNjs7Kgiknt1pNawQMy2FpUWSIn4IsFINtG07zDK1lHPnfBZoS4oQ5-7X7uN1CuGVxYD8kjBPzK0kqL_X-jqWg2Z8bK_k3TsXW1mS-gZ0rVYXLb4UY8mutKAcm0bGJ_bgawQNQTp8oeht82gYAcNRXX9ujmFAGOvJhJazNENqTPicmbpAc2VvDYJk1qeuVWZzaRoQQiwMuNDz0Lv1yf6G7jDR8VbCbaxf5cMzrEPDd5qD4u4WUS6EPYLyYSDg_0Gy98UVMsEXAI9IEzNaRoU8Q",
           e: "AQAB",
-          n: "wAR7gpvDJx2nkFRwVTf0ZBMOuU2L5joNRF9JBJtufkEW1LDrC3GBOthItRkpFfPtX8wEd4GvYVzDpLAjwJoW_tHNC1JeGDj8dGPzCDm1GISLuMB5W4WMV_FzGLjQPhX5mn3F9bJP_YDUMTzJKXG7HfADbtXpVVQ1_jx6kHfFkOkfGnGNxE1sBzfEwq8mP7z_bY4qgFPJGjuVNPMiCz5SZ-EJz6EVuEfUJi7POnLgPwUgSsYOp5oJhnsl8BBEsqjMPIXPdSW0qqMjfHkrI1zSpPW3yLRHSxjdm0fNxGNpQm0OyaKfqBnpJCPGx9RlWFJhYMVoRlnMz5PxbxVPnTh7w",
-          d: "DArT0MaWVE5p9JR2kT6BClYzX7OC5gGYBN9iSoKbdDEgSzKQTXPnkHc5q3p5FAlFCrmyoBdeh32jTS3fOS9j1CYCq7bUWAFAjV7lXGPceLX2mq2l1GnXNh5PN7W1rxLmKJU7UuIVnqQCN-mfM6p_FOFma0iiYtV_7jKpPhs7DEZ9Ej0wMKfJx7CL0sX7BeOpaA5YrFUCNg-g2Dh4S_gPevVnhVS8m-ECM0YKPxXO7sXuRSH9dK4GnMXCr7BCKj2qPIJOHTIcHrKi_sYEP1V6GBJOx4d0k7T_NBqe7PvPR_hTnIz2CrNqiYsfU5DqDpJHy3M08RPqAW8DJFWJDuMXAQ",
-          p: "7bM0V3_nL3gV5YBb8W1IIoL02JXJPmsfXJr1G_r-iE5bJ3ycPHmHHR_3Ofd8VyoI8f5yW0P3LP2m_TVKrFPa75nXj_a9Tixw8Nv-Z6bH8tOy4j_F6E1oiClLhGTkWJhzD0a-5-pjdv7UKBj-YJhk6RNhtYNrz8MQV1BUjMhEc",
-          q: "z6TBuWlSlGHw6oc3PFsnz1ORUE8Dt3dVSU-AHpW8C6Kz1h6U_EPfL1tGMu7DP9Dfee-KRz2Xp0zMfV1CQ7tP3LqHi8gg9PO-k-qG1CAXijb6RrJ9qJ4TP_Hj_PH20SFCxchW5blRDUtLXU9VVy7v1Zp9twFjUVpIr02QjdpkJw",
-          dp: "6MGkr8GPayGNV5x_RLmA5cSQr7YJnG1s8EjF3NkxrN2C13FjYwUCJv2F4TX4I5nccWNqH6P_S0lMfN-CLPTzFy5Lv2iB_Cjmwz4fOS_xjSqNYqy1n_mBfJNzqL-5MdQsP35Mi0SUbiph6hSRZxwCfABp63KPGK0kCPJE5d5bh0",
-          dq: "E_0hbMwoeC2NPNEBhLP5TxVwi8VbDr40oqC0RXX_3BGQ_A8g-HRz10SRxqF30vz6dR_6hbfH3nGBZtptxMSUPYKvFcxkhR2ohacOxPyhnOBVUyAeZ4JIPaJk0cR6tRVaoy5JLoqe9uV42s0YaXbEEYpEq3FLHC2nTiKGqwA-i4E",
-          qi: "LNVP4YJNvyMOM4yyfc6PgU2B-l9H6kIkTbTn04G3YJEsdm1i3V0fXsjC8XjPZQp_NJkER3pJn9K4ykmUUBm9i1f9WCN1UH0o-YYRnk-Xl36TnMf0w0-_2jGJR0cgxm4VRQ_slpCrNTqp3pHK1yzyPWSsgVBH1URZbK1PvOliXc",
+          d: "FOJiy1FCeWlVhR7kO-IGdzAmfiaxkiFA9lwpQB3c_JKUwcdX-V-m14hm9d84EpGlP3a4vXfXwDzoxdpXogdo39wRIuMSw5YW50VyfJ1lGZQQU-RUDWTe-VO8jWpZwDZIOicz2fIGz0lnqJTTtPPH_8_efLEnBa-FAfuQE-nzKeaCMcapadgUmUE9bNiiqlOwHDGemKNOZvGLP0A3AVqMljYrvZWCb3kbcbQuKj1PI3d1RDCZRfxpZ68mzagn7AzM17d38gIHGhk1X-ROOPM1tgp9a7sPX_9Dz24MqxKRmQAhrkaaa-3msaH_-2h-UY7xwyCFHX7edshhYfTO93lUcQ",
+          p: "3M2lTUZroxpBeshSQBb5gdyHHRsd-Mank4PNYIldTppUWLfGKqzUlD2F8lVe034-CiySOmB8LWoYUs2dNKZJp6ar4nIqViwj96Md6ajX7FN4pubYtvlYL6rIBS1V3h-aMEKewziUuIqSyAJQZ7D-YHOacGCevByjcGD3v5GXbwc",
+          q: "uZWXD75o5mL02-MB67k_DAGf5WvWrxQBXLMoqNuvrK6kPaB9-H7ifPwetv6WZHVpRLP9twP8rYmL-bE2eydNyQ9oyOhRUygR_EMB_euGgN71UaTP4tg-dUGINfFL9kNILWS6jxlVMRUTvOPPqTILNGTk3iKZYb8GkvRmEmJW5kc",
+          dp: "Tqw7RMBdo7y8LfpoTAujlSC1R6qc0EI__TCOIeJvy4zzlrTMN_Jiv_r32fOPGP43LrrY01IDjM7rob0_UT4aqlCZl9KjwRZzLk4BX3rYjIzlRVqlRvSq9jj8kdOob7-E2cMy_E4Rt3swd3FTos6OpGEsWvQiOtZdabIzNB-0_Es",
+          dq: "goBLormNwHxTnRBLuHwidonp64ViiOjzcEFX1S3uoeqI-gEStBxdnfAYlSv_i5L4vGQphHncRBfWA3Z3TjC8RSd90tFy5pvl0dM44lqt0Y93SLsxqF3RxdiYNP6CISD871bGzXvN6V7d61TzIRJcyLIuMnp4C0EuGUadRE48t18",
+          qi: "hAoC6ASFx0-9dEBAIhr2Z2vbXxZwO6xoCjC3_x8aq0CjC06mHrDnaSBN8l9AwcOcT08CQQ-s5S8u9zFbk4GWtIfDPys87yaNGsWosOOmAH1eYlFkxT6Ys_VJ1o8e2Z01VEJG4rkvCsAnqTcfVaQ-oYUuHncr_JWP3vZMO6_Nbjk",
         },
       ],
     },
@@ -71,9 +71,33 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
     // スコープ設定
     scopes: ["openid", "profile", "email", "offline_access"],
 
+    // エラー発生時にJSON形式で返す（デバッグ用）
+    renderError: async (ctx, out, error) => {
+      console.error("oidc-provider error:", error);
+      ctx.type = "application/json";
+      ctx.body = JSON.stringify({
+        error: out.error,
+        error_description: out.error_description,
+      });
+    },
+
     // 有効にする機能
     features: {
       devInteractions: { enabled: true },
+
+      // リソースインジケーターの設定（RFC 8707） - クライアントがトークン発行時にリソースサーバーを指定できるようにする
+      // resourceIndicators: {
+      //   enabled: true,
+      //   useGrantedResource: () => true,
+      //   getResourceServerInfo: (ctx, resourceIndicator, client) => {
+      //     console.log("Resource Indicator requested:", resourceIndicator);
+      //     return {
+      //       audience: resourceIndicator,
+      //       scope: "openid profile email",
+      //       accessTokenFormat: "jwt" as const,
+      //     }
+      //   },
+      // },
     },
 
     // トークンの有効期限

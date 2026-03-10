@@ -4,7 +4,7 @@ compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-ISSUER = "https://oidc-provider.example.com"
+ISSUER = "http://localhost:8787"
 
 # ローカル開発用のKVネームスペース
 [[kv_namespaces]]

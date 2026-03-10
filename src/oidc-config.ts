@@ -157,14 +157,14 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
     },
 
     // ユーザー情報取得のコールバック
+    // CIBA では login_hint がそのまま accountId として使われる
     findAccount: async (_ctx: unknown, id: string) => {
       return {
         accountId: id,
         claims: async () => ({
           sub: id,
-          name: "Sample User",
-          email: "user@example.com",
-          email_verified: true,
+          name: id, // login_hint をそのまま表示名に
+          preferred_username: id,
         }),
       };
     },

@@ -23,14 +23,9 @@ Auth0 ダッシュボードで **Applications > APIs** を開き、「Auth0 My A
 
 ### 2. Google Cloud Console で OAuth クライアントを作成
 
-以下の手順で Google OAuth クライアントを作成し、認証情報を控えておいてください。セットアップスクリプト実行時に入力を求められます。
-
-1. [Google Cloud Console](https://console.cloud.google.com/) を開く
-2. **APIs & Services > Credentials** を開く
-3. **+ CREATE CREDENTIALS > OAuth client ID** をクリック
-4. Application type: **Web application** を選択
-5. Authorized redirect URIs に `https://<your-auth0-domain>/login/callback` を追加
-6. 作成後、**Client ID** と **Client Secret** を控えておく
+以下のサイトで「Google Auth Platform」までを行い、GoogleのOAuthクライアントを作成してください。
+https://marketplace.auth0.com/integrations/google-social-connection
+作成後、`Client ID`と`Client Secret`は控えておいてください。
 
 > **注意**: Auth0 ダッシュボードでの Google connection の設定（Client ID / Secret の入力、Purpose の変更、アプリへの紐づけ）はセットアップスクリプトが Terraform で自動的に行います。手動での設定は不要です。
 

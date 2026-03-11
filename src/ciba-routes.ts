@@ -2,72 +2,59 @@
  * CIBA (Client Initiated Backchannel Authentication) のコンセントルート
  *
  * 認証デバイス（AD）側の実装:
- * - デバイス登録（PIN設定 + User-Agent フィンガープリント + Cookie バインディング）
+ * - FIDO2/WebAuthn によるデバイス登録（Platform Authenticator でデバイス固定）
  * - 保留中リクエスト一覧（自動ポーリング）
- * - 承認（PIN 再入力による本人確認）
+ * - FIDO2 認証による承認（秘密鍵はデバイスから出ない → 真のデバイス固定）
  * - 拒否
- *
- * デバイス固定の仕組み:
- * 1. Cookie (HttpOnly) でデバイスを識別
- * 2. User-Agent をフィンガープリントとして保存・照合
- * 3. 承認操作には PIN の再入力が必要（所持＋知識の2要素）
  */
 import type Provider from "oidc-provider";
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
 import type { CibaPendingRequest } from "./oidc-config";
 
 type ProviderInstance = InstanceType<typeof Provider>;
 
+const RP_NAME = "CIBA Sample OP";
+const RP_ID = "localhost";
+const ORIGIN = "http://localhost:8787";
+
 /**
- * KV に保存するデバイスバインディング情報
+ * KV に保存する FIDO デバイスバインディング情報
  */
-interface DeviceBinding {
+interface FidoDeviceBinding {
   accountId: string;
-  pinHash: string; // SHA-256(salt + pin)
-  salt: string;
-  userAgent: string; // 登録時の User-Agent
+  credentialId: string;         // Base64URL
+  credentialPublicKey: string;  // Base64URL (Uint8Array をエンコード)
+  counter: number;
+  transports?: string[];
+  credentialDeviceType: string;
+  credentialBackedUp: boolean;
   registeredAt: number;
 }
 
-// --- 暗号ユーティリティ ---
+// --- ユーティリティ ---
 
-async function hashPin(pin: string, salt: string): Promise<string> {
-  const data = new TextEncoder().encode(salt + pin);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function generateSalt(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-// --- ミドルウェア内のデバイス検証共通処理 ---
-
-interface VerifiedDevice {
-  deviceId: string;
-  binding: DeviceBinding;
-}
-
-async function verifyDevice(
-  ctx: { cookies: { get(name: string): string | undefined }; req: { headers: Record<string, string | string[] | undefined> } },
-  kv: KVNamespace,
-): Promise<VerifiedDevice | null> {
-  const deviceId = ctx.cookies.get("ciba_device_id");
-  if (!deviceId) return null;
-
-  const binding = await kv.get<DeviceBinding>(`ciba:device:${deviceId}`, "json");
-  if (!binding) return null;
-
-  // User-Agent フィンガープリント照合
-  const currentUA = String(ctx.req.headers["user-agent"] ?? "");
-  if (currentUA !== binding.userAgent) {
-    console.warn(`[CIBA] User-Agent不一致: device=${deviceId}, expected=${binding.userAgent}, got=${currentUA}`);
-    return null;
+function uint8ArrayToBase64Url(arr: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < arr.length; i++) {
+    binary += String.fromCharCode(arr[i]);
   }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
-  return { deviceId, binding };
+function base64UrlToUint8Array(b64url: string): Uint8Array {
+  const base64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 /**
@@ -75,105 +62,213 @@ async function verifyDevice(
  */
 export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
   provider.use(async (ctx, next) => {
-    // --- デバイス登録ページ ---
+
+    // ============================================================
+    // デバイス登録ページ
+    // ============================================================
     if (ctx.method === "GET" && ctx.path === "/ciba/device") {
       ctx.type = "text/html";
       ctx.body = renderDeviceRegistrationPage();
       return;
     }
 
-    // --- デバイス登録処理 ---
-    if (ctx.method === "POST" && ctx.path === "/ciba/device") {
-      const body = await parseFormBody(ctx.req);
-      const loginHint = body.login_hint?.trim();
-      const pin = body.pin?.trim();
+    // ============================================================
+    // WebAuthn 登録: オプション生成
+    // ============================================================
+    if (ctx.method === "POST" && ctx.path === "/ciba/device/register/options") {
+      const body = await parseJsonBody(ctx.req);
+      const accountId = body.account_id?.trim();
 
-      if (!loginHint) {
-        ctx.type = "text/html";
-        ctx.body = renderDeviceRegistrationPage("ユーザー識別子を入力してください");
-        return;
-      }
-      if (!pin || pin.length < 4) {
-        ctx.type = "text/html";
-        ctx.body = renderDeviceRegistrationPage("PINは4文字以上で入力してください");
+      if (!accountId) {
+        ctx.status = 400;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "account_id is required" });
         return;
       }
 
-      const deviceId = crypto.randomUUID();
-      const salt = generateSalt();
-      const pinHash = await hashPin(pin, salt);
-      const userAgent = String(ctx.req.headers["user-agent"] ?? "");
+      // 既存クレデンシャルがあれば除外
+      const existingCredId = await kv.get(`ciba:account:${accountId}`);
+      const excludeCredentials = existingCredId
+        ? [{ id: existingCredId, transports: ["internal" as const] }]
+        : [];
 
-      const binding: DeviceBinding = {
-        accountId: loginHint,
-        pinHash,
-        salt,
-        userAgent,
-        registeredAt: Date.now(),
-      };
-
-      await kv.put(`ciba:device:${deviceId}`, JSON.stringify(binding), {
-        expirationTtl: 86400 * 30, // 30日
+      const options = await generateRegistrationOptions({
+        rpName: RP_NAME,
+        rpID: RP_ID,
+        userName: accountId,
+        userDisplayName: accountId,
+        attestationType: "none",
+        authenticatorSelection: {
+          // platform: デバイス内蔵の認証器（Touch ID, Windows Hello 等）に限定
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+          residentKey: "preferred",
+        },
+        excludeCredentials,
       });
 
-      ctx.cookies.set("ciba_device_id", deviceId, {
-        httpOnly: true,
-        maxAge: 86400 * 30 * 1000,
-        sameSite: "lax",
-        path: "/",
-      });
+      // チャレンジを一時保存
+      const challengeId = crypto.randomUUID();
+      await kv.put(`ciba:challenge:${challengeId}`, JSON.stringify({
+        challenge: options.challenge,
+        accountId,
+        type: "registration",
+      }), { expirationTtl: 300 });
 
-      console.log(`[CIBA] デバイス登録: device=${deviceId}, account=${loginHint}, ua=${userAgent.substring(0, 50)}`);
-      ctx.redirect("/ciba/consent");
+      ctx.type = "application/json";
+      ctx.body = JSON.stringify({ options, challengeId });
       return;
     }
 
-    // --- コンセントページ ---
+    // ============================================================
+    // WebAuthn 登録: 検証
+    // ============================================================
+    if (ctx.method === "POST" && ctx.path === "/ciba/device/register/verify") {
+      const body = await parseJsonBody(ctx.req);
+      const { challengeId, attestationResponse } = body;
+
+      if (!challengeId || !attestationResponse) {
+        ctx.status = 400;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "challengeId and attestationResponse are required" });
+        return;
+      }
+
+      // チャレンジを取得・削除
+      const challengeData = await kv.get<{ challenge: string; accountId: string; type: string }>(
+        `ciba:challenge:${challengeId}`, "json",
+      );
+      await kv.delete(`ciba:challenge:${challengeId}`);
+
+      if (!challengeData || challengeData.type !== "registration") {
+        ctx.status = 400;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "invalid or expired challenge" });
+        return;
+      }
+
+      try {
+        const verification = await verifyRegistrationResponse({
+          response: attestationResponse,
+          expectedChallenge: challengeData.challenge,
+          expectedOrigin: ORIGIN,
+          expectedRPID: RP_ID,
+          requireUserVerification: true,
+        });
+
+        if (!verification.verified || !verification.registrationInfo) {
+          ctx.status = 400;
+          ctx.type = "application/json";
+          ctx.body = JSON.stringify({ error: "verification_failed" });
+          return;
+        }
+
+        const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+
+        // デバイスバインディングを保存
+        const binding: FidoDeviceBinding = {
+          accountId: challengeData.accountId,
+          credentialId: credential.id,
+          credentialPublicKey: uint8ArrayToBase64Url(new Uint8Array(credential.publicKey)),
+          counter: credential.counter,
+          transports: credential.transports,
+          credentialDeviceType,
+          credentialBackedUp,
+          registeredAt: Date.now(),
+        };
+
+        // クレデンシャルID → バインディング
+        await kv.put(
+          `ciba:device:${credential.id}`,
+          JSON.stringify(binding),
+          { expirationTtl: 86400 * 365 },
+        );
+        // アカウント → クレデンシャルID
+        await kv.put(
+          `ciba:account:${challengeData.accountId}`,
+          credential.id,
+          { expirationTtl: 86400 * 365 },
+        );
+
+        // セッション Cookie（コンセントページへのアクセス用）
+        const sessionId = crypto.randomUUID();
+        await kv.put(`ciba:session:${sessionId}`, JSON.stringify({
+          accountId: challengeData.accountId,
+          credentialId: credential.id,
+        }), { expirationTtl: 86400 * 30 });
+
+        ctx.cookies.set("ciba_session", sessionId, {
+          httpOnly: true,
+          maxAge: 86400 * 30 * 1000,
+          sameSite: "lax",
+          path: "/",
+        });
+
+        console.log(`[CIBA] FIDO デバイス登録完了: account=${challengeData.accountId}, credId=${credential.id.substring(0, 16)}..., type=${credentialDeviceType}`);
+
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({
+          status: "registered",
+          credentialDeviceType,
+          credentialBackedUp,
+        });
+      } catch (err) {
+        console.error("[CIBA] WebAuthn 登録検証エラー:", err);
+        ctx.status = 400;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "verification_error", detail: String(err) });
+      }
+      return;
+    }
+
+    // ============================================================
+    // コンセントページ
+    // ============================================================
     if (ctx.method === "GET" && ctx.path === "/ciba/consent") {
-      const device = await verifyDevice(ctx, kv);
-      if (!device) {
-        ctx.cookies.set("ciba_device_id", "", { maxAge: 0, path: "/" });
+      const session = await getSession(ctx, kv);
+      if (!session) {
         ctx.redirect("/ciba/device");
         return;
       }
 
-      const pendingRequests = await getPendingRequests(kv, device.binding.accountId);
-
+      const pendingRequests = await getPendingRequests(kv, session.accountId);
       ctx.type = "text/html";
-      ctx.body = renderConsentPage(device.binding.accountId, device.deviceId, pendingRequests);
+      ctx.body = renderConsentPage(session.accountId, pendingRequests);
       return;
     }
 
-    // --- 保留リクエスト一覧 API ---
+    // ============================================================
+    // 保留リクエスト一覧 API（ポーリング用）
+    // ============================================================
     if (ctx.method === "GET" && ctx.path === "/ciba/pending") {
-      const device = await verifyDevice(ctx, kv);
-      if (!device) {
+      const session = await getSession(ctx, kv);
+      if (!session) {
         ctx.status = 401;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "device_not_verified" });
+        ctx.body = JSON.stringify({ error: "not_authenticated" });
         return;
       }
 
-      const pendingRequests = await getPendingRequests(kv, device.binding.accountId);
+      const pendingRequests = await getPendingRequests(kv, session.accountId);
       ctx.type = "application/json";
       ctx.body = JSON.stringify({ requests: pendingRequests });
       return;
     }
 
-    // --- リクエスト承認（PIN必須） ---
-    if (ctx.method === "POST" && ctx.path === "/ciba/approve") {
-      const device = await verifyDevice(ctx, kv);
-      if (!device) {
+    // ============================================================
+    // WebAuthn 認証: オプション生成（承認用）
+    // ============================================================
+    if (ctx.method === "POST" && ctx.path === "/ciba/approve/options") {
+      const session = await getSession(ctx, kv);
+      if (!session) {
         ctx.status = 401;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "device_not_verified" });
+        ctx.body = JSON.stringify({ error: "not_authenticated" });
         return;
       }
 
       const body = await parseJsonBody(ctx.req);
       const authReqId = body.auth_req_id;
-      const pin = body.pin;
-
       if (!authReqId) {
         ctx.status = 400;
         ctx.type = "application/json";
@@ -181,68 +276,156 @@ export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
         return;
       }
 
-      if (!pin) {
+      const options = await generateAuthenticationOptions({
+        rpID: RP_ID,
+        allowCredentials: [{
+          id: session.credentialId,
+          transports: ["internal"],
+        }],
+        userVerification: "required",
+      });
+
+      const challengeId = crypto.randomUUID();
+      await kv.put(`ciba:challenge:${challengeId}`, JSON.stringify({
+        challenge: options.challenge,
+        accountId: session.accountId,
+        credentialId: session.credentialId,
+        authReqId,
+        type: "authentication",
+      }), { expirationTtl: 300 });
+
+      ctx.type = "application/json";
+      ctx.body = JSON.stringify({ options, challengeId });
+      return;
+    }
+
+    // ============================================================
+    // WebAuthn 認証: 検証 + CIBA 承認
+    // ============================================================
+    if (ctx.method === "POST" && ctx.path === "/ciba/approve/verify") {
+      const session = await getSession(ctx, kv);
+      if (!session) {
+        ctx.status = 401;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "not_authenticated" });
+        return;
+      }
+
+      const body = await parseJsonBody(ctx.req);
+      const { challengeId, assertionResponse } = body;
+
+      if (!challengeId || !assertionResponse) {
         ctx.status = 400;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "pin_required", message: "承認にはPINの入力が必要です" });
+        ctx.body = JSON.stringify({ error: "challengeId and assertionResponse are required" });
         return;
       }
 
-      // PIN 検証
-      const inputHash = await hashPin(pin, device.binding.salt);
-      if (inputHash !== device.binding.pinHash) {
-        ctx.status = 403;
+      const challengeData = await kv.get<{
+        challenge: string;
+        accountId: string;
+        credentialId: string;
+        authReqId: string;
+        type: string;
+      }>(`ciba:challenge:${challengeId}`, "json");
+      await kv.delete(`ciba:challenge:${challengeId}`);
+
+      if (!challengeData || challengeData.type !== "authentication") {
+        ctx.status = 400;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "invalid_pin", message: "PINが正しくありません" });
+        ctx.body = JSON.stringify({ error: "invalid or expired challenge" });
         return;
       }
 
-      // 保留リクエスト検証
-      const accountId = device.binding.accountId;
-      const pendingReq = await kv.get<CibaPendingRequest>(`ciba:request:${authReqId}`, "json");
-      if (!pendingReq || pendingReq.accountId !== accountId) {
-        ctx.status = 404;
+      // デバイスバインディングを取得
+      const binding = await kv.get<FidoDeviceBinding>(
+        `ciba:device:${challengeData.credentialId}`, "json",
+      );
+      if (!binding) {
+        ctx.status = 400;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "request_not_found" });
+        ctx.body = JSON.stringify({ error: "device_not_found" });
         return;
       }
 
       try {
+        const verification = await verifyAuthenticationResponse({
+          response: assertionResponse,
+          expectedChallenge: challengeData.challenge,
+          expectedOrigin: ORIGIN,
+          expectedRPID: RP_ID,
+          credential: {
+            id: binding.credentialId,
+            publicKey: base64UrlToUint8Array(binding.credentialPublicKey) as Uint8Array<ArrayBuffer>,
+            counter: binding.counter,
+            transports: binding.transports as ("internal" | "usb" | "ble" | "nfc")[] | undefined,
+          },
+          requireUserVerification: true,
+        });
+
+        if (!verification.verified) {
+          ctx.status = 403;
+          ctx.type = "application/json";
+          ctx.body = JSON.stringify({ error: "authentication_failed" });
+          return;
+        }
+
+        // カウンター更新
+        binding.counter = verification.authenticationInfo.newCounter;
+        await kv.put(
+          `ciba:device:${binding.credentialId}`,
+          JSON.stringify(binding),
+          { expirationTtl: 86400 * 365 },
+        );
+
+        // CIBA リクエスト承認
+        const authReqId = challengeData.authReqId;
+        const pendingReq = await kv.get<CibaPendingRequest>(`ciba:request:${authReqId}`, "json");
+        if (!pendingReq || pendingReq.accountId !== session.accountId) {
+          ctx.status = 404;
+          ctx.type = "application/json";
+          ctx.body = JSON.stringify({ error: "request_not_found" });
+          return;
+        }
+
         const grant = new provider.Grant({
-          accountId,
+          accountId: session.accountId,
           clientId: pendingReq.clientId,
         });
         grant.addOIDCScope(pendingReq.scope);
         await grant.save();
 
         await provider.backchannelResult(authReqId, grant, {
-          acr: "urn:mace:incommon:iap:bronze",
-          amr: ["pin"],
+          acr: "urn:mace:incommon:iap:silver",
+          amr: ["fido"],
           authTime: Math.floor(Date.now() / 1000),
         });
 
-        await removePendingRequest(kv, accountId, authReqId);
+        await removePendingRequest(kv, session.accountId, authReqId);
         await kv.delete(`ciba:request:${authReqId}`);
 
-        console.log(`[CIBA] 承認: auth_req_id=${authReqId}, account=${accountId}`);
+        console.log(`[CIBA] FIDO 認証で承認: auth_req_id=${authReqId}, account=${session.accountId}`);
+
         ctx.type = "application/json";
         ctx.body = JSON.stringify({ status: "approved" });
       } catch (err) {
-        console.error("[CIBA] 承認エラー:", err);
+        console.error("[CIBA] WebAuthn 認証検証エラー:", err);
         ctx.status = 500;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "approval_failed", detail: String(err) });
+        ctx.body = JSON.stringify({ error: "verification_error", detail: String(err) });
       }
       return;
     }
 
-    // --- リクエスト拒否 ---
+    // ============================================================
+    // リクエスト拒否（FIDO不要 — セッションのみ）
+    // ============================================================
     if (ctx.method === "POST" && ctx.path === "/ciba/deny") {
-      const device = await verifyDevice(ctx, kv);
-      if (!device) {
+      const session = await getSession(ctx, kv);
+      if (!session) {
         ctx.status = 401;
         ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "device_not_verified" });
+        ctx.body = JSON.stringify({ error: "not_authenticated" });
         return;
       }
 
@@ -255,9 +438,8 @@ export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
         return;
       }
 
-      const accountId = device.binding.accountId;
       const pendingReq = await kv.get<CibaPendingRequest>(`ciba:request:${authReqId}`, "json");
-      if (!pendingReq || pendingReq.accountId !== accountId) {
+      if (!pendingReq || pendingReq.accountId !== session.accountId) {
         ctx.status = 404;
         ctx.type = "application/json";
         ctx.body = JSON.stringify({ error: "request_not_found" });
@@ -266,10 +448,10 @@ export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
 
       try {
         await provider.backchannelResult(authReqId, "access_denied");
-        await removePendingRequest(kv, accountId, authReqId);
+        await removePendingRequest(kv, session.accountId, authReqId);
         await kv.delete(`ciba:request:${authReqId}`);
 
-        console.log(`[CIBA] 拒否: auth_req_id=${authReqId}, account=${accountId}`);
+        console.log(`[CIBA] 拒否: auth_req_id=${authReqId}, account=${session.accountId}`);
         ctx.type = "application/json";
         ctx.body = JSON.stringify({ status: "denied" });
       } catch (err) {
@@ -281,80 +463,55 @@ export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
       return;
     }
 
-    // --- デバイス情報 API（デバッグ用） ---
-    if (ctx.method === "GET" && ctx.path === "/ciba/device/info") {
-      const device = await verifyDevice(ctx, kv);
-      if (!device) {
-        ctx.status = 401;
-        ctx.type = "application/json";
-        ctx.body = JSON.stringify({ error: "device_not_verified" });
-        return;
-      }
-
-      ctx.type = "application/json";
-      ctx.body = JSON.stringify({
-        deviceId: device.deviceId,
-        accountId: device.binding.accountId,
-        registeredAt: new Date(device.binding.registeredAt).toISOString(),
-        userAgentMatch: true,
-      });
-      return;
-    }
-
     await next();
   });
 }
 
-// --- ヘルパー関数 ---
+// --- ヘルパー ---
+
+interface SessionData {
+  accountId: string;
+  credentialId: string;
+}
+
+async function getSession(
+  ctx: { cookies: { get(name: string): string | undefined } },
+  kv: KVNamespace,
+): Promise<SessionData | null> {
+  const sessionId = ctx.cookies.get("ciba_session");
+  if (!sessionId) return null;
+  return kv.get<SessionData>(`ciba:session:${sessionId}`, "json");
+}
 
 async function getPendingRequests(kv: KVNamespace, accountId: string): Promise<CibaPendingRequest[]> {
   const pendingIds = await kv.get<string[]>(`ciba:pending:${accountId}`, "json") ?? [];
   const requests: CibaPendingRequest[] = [];
   for (const reqId of pendingIds) {
     const req = await kv.get<CibaPendingRequest>(`ciba:request:${reqId}`, "json");
-    if (req) {
-      requests.push(req);
-    }
+    if (req) requests.push(req);
   }
   return requests;
 }
 
 async function removePendingRequest(kv: KVNamespace, accountId: string, authReqId: string) {
-  const pendingListKey = `ciba:pending:${accountId}`;
-  const existing = await kv.get<string[]>(pendingListKey, "json") ?? [];
+  const key = `ciba:pending:${accountId}`;
+  const existing = await kv.get<string[]>(key, "json") ?? [];
   const updated = existing.filter((id) => id !== authReqId);
   if (updated.length > 0) {
-    await kv.put(pendingListKey, JSON.stringify(updated), { expirationTtl: 600 });
+    await kv.put(key, JSON.stringify(updated), { expirationTtl: 600 });
   } else {
-    await kv.delete(pendingListKey);
+    await kv.delete(key);
   }
 }
 
-function parseFormBody(req: import("http").IncomingMessage): Promise<Record<string, string>> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
-    req.on("end", () => {
-      const body = Buffer.concat(chunks).toString();
-      const params = new URLSearchParams(body);
-      const result: Record<string, string> = {};
-      for (const [key, value] of params) {
-        result[key] = value;
-      }
-      resolve(result);
-    });
-    req.on("error", reject);
-  });
-}
-
-function parseJsonBody(req: import("http").IncomingMessage): Promise<Record<string, string>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseJsonBody(req: import("http").IncomingMessage): Promise<Record<string, any>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     req.on("data", (chunk: Buffer) => chunks.push(chunk));
     req.on("end", () => {
       try {
-        const body = Buffer.concat(chunks).toString();
-        resolve(JSON.parse(body));
+        resolve(JSON.parse(Buffer.concat(chunks).toString()));
       } catch {
         resolve({});
       }
@@ -363,22 +520,38 @@ function parseJsonBody(req: import("http").IncomingMessage): Promise<Record<stri
   });
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // --- HTML レンダリング ---
 
 const COMMON_STYLES = `
+  * { box-sizing: border-box; }
   body { font-family: -apple-system, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
   .container { max-width: 560px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  h1 { color: #333; border-bottom: 2px solid #2196F3; padding-bottom: 10px; font-size: 1.4em; }
+  h1 { color: #333; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; font-size: 1.4em; }
   p { color: #666; line-height: 1.6; }
   label { display: block; margin-bottom: 6px; font-weight: bold; color: #555; }
-  input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; box-sizing: border-box; margin-bottom: 14px; }
-  .btn { display: inline-block; background: #4CAF50; color: #fff; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+  input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; margin-bottom: 14px; }
+  .btn { display: inline-block; color: #fff; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
   .btn:hover { opacity: 0.9; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: #1a73e8; }
+  .btn-approve { background: #4CAF50; }
+  .btn-deny { background: #f44336; }
+  .btn-muted { background: #9e9e9e; font-size: 12px; padding: 6px 12px; }
   .error { color: #f44336; background: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
+  .success { color: #2e7d32; background: #e8f5e9; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
   .info { background: #e3f2fd; padding: 12px; border-radius: 4px; margin-top: 16px; font-size: 14px; color: #1565C0; line-height: 1.5; }
 `;
 
-function renderDeviceRegistrationPage(error?: string): string {
+function renderDeviceRegistrationPage(): string {
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -390,37 +563,149 @@ function renderDeviceRegistrationPage(error?: string): string {
 <body>
   <div class="container">
     <h1>CIBA 認証デバイス（AD）登録</h1>
-    <p>このブラウザを認証デバイスとして登録します。<br>
-    CIBAフローで認証リクエストが来ると、このデバイスで承認・拒否できます。</p>
+    <p>このデバイスを FIDO2/WebAuthn で認証デバイスとして登録します。<br>
+    生体認証（指紋・顔）やデバイスPINで本人確認を行い、デバイスに固定されます。</p>
 
-    ${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}
+    <div id="error-msg" class="error" style="display:none"></div>
+    <div id="success-msg" class="success" style="display:none"></div>
 
-    <form method="POST" action="/ciba/device">
-      <label for="login_hint">ユーザー識別子</label>
-      <input type="text" id="login_hint" name="login_hint"
-        placeholder="例: user01, user@example.com, 090XXXXXXXX" required>
+    <div id="register-form">
+      <label for="account_id">ユーザー識別子</label>
+      <input type="text" id="account_id" placeholder="例: user01, user@example.com, 090XXXXXXXX" required>
 
-      <label for="pin">認証PIN（4文字以上）</label>
-      <input type="password" id="pin" name="pin"
-        placeholder="承認時に入力するPIN" minlength="4" required>
-
-      <button type="submit" class="btn">このデバイスを登録</button>
-    </form>
+      <button class="btn btn-primary" onclick="startRegistration()" id="register-btn">
+        FIDO2 でデバイスを登録
+      </button>
+    </div>
 
     <div class="info">
-      <strong>デバイス固定について:</strong><br>
-      ・Cookie + User-Agentでこのブラウザに固定されます<br>
-      ・承認時にはPINの再入力が必要です（所持＋知識の2要素）<br>
-      ・別のブラウザ・デバイスからは承認操作ができません
+      <strong>FIDO2 デバイス固定:</strong><br>
+      ・秘密鍵はこのデバイスのセキュアエレメントに保存されます<br>
+      ・生体認証またはデバイスPINで本人確認を行います<br>
+      ・秘密鍵はデバイス外に出ないため、他のデバイスでは承認不可能です
     </div>
   </div>
+
+  <script>
+    async function startRegistration() {
+      var accountId = document.getElementById('account_id').value.trim();
+      if (!accountId) { alert('ユーザー識別子を入力してください'); return; }
+
+      var btn = document.getElementById('register-btn');
+      btn.disabled = true;
+      btn.textContent = '登録中...';
+      hideMessages();
+
+      try {
+        // 1. 登録オプションを取得
+        var optRes = await fetch('/ciba/device/register/options', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account_id: accountId }),
+        });
+        var optData = await optRes.json();
+        if (!optRes.ok) throw new Error(optData.error || 'オプション取得に失敗');
+
+        var options = optData.options;
+        var challengeId = optData.challengeId;
+
+        // 2. WebAuthn API でクレデンシャル作成
+        var publicKey = {
+          challenge: base64UrlToBuffer(options.challenge),
+          rp: options.rp,
+          user: {
+            id: base64UrlToBuffer(options.user.id),
+            name: options.user.name,
+            displayName: options.user.displayName,
+          },
+          pubKeyCredParams: options.pubKeyCredParams,
+          timeout: options.timeout,
+          attestation: options.attestation,
+          authenticatorSelection: options.authenticatorSelection,
+          excludeCredentials: (options.excludeCredentials || []).map(function(c) {
+            return { id: base64UrlToBuffer(c.id), type: c.type, transports: c.transports };
+          }),
+        };
+
+        var credential = await navigator.credentials.create({ publicKey: publicKey });
+
+        // 3. レスポンスをサーバーに送信
+        var attestationResponse = {
+          id: credential.id,
+          rawId: bufferToBase64Url(credential.rawId),
+          type: credential.type,
+          response: {
+            clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+            attestationObject: bufferToBase64Url(credential.response.attestationObject),
+            transports: credential.response.getTransports ? credential.response.getTransports() : [],
+          },
+          clientExtensionResults: credential.getClientExtensionResults(),
+          authenticatorAttachment: credential.authenticatorAttachment,
+        };
+
+        var verifyRes = await fetch('/ciba/device/register/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challengeId: challengeId, attestationResponse: attestationResponse }),
+        });
+        var verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok) throw new Error(verifyData.error || '登録検証に失敗');
+
+        showSuccess('デバイス登録が完了しました (type: ' + verifyData.credentialDeviceType + ')');
+        setTimeout(function() { window.location.href = '/ciba/consent'; }, 1500);
+
+      } catch (err) {
+        if (err.name === 'NotAllowedError') {
+          showError('認証がキャンセルされました。もう一度お試しください。');
+        } else if (err.name === 'NotSupportedError') {
+          showError('このデバイス/ブラウザはPlatform Authenticatorに対応していません。');
+        } else {
+          showError(err.message || String(err));
+        }
+        btn.disabled = false;
+        btn.textContent = 'FIDO2 でデバイスを登録';
+      }
+    }
+
+    // --- Base64URL ユーティリティ ---
+    function base64UrlToBuffer(b64url) {
+      var base64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+      var padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+      var binary = atob(padded);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    function bufferToBase64Url(buffer) {
+      var bytes = new Uint8Array(buffer);
+      var binary = '';
+      for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+    }
+
+    function hideMessages() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+    function showError(msg) {
+      var el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function showSuccess(msg) {
+      var el = document.getElementById('success-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
 </body>
 </html>`;
 }
 
 function renderConsentPage(
   accountId: string,
-  deviceId: string,
   pendingRequests: CibaPendingRequest[],
 ): string {
   const requestsHtml = pendingRequests.length > 0
@@ -438,15 +723,9 @@ function renderConsentPage(
     .device-info { background: #e8f5e9; padding: 10px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; color: #2e7d32; }
     .request-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
     .request-info { margin-bottom: 12px; line-height: 1.6; }
-    .request-actions { display: flex; gap: 8px; align-items: flex-end; }
-    .btn { padding: 10px 20px; font-size: 14px; }
-    .btn-approve { background: #4CAF50; }
-    .btn-deny { background: #f44336; }
-    .btn-unregister { background: #9e9e9e; font-size: 12px; padding: 6px 12px; margin-top: 20px; }
+    .request-actions { display: flex; gap: 8px; align-items: center; }
     .no-requests { text-align: center; padding: 40px; color: #999; }
-    .pin-input { width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 0; }
-    .pin-label { font-size: 12px; color: #666; margin-bottom: 4px; display: block; }
-    .result-msg { padding: 8px 16px; border-radius: 4px; margin-top: 8px; }
+    .result-msg { padding: 8px 16px; border-radius: 4px; }
     .result-ok { background: #e8f5e9; color: #2e7d32; }
     .result-err { background: #ffebee; color: #f44336; }
     #polling-indicator { font-size: 12px; color: #999; text-align: center; margin-top: 8px; }
@@ -456,8 +735,8 @@ function renderConsentPage(
   <div class="container">
     <h1>CIBA 認証リクエスト</h1>
     <div class="device-info">
-      登録ユーザー: <strong>${escapeHtml(accountId)}</strong><br>
-      デバイスID: <code>${escapeHtml(deviceId.substring(0, 8))}...</code>
+      登録ユーザー: <strong>${escapeHtml(accountId)}</strong>
+      （FIDO2 デバイス固定済み）
     </div>
 
     <div id="requests-container">
@@ -466,7 +745,10 @@ function renderConsentPage(
 
     <div id="polling-indicator">自動更新中（5秒間隔）</div>
 
-    <button type="button" class="btn btn-unregister" onclick="unregisterDevice()">デバイス登録解除</button>
+    <button type="button" class="btn btn-muted" style="margin-top: 20px;"
+      onclick="if(confirm('デバイス登録を解除しますか？')) { document.cookie='ciba_session=;Max-Age=0;Path=/'; location.href='/ciba/device'; }">
+      デバイス登録解除
+    </button>
   </div>
 
   <script>
@@ -474,38 +756,67 @@ function renderConsentPage(
       var card = document.getElementById('req-' + authReqId);
       if (!card) return;
 
-      var pinInput = card.querySelector('.pin-input');
-      var pin = pinInput ? pinInput.value : '';
-      if (!pin) {
-        alert('PINを入力してください');
-        pinInput.focus();
-        return;
-      }
-
       var buttons = card.querySelectorAll('button');
       buttons.forEach(function(b) { b.disabled = true; });
 
       try {
-        var res = await fetch('/ciba/approve', {
+        // 1. 認証オプション取得
+        var optRes = await fetch('/ciba/approve/options', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ auth_req_id: authReqId, pin: pin }),
+          body: JSON.stringify({ auth_req_id: authReqId }),
         });
-        var data = await res.json();
+        var optData = await optRes.json();
+        if (!optRes.ok) throw new Error(optData.error || 'オプション取得に失敗');
 
-        if (res.ok) {
-          showResult(card, '承認しました', true);
-        } else if (data.error === 'invalid_pin') {
-          alert('PINが正しくありません');
-          pinInput.value = '';
-          pinInput.focus();
-          buttons.forEach(function(b) { b.disabled = false; });
-        } else {
-          alert('エラー: ' + (data.message || data.error));
-          buttons.forEach(function(b) { b.disabled = false; });
-        }
+        var options = optData.options;
+        var challengeId = optData.challengeId;
+
+        // 2. WebAuthn 認証
+        var publicKey = {
+          challenge: base64UrlToBuffer(options.challenge),
+          rpId: options.rpId,
+          timeout: options.timeout,
+          userVerification: options.userVerification,
+          allowCredentials: (options.allowCredentials || []).map(function(c) {
+            return { id: base64UrlToBuffer(c.id), type: c.type, transports: c.transports };
+          }),
+        };
+
+        var assertion = await navigator.credentials.get({ publicKey: publicKey });
+
+        // 3. 検証 + 承認
+        var assertionResponse = {
+          id: assertion.id,
+          rawId: bufferToBase64Url(assertion.rawId),
+          type: assertion.type,
+          response: {
+            clientDataJSON: bufferToBase64Url(assertion.response.clientDataJSON),
+            authenticatorData: bufferToBase64Url(assertion.response.authenticatorData),
+            signature: bufferToBase64Url(assertion.response.signature),
+            userHandle: assertion.response.userHandle ? bufferToBase64Url(assertion.response.userHandle) : null,
+          },
+          clientExtensionResults: assertion.getClientExtensionResults(),
+          authenticatorAttachment: assertion.authenticatorAttachment,
+        };
+
+        var verifyRes = await fetch('/ciba/approve/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challengeId: challengeId, assertionResponse: assertionResponse }),
+        });
+        var verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok) throw new Error(verifyData.error || '承認に失敗');
+
+        showResult(card, '承認しました（FIDO2 認証済み）', true);
+
       } catch (err) {
-        alert('通信エラー: ' + err.message);
+        if (err.name === 'NotAllowedError') {
+          alert('認証がキャンセルされました');
+        } else {
+          alert('エラー: ' + (err.message || String(err)));
+        }
         buttons.forEach(function(b) { b.disabled = false; });
       }
     }
@@ -555,17 +866,15 @@ function renderConsentPage(
       card.id = 'req-' + req.authReqId;
 
       var info = '<div class="request-info">' +
-        '<strong>クライアント:</strong> ' + escapeHtml(req.clientId) + '<br>' +
-        '<strong>スコープ:</strong> ' + escapeHtml(req.scope) + '<br>';
+        '<strong>クライアント:</strong> ' + esc(req.clientId) + '<br>' +
+        '<strong>スコープ:</strong> ' + esc(req.scope) + '<br>';
       if (req.bindingMessage) {
-        info += '<strong>確認メッセージ:</strong> <code>' + escapeHtml(req.bindingMessage) + '</code><br>';
+        info += '<strong>確認メッセージ:</strong> <code>' + esc(req.bindingMessage) + '</code><br>';
       }
       info += '<strong>リクエスト時刻:</strong> ' + new Date(req.createdAt).toLocaleString('ja-JP') + '</div>';
 
       var actions = '<div class="request-actions">' +
-        '<div><span class="pin-label">認証PIN:</span>' +
-        '<input type="password" class="pin-input" placeholder="PIN"></div>' +
-        '<button class="btn btn-approve" onclick="handleApprove(\\'' + req.authReqId + '\\')">承認</button>' +
+        '<button class="btn btn-approve" onclick="handleApprove(\\'' + req.authReqId + '\\')">FIDO2 で承認</button>' +
         '<button class="btn btn-deny" onclick="handleDeny(\\'' + req.authReqId + '\\')">拒否</button>' +
         '</div>';
 
@@ -573,10 +882,27 @@ function renderConsentPage(
       return card;
     }
 
-    function escapeHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    function esc(str) {
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    // --- Base64URL ---
+    function base64UrlToBuffer(b64url) {
+      var base64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+      var padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+      var binary = atob(padded);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    function bufferToBase64Url(buffer) {
+      var bytes = new Uint8Array(buffer);
+      var binary = '';
+      for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
     }
 
     async function pollPendingRequests() {
@@ -590,23 +916,14 @@ function renderConsentPage(
             return el.id.replace('req-', '');
           })
         );
-
         for (var i = 0; i < data.requests.length; i++) {
           var req = data.requests[i];
           if (existingIds.has(req.authReqId)) continue;
-          var card = buildRequestCard(req);
-          container.prepend(card);
+          container.prepend(buildRequestCard(req));
           var noReq = container.querySelector('.no-requests');
           if (noReq) noReq.remove();
         }
-      } catch (e) { /* ポーリングエラーは無視 */ }
-    }
-
-    function unregisterDevice() {
-      if (confirm('デバイス登録を解除しますか？\\nこのデバイスでは承認操作ができなくなります。')) {
-        document.cookie = 'ciba_device_id=; Max-Age=0; Path=/';
-        window.location.href = '/ciba/device';
-      }
+      } catch (e) { /* ignore */ }
     }
 
     setInterval(pollPendingRequests, 5000);
@@ -625,21 +942,8 @@ function renderRequestCard(req: CibaPendingRequest): string {
         <strong>リクエスト時刻:</strong> ${new Date(req.createdAt).toLocaleString("ja-JP")}
       </div>
       <div class="request-actions">
-        <div>
-          <span class="pin-label">認証PIN:</span>
-          <input type="password" class="pin-input" placeholder="PIN">
-        </div>
-        <button class="btn btn-approve" onclick="handleApprove('${escapeHtml(req.authReqId)}')">承認</button>
+        <button class="btn btn-approve" onclick="handleApprove('${escapeHtml(req.authReqId)}')">FIDO2 で承認</button>
         <button class="btn btn-deny" onclick="handleDeny('${escapeHtml(req.authReqId)}')">拒否</button>
       </div>
     </div>`;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

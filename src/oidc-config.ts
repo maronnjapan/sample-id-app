@@ -5,6 +5,7 @@ import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Configuration, Account, BackchannelAuthenticationRequest, KoaContextWithOIDC } from "oidc-provider";
 import type { Client as OIDCClient } from "oidc-provider";
 import { KvAdapter } from "./kv-adapter";
+import { sendPushNotification } from "./web-push-config";
 
 /**
  * CIBA の保留中リクエスト情報
@@ -140,6 +141,27 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
           );
 
           console.log(`[CIBA] 認証リクエスト保存: auth_req_id=${request.jti}, account=${accountId}`);
+
+          // Web Push 通知を送信
+          const pushSubJson = await kv.get(`ciba:push:${accountId}`);
+          if (pushSubJson) {
+            try {
+              const pushSub = JSON.parse(pushSubJson);
+              const pushPayload = JSON.stringify({
+                title: "CIBA 認証リクエスト",
+                body: pendingRequest.bindingMessage
+                  ? `確認コード: ${pendingRequest.bindingMessage}`
+                  : `${pendingRequest.clientId} からの認証リクエスト`,
+                authReqId: request.jti,
+              });
+              const result = await sendPushNotification(pushSub, pushPayload);
+              console.log(`[CIBA] Push通知送信: status=${result.status}, ok=${result.ok}`);
+            } catch (pushErr) {
+              console.warn("[CIBA] Push通知送信失敗（ポーリングで代替）:", pushErr);
+            }
+          } else {
+            console.log("[CIBA] Push購読なし（ポーリングで代替）");
+          }
         },
       },
     },

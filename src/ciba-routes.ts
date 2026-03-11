@@ -15,6 +15,7 @@ import {
   verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
 import type { CibaPendingRequest } from "./oidc-config";
+import { VAPID_PUBLIC_KEY } from "./web-push-config";
 
 type ProviderInstance = InstanceType<typeof Provider>;
 
@@ -463,9 +464,97 @@ export function addCibaRoutes(provider: ProviderInstance, kv: KVNamespace) {
       return;
     }
 
+    // ============================================================
+    // Web Push: VAPID 公開鍵
+    // ============================================================
+    if (ctx.method === "GET" && ctx.path === "/ciba/push/vapid-key") {
+      ctx.type = "application/json";
+      ctx.body = JSON.stringify({ publicKey: VAPID_PUBLIC_KEY });
+      return;
+    }
+
+    // ============================================================
+    // Web Push: 購読登録
+    // ============================================================
+    if (ctx.method === "POST" && ctx.path === "/ciba/push/subscribe") {
+      const session = await getSession(ctx, kv);
+      if (!session) {
+        ctx.status = 401;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "not_authenticated" });
+        return;
+      }
+
+      const body = await parseJsonBody(ctx.req);
+      const subscription = body.subscription;
+      if (!subscription) {
+        ctx.status = 400;
+        ctx.type = "application/json";
+        ctx.body = JSON.stringify({ error: "subscription is required" });
+        return;
+      }
+
+      await kv.put(
+        `ciba:push:${session.accountId}`,
+        JSON.stringify(subscription),
+        { expirationTtl: 86400 * 30 },
+      );
+
+      console.log(`[CIBA] Push購読登録: account=${session.accountId}`);
+      ctx.type = "application/json";
+      ctx.body = JSON.stringify({ status: "subscribed" });
+      return;
+    }
+
+    // ============================================================
+    // Web Push: Service Worker
+    // ============================================================
+    if (ctx.method === "GET" && ctx.path === "/ciba/sw.js") {
+      ctx.type = "application/javascript";
+      ctx.body = SERVICE_WORKER_SCRIPT;
+      return;
+    }
+
     await next();
   });
 }
+
+// --- Service Worker スクリプト ---
+
+const SERVICE_WORKER_SCRIPT = `
+self.addEventListener('push', function(event) {
+  var data = { title: 'CIBA 認証リクエスト', body: '認証リクエストが届いています' };
+  try {
+    data = event.data.json();
+  } catch (e) {}
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔐</text></svg>',
+      badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔐</text></svg>',
+      tag: 'ciba-auth-' + (data.authReqId || 'default'),
+      requireInteraction: true,
+      data: { url: '/ciba/consent', authReqId: data.authReqId },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  var url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/ciba/consent';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      for (var i = 0; i < clientList.length; i++) {
+        if (clientList[i].url.includes('/ciba/consent') && 'focus' in clientList[i]) {
+          return clientList[i].focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
+`;
 
 // --- ヘルパー ---
 
@@ -736,7 +825,8 @@ function renderConsentPage(
     <h1>CIBA 認証リクエスト</h1>
     <div class="device-info">
       登録ユーザー: <strong>${escapeHtml(accountId)}</strong>
-      （FIDO2 デバイス固定済み）
+      （FIDO2 デバイス固定済み）<br>
+      <span id="push-status" style="font-size: 12px;">Push通知: 確認中...</span>
     </div>
 
     <div id="requests-container">
@@ -927,6 +1017,57 @@ function renderConsentPage(
     }
 
     setInterval(pollPendingRequests, 5000);
+
+    // --- Web Push 購読 ---
+    async function setupPush() {
+      var statusEl = document.getElementById('push-status');
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        statusEl.textContent = 'Push通知: 非対応ブラウザ';
+        return;
+      }
+      try {
+        var reg = await navigator.serviceWorker.register('/ciba/sw.js', { scope: '/ciba/' });
+        await navigator.serviceWorker.ready;
+
+        var existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          statusEl.textContent = 'Push通知: 有効';
+          statusEl.style.color = '#2e7d32';
+          return;
+        }
+
+        if (Notification.permission === 'denied') {
+          statusEl.textContent = 'Push通知: ブロック済み（ブラウザ設定で許可してください）';
+          statusEl.style.color = '#f44336';
+          return;
+        }
+
+        // VAPID 公開鍵を取得
+        var keyRes = await fetch('/ciba/push/vapid-key');
+        var keyData = await keyRes.json();
+        var vapidKey = base64UrlToBuffer(keyData.publicKey);
+
+        var sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey,
+        });
+
+        // サーバーに購読情報を送信
+        await fetch('/ciba/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON() }),
+        });
+
+        statusEl.textContent = 'Push通知: 有効';
+        statusEl.style.color = '#2e7d32';
+      } catch (err) {
+        console.warn('Push setup failed:', err);
+        statusEl.textContent = 'Push通知: 設定失敗（ポーリングで代替）';
+        statusEl.style.color = '#ff9800';
+      }
+    }
+    setupPush();
   </script>
 </body>
 </html>`;

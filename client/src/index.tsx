@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { HomePage } from "./views/home";
 import { TokensPage } from "./views/tokens";
 import { ErrorPage } from "./views/error";
@@ -14,6 +15,9 @@ const PORT = Number(process.env.PORT ?? 3000);
 const REDIRECT_URI = `http://localhost:${PORT}/callback`;
 
 const app = new Hono();
+
+// 静的ファイル配信
+app.use("/static/*", serveStatic({ root: "./public", rewriteRequestPath: (path) => path.replace(/^\/static/, "") }));
 
 // トップページ
 app.get("/", (c) => {

@@ -2,8 +2,22 @@
  * oidc-provider の設定
  */
 import type { KVNamespace } from "@cloudflare/workers-types";
-import type { Configuration } from "oidc-provider";
+import type { Configuration, Account, BackchannelAuthenticationRequest, KoaContextWithOIDC } from "oidc-provider";
+import type { Client as OIDCClient } from "oidc-provider";
 import { KvAdapter } from "./kv-adapter";
+import { sendPushNotification } from "./web-push-config";
+
+/**
+ * CIBA の保留中リクエスト情報
+ */
+export interface CibaPendingRequest {
+  authReqId: string;
+  clientId: string;
+  accountId: string;
+  scope: string;
+  bindingMessage?: string;
+  createdAt: number;
+}
 
 /**
  * OIDC Provider の設定を生成
@@ -18,12 +32,17 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
       {
         client_id: "sample-client",
         client_secret: "sample-client-secret",
-        grant_types: ["authorization_code", "refresh_token"],
+        grant_types: [
+          "authorization_code",
+          "refresh_token",
+          "urn:openid:params:grant-type:ciba",
+        ],
         redirect_uris: ["http://localhost:3000/callback"],
         response_types: ["code" as const],
         scope: "openid profile email",
         token_endpoint_auth_method:
           "client_secret_basic" as const,
+        backchannel_token_delivery_mode: "poll" as const,
       },
     ],
 
@@ -85,25 +104,73 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
     features: {
       devInteractions: { enabled: true },
 
-      // リソースインジケーターの設定（RFC 8707） - クライアントがトークン発行時にリソースサーバーを指定できるようにする
-      // resourceIndicators: {
-      //   enabled: true,
-      //   useGrantedResource: () => true,
-      //   getResourceServerInfo: (ctx, resourceIndicator, client) => {
-      //     console.log("Resource Indicator requested:", resourceIndicator);
-      //     return {
-      //       audience: resourceIndicator,
-      //       scope: "openid profile email",
-      //       accessTokenFormat: "jwt" as const,
-      //     }
-      //   },
-      // },
+      // CIBA (Client Initiated Backchannel Authentication)
+      ciba: {
+        enabled: true,
+        deliveryModes: ["poll"],
+        triggerAuthenticationDevice: async (
+          _ctx: KoaContextWithOIDC,
+          request: BackchannelAuthenticationRequest,
+          account: Account,
+          _client: OIDCClient,
+        ) => {
+          // 認証デバイスへの通知: 保留中リクエストをKVに保存
+          const accountId = account.accountId;
+          const params = request.params as Record<string, string> | undefined;
+
+          const pendingRequest: CibaPendingRequest = {
+            authReqId: request.jti,
+            clientId: params?.client_id ?? "unknown",
+            accountId,
+            scope: params?.scope ?? "openid",
+            bindingMessage: params?.binding_message,
+            createdAt: Date.now(),
+          };
+
+          // ユーザーごとの保留リクエスト一覧を更新
+          const pendingListKey = `ciba:pending:${accountId}`;
+          const existing = await kv.get<string[]>(pendingListKey, "json") ?? [];
+          existing.push(request.jti);
+          await kv.put(pendingListKey, JSON.stringify(existing), { expirationTtl: 600 });
+
+          // リクエスト詳細を保存
+          await kv.put(
+            `ciba:request:${request.jti}`,
+            JSON.stringify(pendingRequest),
+            { expirationTtl: 600 },
+          );
+
+          console.log(`[CIBA] 認証リクエスト保存: auth_req_id=${request.jti}, account=${accountId}`);
+
+          // Web Push 通知を送信
+          const pushSubJson = await kv.get(`ciba:push:${accountId}`);
+          if (pushSubJson) {
+            try {
+              const pushSub = JSON.parse(pushSubJson);
+              const pushPayload = JSON.stringify({
+                title: "CIBA 認証リクエスト",
+                body: pendingRequest.bindingMessage
+                  ? `確認コード: ${pendingRequest.bindingMessage}`
+                  : `${pendingRequest.clientId} からの認証リクエスト`,
+                authReqId: request.jti,
+              });
+              const result = await sendPushNotification(pushSub, pushPayload);
+              console.log(`[CIBA] Push通知送信: status=${result.status}, ok=${result.ok}`);
+            } catch (pushErr) {
+              console.warn("[CIBA] Push通知送信失敗（ポーリングで代替）:", pushErr);
+            }
+          } else {
+            console.log("[CIBA] Push購読なし（ポーリングで代替）");
+          }
+        },
+      },
     },
 
     // トークンの有効期限
     ttl: {
       AccessToken: 3600,
       AuthorizationCode: 600,
+      BackchannelAuthenticationRequest: 600,
       IdToken: 3600,
       RefreshToken: 1209600,
       Session: 1209600,
@@ -112,14 +179,14 @@ export function createOidcConfig(kv: KVNamespace): Configuration {
     },
 
     // ユーザー情報取得のコールバック
+    // CIBA では login_hint がそのまま accountId として使われる
     findAccount: async (_ctx: unknown, id: string) => {
       return {
         accountId: id,
         claims: async () => ({
           sub: id,
-          name: "Sample User",
-          email: "user@example.com",
-          email_verified: true,
+          name: id, // login_hint をそのまま表示名に
+          preferred_username: id,
         }),
       };
     },

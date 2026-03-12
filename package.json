@@ -16,12 +16,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "oidc-provider": "^9.7.0"
+    "@simplewebauthn/server": "^13.3.0",
+    "oidc-provider": "^9.7.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260307.1",
     "@types/node": "^25.4.0",
     "@types/oidc-provider": "^9.5.0",
+    "@types/web-push": "^3.6.4",
     "typescript": "^5.9.3",
     "wrangler": "^4.71.0"
   }

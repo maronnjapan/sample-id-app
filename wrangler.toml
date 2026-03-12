@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ISSUER = "http://localhost:8787"
 
+# 静的アセット（JS ファイル等）
+[assets]
+directory = "./public"
+
 # ローカル開発用のKVネームスペース
 [[kv_namespaces]]
 binding = "OIDC_STORE"

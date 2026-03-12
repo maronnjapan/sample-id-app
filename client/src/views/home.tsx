@@ -9,7 +9,10 @@ export function HomePage() {
       <h1>OIDC Client (Relying Party)</h1>
       <p>認可コードフローでOpenID Providerからトークンを取得します。</p>
       <a href="/login" class="btn">
-        ログイン
+        ログイン（認可コードフロー）
+      </a>
+      <a href="/ciba" class="btn" style="background: #2196F3; margin-left: 8px;">
+        CIBA ログイン
       </a>
       <hr />
       <h2>設定</h2>

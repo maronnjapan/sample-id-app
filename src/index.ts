@@ -8,6 +8,7 @@
 import Provider from "oidc-provider";
 import { httpServerHandler } from "cloudflare:node";
 import { createOidcConfig } from "./oidc-config";
+import { addCibaRoutes } from "./ciba-routes";
 
 interface Env {
   OIDC_STORE: KVNamespace;
@@ -30,6 +31,9 @@ function getProvider(env: Env): InstanceType<typeof Provider> {
 
   // プロキシ設定（Cloudflare の背後で動作するため）
   provider.proxy = true;
+
+  // CIBA コンセントルートを追加
+  addCibaRoutes(provider, env.OIDC_STORE);
 
   // Koa (oidc-provider) を Node.js HTTP サーバーとして起動
   provider.listen(8080);

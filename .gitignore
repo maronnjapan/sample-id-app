@@ -56,3 +56,6 @@ dist
 /proxy-oauth-token-request
 
 .wrangler
+
+# Go binary
+golang/okta-log-retrieval

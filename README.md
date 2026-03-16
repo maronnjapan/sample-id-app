@@ -1,13 +1,65 @@
-## このプロジェクトについて
-このプロジェクトはID関連について試した内容を保存したリポジトリです。  
-各種内容とブランチは以下の通りです。
+## Hono MCP Server サンプル
 
-- Device Bound Credentials SessionをNext.jsで動かしたもの：[no-authorization-dbscブランチ](https://github.com/maronnjapan/sample-id-app/tree/no-authorization-dbsc)
-- Device Bound Credentials Sessionをユーザー認証に組み込んだもの：[check-session-dbscブランチ](https://github.com/maronnjapan/sample-id-app/tree/check-session-dbsc)
-- OAuth2 Token ExchangeをKeycloakで体験するためのアプリを実装したもの：[oauth-token-exchange-by-keycloakブランチ](https://github.com/maronnjapan/sample-id-app/tree/oauth-token-exchange-by-keycloak)
-- Device Bound Credentials Sessionのオプションであるauthorizationを試したもの：[dbsc-with-authorization-by-auth0ブランチ](https://github.com/maronnjapan/sample-id-app/tree/dbsc-with-authorization-by-auth0)
-- OktaのSWAをWebアプリと統合したもの：[practice-okta-swa-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/practice-okta-swa-app)
-- Auth0のEvent Streamを使用してユーザーのブロック通知をリソースサーバーに通知するもの：[notification-blocked-userブランチ](https://github.com/maronnjapan/sample-id-app/tree/notification-blocked-user)
-- OAuthの同意疲れを体験するアプリ：[many-oauth-consent-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/many-oauth-consent-app)
-- Auth0とAWSのEventBridgeを連携を行うための設定リポジトリ:[linked-aws-and-auth0-by-event-streamブランチ](https://github.com/maronnjapan/sample-id-app/tree/linked-aws-and-auth0-by-event-stream)
-- OktaでCIBAの代替アプリを動かすためのアプリとTerraform:[ciba-with-oktaブランチ](https://github.com/maronnjapan/sample-id-app/tree/ciba-with-okta)
+HonoとModel Context Protocol (MCP) SDKを使ったMCPサーバーのサンプル実装です。
+
+### 使用ライブラリ
+
+- [Hono](https://hono.dev/) - 軽量Webフレームワーク
+- [@hono/mcp](https://github.com/honojs/middleware/tree/main/packages/mcp) - HonoのMCPミドルウェア
+- [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) - MCP公式TypeScript SDK
+
+### セットアップ
+
+```bash
+npm install
+```
+
+### 起動方法
+
+```bash
+# 開発モード（ホットリロード付き）
+npm run dev
+
+# プロダクションビルド & 起動
+npm run build
+npm start
+```
+
+サーバーが `http://localhost:3000` で起動します。MCPエンドポイントは `http://localhost:3000/mcp` です。
+
+### 提供するMCP機能
+
+#### ツール (Tools)
+
+| ツール名 | 説明 |
+|---------|------|
+| `greet` | 名前を指定して挨拶メッセージを返す |
+| `calculate` | 四則演算（加算・減算・乗算・除算） |
+| `current_time` | 現在日時を取得（タイムゾーン指定可） |
+| `transform_text` | テキスト変換（大文字化・小文字化・反転・文字数カウント） |
+
+#### リソース (Resources)
+
+| リソース名 | URI | 説明 |
+|-----------|-----|------|
+| `server-info` | `info://server` | サーバー情報をJSON形式で返す |
+
+#### プロンプト (Prompts)
+
+| プロンプト名 | 説明 |
+|-------------|------|
+| `code-review` | コードレビュー依頼用のプロンプトテンプレート |
+
+### MCPクライアントからの接続
+
+Claude DesktopなどのMCPクライアントから接続する場合、以下の設定を追加してください。
+
+```json
+{
+  "mcpServers": {
+    "hono-mcp-sample": {
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```

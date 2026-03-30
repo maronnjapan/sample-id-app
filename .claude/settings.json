@@ -1,0 +1,89 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm typecheck:household-app:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(touch **/*.{ts,tsx,jsx,js,json,sh,md})",
+      "WriteFile(**/*.ts)",
+      "WriteFile(**/*.tsx)",
+      "WriteFile(**/*.jsx)",
+      "WriteFile(**/*.js)",
+      "WriteFile(**/*.json)",
+      "WriteFile(**/*.jsonc)",
+      "WriteFile(**/*.sh)",
+      "WriteFile(**/*.md)",
+      "mcp__ide__getDiagnostics",
+      "Bash(pnpm --filter household-app typecheck:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh api:*)",
+      "Bash(git show:*)",
+      "Bash(pnpm --filter household-app exec tsc --noEmit)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm -r build:*)",
+      "Bash(pnpm --filter delete-expired-session-cron exec tsc:*)",
+      "Bash(pnpm install)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "WebSearch",
+      "Bash(grep:*)",
+      "Bash(git log:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform apply:*)",
+      "Bash(git log:*)",
+      "Bash(chmod:*)",
+      "Bash(./setup-ciba-authenticator.sh:*)",
+      "Bash(TF_LOG=DEBUG terraform apply:*)",
+      "Bash(./check-ciba-support.sh:*)",
+      "WebSearch",
+      "WebFetch(domain:developer.okta.com)",
+      "WebFetch(domain:devforum.okta.com)",
+      "WebFetch(domain:help.okta.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:iamse.blog)",
+      "Bash(npx tsc:*)",
+      "Bash(terraform state list:*)",
+      "Bash(terraform state show:*)",
+      "WebFetch(domain:registry.terraform.io)",
+      "Bash(cd /var/www/sample-id-app/connected-account && pnpm run build 2>&1)",
+      "Bash(ls:*)",
+      "WebFetch(domain:auth0.com)",
+      "WebFetch(domain:auth0.github.io)",
+      "WebFetch(domain:community.auth0.com)",
+      "Bash(git checkout:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm install:*)",
+      "Bash(node:*)",
+      "Bash(git ls-tree:*)"
+    ]
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Console]::Beep(800, 700); [System.Windows.Forms.MessageBox]::Show('Claude Codeが確認を求めています')\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Console]::Beep(500, 1000); [System.Windows.Forms.MessageBox]::Show('Claude Codeが作業を完了しました。')\""
+          }
+        ]
+      }
+    ]
+  }
+}

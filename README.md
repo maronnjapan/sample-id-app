@@ -1,13 +1,114 @@
-## このプロジェクトについて
-このプロジェクトはID関連について試した内容を保存したリポジトリです。  
-各種内容とブランチは以下の通りです。
+# sample-id-app
 
-- Device Bound Credentials SessionをNext.jsで動かしたもの：[no-authorization-dbscブランチ](https://github.com/maronnjapan/sample-id-app/tree/no-authorization-dbsc)
-- Device Bound Credentials Sessionをユーザー認証に組み込んだもの：[check-session-dbscブランチ](https://github.com/maronnjapan/sample-id-app/tree/check-session-dbsc)
-- OAuth2 Token ExchangeをKeycloakで体験するためのアプリを実装したもの：[oauth-token-exchange-by-keycloakブランチ](https://github.com/maronnjapan/sample-id-app/tree/oauth-token-exchange-by-keycloak)
-- Device Bound Credentials Sessionのオプションであるauthorizationを試したもの：[dbsc-with-authorization-by-auth0ブランチ](https://github.com/maronnjapan/sample-id-app/tree/dbsc-with-authorization-by-auth0)
-- OktaのSWAをWebアプリと統合したもの：[practice-okta-swa-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/practice-okta-swa-app)
-- Auth0のEvent Streamを使用してユーザーのブロック通知をリソースサーバーに通知するもの：[notification-blocked-userブランチ](https://github.com/maronnjapan/sample-id-app/tree/notification-blocked-user)
-- OAuthの同意疲れを体験するアプリ：[many-oauth-consent-appブランチ](https://github.com/maronnjapan/sample-id-app/tree/many-oauth-consent-app)
-- Auth0とAWSのEventBridgeを連携を行うための設定リポジトリ:[linked-aws-and-auth0-by-event-streamブランチ](https://github.com/maronnjapan/sample-id-app/tree/linked-aws-and-auth0-by-event-stream)
-- OktaでCIBAの代替アプリを動かすためのアプリとTerraform:[ciba-with-oktaブランチ](https://github.com/maronnjapan/sample-id-app/tree/ciba-with-okta)
+ID 連携・認証プロトコルの実装を試すサンプルリポジトリ。
+ブランチごとにテーマを分けて検証内容を保存している。
+
+## ブランチ一覧
+
+| ブランチ | 内容 |
+|---|---|
+| `okta-toke-exchange` | Okta Org 認可サーバーを使った Token Exchange (RFC 8693) + ID-JAG 取得デモ |
+
+> 過去の検証内容（Auth0 / AWS EventBridge 連携、CIBA など）はコミット履歴を参照。
+
+---
+
+## okta-toke-exchange ブランチ
+
+Okta でログインして取得した ID Token を、Token Exchange (RFC 8693) で
+**ID-JAG (Identity Assertion JWT)** に変換するデモアプリ。
+
+### フロー
+
+```
+ユーザー
+  └─ Okta ログイン (NextAuth / Login App)
+       └─ ID Token 取得
+            └─ /api/token-exchange (POST) でToken Exchange リクエスト
+                 └─ Okta Org AS → ID-JAG 返却 → ブラウザに表示
+```
+
+### 技術スタック
+
+- **Next.js 16** (App Router)
+- **NextAuth.js v5** (Okta プロバイダ)
+- **TypeScript 6**
+- **Tailwind CSS 4**
+- **Vitest 4**
+
+### セットアップ
+
+#### 1. 依存関係のインストール
+
+```bash
+pnpm install
+```
+
+#### 2. 環境変数の設定
+
+```bash
+cp .env.example .env
+```
+
+`.env` に以下を設定する:
+
+```env
+# Okta アプリ（Login App）
+OKTA_DOMAIN=https://your-org.okta.com
+OKTA_CLIENT_ID=your-client-id
+OKTA_CLIENT_SECRET=your-client-secret
+
+# Token Exchange のデフォルト audience（任意）
+# OKTA_RESOURCE_AUDIENCE=http://localhost:5001
+
+# NextAuth
+AUTH_SECRET=  # npx auth secret で生成
+```
+
+Okta 側の設定（XAA 有効化、Managed Connections 等）は [`docs/setup-guide.md`](docs/setup-guide.md) を参照。
+
+#### 3. 開発サーバーの起動
+
+```bash
+pnpm dev
+```
+
+http://localhost:3000 にアクセスすると `/token-exchange` にリダイレクトされる。
+
+### テスト
+
+```bash
+pnpm test
+```
+
+### ディレクトリ構成
+
+```
+src/
+  app/
+    api/
+      auth/[...nextauth]/   # NextAuth ハンドラ
+      token-exchange/       # Token Exchange API エンドポイント
+    token-exchange/         # Token Exchange ページ（Server Component）
+  components/
+    LoginForm.tsx           # Okta ログインボタン
+    Logout.tsx              # ログアウトボタン
+    TokenExchangeClient.tsx # Token Exchange UI（Client Component）
+  lib/
+    token-utils.ts          # JWT デコード / Token Exchange ボディ生成
+    token-utils.test.ts     # ユニットテスト
+  auth.ts                   # NextAuth 設定
+  proxy.ts                  # /token-exchange ルートの認証ガード
+types/
+  global.d.ts               # NextAuth Session / JWT 型拡張
+docs/
+  setup-guide.md            # Okta セットアップ手順
+  xaa-investigation.md      # XAA / ID-JAG 調査メモ
+  implementation-status.md  # 実装状況メモ
+```
+
+### ドキュメント
+
+- [セットアップ手順](docs/setup-guide.md)
+- [XAA / ID-JAG 調査メモ](docs/xaa-investigation.md)
+- [実装状況](docs/implementation-status.md)

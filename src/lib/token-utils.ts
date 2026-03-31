@@ -54,7 +54,7 @@ export function buildTokenExchangeBody(params: TokenExchangeParams): URLSearchPa
     'subject_token': params.idToken,
     'subject_token_type': 'urn:ietf:params:oauth:token-type:id_token',
     'requested_token_type': 'urn:ietf:params:oauth:token-type:id-jag',
-    'resource': 'https://integrator-9180109.okta.com/oauth2/default', // Okta Org認可サーバーのIssuer URLを指定（Custom認可サーバーは不可）
+    'resource': 'https://example.com', // Resource Serverの識別子（必要に応じて変更）
   });
 
   if (params.audience) {

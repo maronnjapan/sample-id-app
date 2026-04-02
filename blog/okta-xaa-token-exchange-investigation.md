@@ -446,7 +446,6 @@ const idJagPayload = idJagToken ? decodeJWTPayload(idJagToken) : null;
 
 ### 5.4 resource パラメータの挙動
 
-- `buildTokenExchangeBody()` 内で `resource` パラメータに Custom 認可サーバーの Issuer URL を指定している
 - `resource` パラメータは自由に設定可能であり、指定した値が ID-JAG に反映されることを確認した（ID-JAG の `resource` クレームに任意の値が入ることを検証済み）
 - RFC 8693 で定義されたトークンの対象リソース指定パラメータであり、Okta XAA においても意図した値を渡すことができる
 - 一方で `audience` の制約（固定値）は別途存在しており、`audience` の自由設定は現時点では不可
@@ -458,17 +457,16 @@ const idJagPayload = idJagToken ? decodeJWTPayload(idJagToken) : null;
 ```json
 {
   "access_token": "<ID-JAG の JWT 文字列>",
-  "token_type": "Bearer",
+  "token_type": "N_A",
   "expires_in": 300,
-  "scope": "openid profile email"
+  "issued_token_type": "urn:ietf:params:oauth:token-type:id-jag"
 }
 ```
 
 - 注目点：
   - フィールド名は `access_token` だが、中身は ID-JAG
-  - RFC 8693 では交換後のトークン種別を `issued_token_type` で返すことが定義されている
   - **Okta のレスポンスには `issued_token_type` フィールドが含まれていなかった**（2026-03-30 時点）
-  - `token_type` は `Bearer`
+  - `token_type` は `N_A`
   - `expires_in` は 300 秒（5 分）で比較的短い → 中間トークンとしての性質を反映
 
 ---
@@ -502,7 +500,7 @@ Okta ID Token
 
 ### 6.3 Org 認可サーバー限定という根本的な制約
 
-- **Token Exchange が Org 認可サーバーにのみ対応** という制約
+- **ID-JAGを発行するためのToken Exchange が Org 認可サーバーにのみ対応** という制約
 
 ```
 # 使えるエンドポイント
@@ -522,7 +520,7 @@ https://your-org.okta.com/oauth2/aus.../v1/token   ← Custom AS（不可）
 - **OIN カタログの専用アプリが必須**
 - 汎用 OIDC アプリで Token Exchange を実行 → `unsupported_grant_type` または `invalid_grant` が返る
 - 原因: Managed Connections の設定が OIN 登録済みかつ XAA 対応のアプリにのみ許可されている
-- 外部リソースサーバー対応のカスタムアプリを作成しても、Managed Connections に登録できず、Token Exchange 自体が実行不可能
+- 外部リソースサーバー対応のカスタムアプリを作成しても、Managed Connections に登録できず、ID-JAGを発行するToken Exchange 自体が実行不可能
 
 ### 6.5 外部リソースサーバーへの拡張が現時点で難しい理由の整理
 

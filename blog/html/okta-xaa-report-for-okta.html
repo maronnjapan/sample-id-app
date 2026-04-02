@@ -170,64 +170,63 @@
 <li data-line="82" class="code-line">なお、通常の Token Exchange（ID-JAG 以外のトークン交換）は Custom 認可サーバーでも利用可能であり、本制約はあくまで ID-JAG 発行に固有の制限である認識です。</li>
 </ul>
 </li>
-<li data-line="83" class="code-line">Custom 認可サーバー（<code>/oauth2/default/v1/token</code> 等）に ID-JAG 発行リクエストを送ると <code>unsupported_grant_type</code> エラーが返る。</li>
-<li data-line="84" class="code-line">Org 認可サーバーはスコープ・クレームのカスタマイズが制限されており、外部リソースサーバー向けのカスタムスコープを ID-JAG に含めることが難しい。</li>
+<li data-line="83" class="code-line">Org 認可サーバーはスコープ・クレームのカスタマイズが制限されており、外部リソースサーバー向けのカスタムスコープを ID-JAG に含めることが難しい。</li>
 </ul>
-<h3 id="oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" data-line="86" class="code-line"><a class="header-anchor-link" href="#oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" aria-hidden="true"></a> OIN カタログ登録済みアプリが必須</h3>
-<ul data-line="88" class="code-line">
-<li data-line="88" class="code-line">Managed Connections タブは OIN カタログに登録済みかつ XAA 対応のアプリにしか表示されない。</li>
-<li data-line="89" class="code-line">汎用 App（OIDC アプリとして手動作成したもの）では Managed Connections の設定自体が不可能であり、ID-JAG 発行のための Token Exchange が実行できない。</li>
-<li data-line="90" class="code-line">また、Cross App AccessにおけるIdPとResource Authorization Server両方をOINカタログアプリである必要。
-<ul data-line="91" class="code-line">
-<li data-line="91" class="code-line">そのため、独自のResource Authorization ServerにID-JAGを渡そうにも、Resource Authorization Serverに相当するOINカタログアプリも作成が必要となる。</li>
-<li data-line="92" class="code-line">Cross App Accessのプロトコルで考えると不要な登場人物が存在してしまう。</li>
+<h3 id="oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" data-line="85" class="code-line"><a class="header-anchor-link" href="#oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" aria-hidden="true"></a> OIN カタログ登録済みアプリが必須</h3>
+<ul data-line="87" class="code-line">
+<li data-line="87" class="code-line">Managed Connections タブは OIN カタログに登録済みかつ XAA 対応のアプリにしか表示されない。</li>
+<li data-line="88" class="code-line">汎用 App（OIDC アプリとして手動作成したもの）では Managed Connections の設定自体が不可能であり、ID-JAG 発行のための Token Exchange が実行できない。</li>
+<li data-line="89" class="code-line">また、Cross App AccessにおけるIdPとResource Authorization ServerはOINカタログアプリであることが必要。
+<ul data-line="90" class="code-line">
+<li data-line="90" class="code-line">そのため、独自のResource Authorization ServerにID-JAGを渡そうにも、Resource Authorization Serverに相当するOINカタログアプリも作成が必要となる。</li>
+<li data-line="91" class="code-line">Cross App Accessのプロトコルで考えると不要な登場人物が存在してしまう。</li>
 </ul>
 </li>
 </ul>
-<h2 id="%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" data-line="95" class="code-line"><a class="header-anchor-link" href="#%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" aria-hidden="true"></a> サードパーティ認可サーバーへの拡張が困難な理由</h2>
-<p data-line="97" class="code-line">当初の目標であった「ID-JAG を Okta 外部の認可サーバーに渡してアクセストークンを発行させる」構成を実現するには、以下の 3 つの制約をすべてクリアする必要がある：</p>
-<table data-line="99" class="code-line">
-<thead data-line="99" class="code-line">
-<tr data-line="99" class="code-line">
+<h2 id="%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" data-line="94" class="code-line"><a class="header-anchor-link" href="#%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" aria-hidden="true"></a> サードパーティ認可サーバーへの拡張が困難な理由</h2>
+<p data-line="96" class="code-line">当初の目標であった「ID-JAG を Okta 外部の認可サーバーに渡してアクセストークンを発行させる」構成を実現するには、以下の 3 つの制約をすべてクリアする必要がある：</p>
+<table data-line="98" class="code-line">
+<thead data-line="98" class="code-line">
+<tr data-line="98" class="code-line">
 <th>制約</th>
 <th>詳細</th>
 <th>現時点での回避策</th>
 </tr>
 </thead>
-<tbody data-line="101" class="code-line">
-<tr data-line="101" class="code-line">
+<tbody data-line="100" class="code-line">
+<tr data-line="100" class="code-line">
 <td><code>audience</code> の固定</td>
 <td>任意の外部サーバー識別子を audience に設定できない</td>
 <td>Okta への申請（<code>xaa@okta.com</code>）が必要</td>
 </tr>
-<tr data-line="102" class="code-line">
+<tr data-line="101" class="code-line">
 <td>Org AS 限定</td>
 <td>カスタムスコープを ID-JAG に含められない</td>
 <td>現時点で回避策なし</td>
 </tr>
-<tr data-line="103" class="code-line">
+<tr data-line="102" class="code-line">
 <td>OIN アプリ必須</td>
 <td>外部リソース向けカスタムアプリで Managed Connections を設定できない</td>
 <td>現時点で回避策なし</td>
 </tr>
 </tbody>
 </table>
-<h2 id="%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" data-line="105" class="code-line"><a class="header-anchor-link" href="#%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" aria-hidden="true"></a> 確認事項</h2>
-<p data-line="107" class="code-line">以下の点について確認したいです。</p>
-<h3 id="q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" data-line="109" class="code-line"><a class="header-anchor-link" href="#q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" aria-hidden="true"></a> Q1. <code>audience</code> の自由設定はいつ頃対応予定か</h3>
-<p data-line="111" class="code-line">現時点では <code>xaa@okta.com</code> へのメール申請が必要とのことだが、GA リリース時に Admin Console または API から自由に設定できるようになる予定はありますでしょうか。</p>
-<h3 id="q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" data-line="113" class="code-line"><a class="header-anchor-link" href="#q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q2. OIN カタログ以外のカスタムアプリで Managed Connections を設定できるようにする予定はあるか</h3>
-<p data-line="115" class="code-line">外部リソースサーバーとの統合を想定した場合、OIN カタログへの登録なしに XAA を利用できる仕組みが必要になると考えます。この対応の予定がありますでしょうか。</p>
-<h3 id="q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" data-line="117" class="code-line"><a class="header-anchor-link" href="#q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q3. カスタム認可サーバーを使用せずともカスタムスコープを設定は可能になるか</h3>
-<p data-line="119" class="code-line">スコープなどの管理はIdPに寄せることができると統制しやすいと思うので、カスタムスコープを設定できると嬉しいと感じております。<br />
+<h2 id="%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" data-line="104" class="code-line"><a class="header-anchor-link" href="#%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" aria-hidden="true"></a> 確認事項</h2>
+<p data-line="106" class="code-line">以下の点について確認したいです。</p>
+<h3 id="q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" data-line="108" class="code-line"><a class="header-anchor-link" href="#q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" aria-hidden="true"></a> Q1. <code>audience</code> の自由設定はいつ頃対応予定か</h3>
+<p data-line="110" class="code-line">現時点では <code>xaa@okta.com</code> へのメール申請が必要とのことだが、GA リリース時に Admin Console または API から自由に設定できるようになる予定はありますでしょうか。</p>
+<h3 id="q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" data-line="112" class="code-line"><a class="header-anchor-link" href="#q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q2. OIN カタログ以外のカスタムアプリで Managed Connections を設定できるようにする予定はあるか</h3>
+<p data-line="114" class="code-line">外部リソースサーバーとの統合を想定した場合、OIN カタログへの登録なしに XAA を利用できる仕組みが必要になると考えます。この対応の予定がありますでしょうか。</p>
+<h3 id="q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" data-line="116" class="code-line"><a class="header-anchor-link" href="#q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q3. カスタム認可サーバーを使用せずともカスタムスコープを設定は可能になるか</h3>
+<p data-line="118" class="code-line">スコープなどの管理はIdPに寄せることができると統制しやすいと思うので、カスタムスコープを設定できると嬉しいと感じております。<br />
 こちらの機能について対応予定はありますでしょうか。</p>
-<h2 id="%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" data-line="122" class="code-line"><a class="header-anchor-link" href="#%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" aria-hidden="true"></a> 参考情報</h2>
-<ul data-line="124" class="code-line">
-<li data-line="124" class="code-line">検証リポジトリ: <a href="https://github.com/maronnjapan/sample-id-app" target="_blank" rel="nofollow noopener noreferrer">https://github.com/maronnjapan/sample-id-app</a> (ブランチ: <code>okta-toke-exchange</code>)</li>
-<li data-line="125" class="code-line"><a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2025/09/03/cross-app-access</a></li>
-<li data-line="126" class="code-line"><a href="https://developer.okta.com/blog/2026/02/17/xaa-resource-app" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2026/02/17/xaa-resource-app</a></li>
-<li data-line="127" class="code-line"><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/</a></li>
-<li data-line="128" class="code-line">RFC 8693: <a href="https://datatracker.ietf.org/doc/html/rfc8693" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/html/rfc8693</a></li>
+<h2 id="%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" data-line="121" class="code-line"><a class="header-anchor-link" href="#%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" aria-hidden="true"></a> 参考情報</h2>
+<ul data-line="123" class="code-line">
+<li data-line="123" class="code-line">検証リポジトリ: <a href="https://github.com/maronnjapan/sample-id-app" target="_blank" rel="nofollow noopener noreferrer">https://github.com/maronnjapan/sample-id-app</a> (ブランチ: <code>okta-toke-exchange</code>)</li>
+<li data-line="124" class="code-line"><a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2025/09/03/cross-app-access</a></li>
+<li data-line="125" class="code-line"><a href="https://developer.okta.com/blog/2026/02/17/xaa-resource-app" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2026/02/17/xaa-resource-app</a></li>
+<li data-line="126" class="code-line"><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/</a></li>
+<li data-line="127" class="code-line">RFC 8693: <a href="https://datatracker.ietf.org/doc/html/rfc8693" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/html/rfc8693</a></li>
 </ul>
 
   </div>

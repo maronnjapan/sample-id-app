@@ -81,14 +81,13 @@ ID-JAG ペイロードに含まれるクレーム:
 
 - ID-JAG を発行するための Token Exchange はOINカタログのアプリを使用する場合、 Org 認可サーバー（`/oauth2/v1/token`）でのみ動作する。
   - なお、通常の Token Exchange（ID-JAG 以外のトークン交換）は Custom 認可サーバーでも利用可能であり、本制約はあくまで ID-JAG 発行に固有の制限である認識です。
-- Custom 認可サーバー（`/oauth2/default/v1/token` 等）に ID-JAG 発行リクエストを送ると `unsupported_grant_type` エラーが返る。
 - Org 認可サーバーはスコープ・クレームのカスタマイズが制限されており、外部リソースサーバー向けのカスタムスコープを ID-JAG に含めることが難しい。
 
 ### OIN カタログ登録済みアプリが必須
 
 - Managed Connections タブは OIN カタログに登録済みかつ XAA 対応のアプリにしか表示されない。
 - 汎用 App（OIDC アプリとして手動作成したもの）では Managed Connections の設定自体が不可能であり、ID-JAG 発行のための Token Exchange が実行できない。
-- また、Cross App AccessにおけるIdPとResource Authorization Server両方をOINカタログアプリである必要。
+- また、Cross App AccessにおけるIdPとResource Authorization ServerはOINカタログアプリであることが必要。
   - そのため、独自のResource Authorization ServerにID-JAGを渡そうにも、Resource Authorization Serverに相当するOINカタログアプリも作成が必要となる。
   - Cross App Accessのプロトコルで考えると不要な登場人物が存在してしまう。
 

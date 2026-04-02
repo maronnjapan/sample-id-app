@@ -19,213 +19,214 @@
 <body>
   <div class="znc">
 <h1 id="okta-xaa-(cross-app-access)-%E6%A4%9C%E8%A8%BC%E3%83%AC%E3%83%9D%E3%83%BC%E3%83%88" data-line="0" class="code-line"><a class="header-anchor-link" href="#okta-xaa-(cross-app-access)-%E6%A4%9C%E8%A8%BC%E3%83%AC%E3%83%9D%E3%83%BC%E3%83%88" aria-hidden="true"></a> Okta XAA (Cross App Access) 検証レポート</h1>
-<p data-line="1" class="code-line">※ このレポートにおけるCross App AccessはAI Agentを使用しない前提になっています。</p>
-<h2 id="%E6%A4%9C%E8%A8%BC%E6%A6%82%E8%A6%81" data-line="3" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E6%A6%82%E8%A6%81" aria-hidden="true"></a> 検証概要</h2>
-<p data-line="5" class="code-line">Okta XAA (Cross App Access) を用いた Token Exchange (RFC 8693) の動作検証を行い、ID-JAG (Identity Assertion JWT) の取得とそのクレーム構造を確認した。</p>
-<p data-line="7" class="code-line">加えて、「AI Agentに限定せず、取得した ID-JAG をサードパーティ（Okta ドメイン外）の認可サーバーに渡し、そこでアクセストークンを発行させる」構成の実現可能性も確認することを目的とした。<br />
+<p data-line="1" class="code-line">※ このレポートにおけるCross App AccessはAI Agentを使用せず以下の記事をベースに検証したものです<br style="display:none" />
+<a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" rel="noreferrer noopener nofollow" target="_blank">https://developer.okta.com/blog/2025/09/03/cross-app-access</a><a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" style="display:none" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2025/09/03/cross-app-access</a></p>
+<h2 id="%E6%A4%9C%E8%A8%BC%E6%A6%82%E8%A6%81" data-line="4" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E6%A6%82%E8%A6%81" aria-hidden="true"></a> 検証概要</h2>
+<p data-line="6" class="code-line">Okta XAA (Cross App Access) を用いた Token Exchange (RFC 8693) の動作検証を行い、ID-JAG (Identity Assertion JWT) の取得とそのクレーム構造を確認した。</p>
+<p data-line="8" class="code-line">加えて、「AI Agentに限定せず、取得した ID-JAG をサードパーティ（Okta ドメイン外）の認可サーバーに渡し、そこでアクセストークンを発行させる」構成の実現可能性も確認することを目的とした。<br />
 ※ サードパーティーの認可サーバーでアクセストークを発行するという要件はありません。あくまで、私が気になったので検証してみたという意味合いがつよいです</p>
-<h2 id="%E6%A4%9C%E8%A8%BC%E7%92%B0%E5%A2%83" data-line="10" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E7%92%B0%E5%A2%83" aria-hidden="true"></a> 検証環境</h2>
-<ul data-line="12" class="code-line">
-<li data-line="12" class="code-line">XAA ステータス: Early Access（管理画面 Settings &gt; Features から手動有効化）</li>
-<li data-line="13" class="code-line">使用アプリ:
-<ul data-line="14" class="code-line">
-<li data-line="14" class="code-line">Agent0 - Cross App Access (XAA) Sample Requesting App（OIN カタログ）</li>
-<li data-line="15" class="code-line">Todo0 - Cross App Access (XAA) Sample Resource App（OIN カタログ）</li>
+<h2 id="%E6%A4%9C%E8%A8%BC%E7%92%B0%E5%A2%83" data-line="11" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E7%92%B0%E5%A2%83" aria-hidden="true"></a> 検証環境</h2>
+<ul data-line="13" class="code-line">
+<li data-line="13" class="code-line">XAA ステータス: Early Access（管理画面 Settings &gt; Features から手動有効化）</li>
+<li data-line="14" class="code-line">使用アプリ:
+<ul data-line="15" class="code-line">
+<li data-line="15" class="code-line">Agent0 - Cross App Access (XAA) Sample Requesting App（OIN カタログ）</li>
+<li data-line="16" class="code-line">Todo0 - Cross App Access (XAA) Sample Resource App（OIN カタログ）</li>
 </ul>
 </li>
-<li data-line="16" class="code-line">検証アプリ: Next.js 16 (App Router) + NextAuth.js v5 + TypeScript</li>
+<li data-line="17" class="code-line">検証アプリ: Next.js 16 (App Router) + NextAuth.js v5 + TypeScript</li>
 </ul>
-<h2 id="%E6%A4%9C%E8%A8%BC%E7%B5%90%E6%9E%9C%E3%82%B5%E3%83%9E%E3%83%AA%E3%83%BC" data-line="18" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E7%B5%90%E6%9E%9C%E3%82%B5%E3%83%9E%E3%83%AA%E3%83%BC" aria-hidden="true"></a> 検証結果サマリー</h2>
-<table data-line="20" class="code-line">
-<thead data-line="20" class="code-line">
-<tr data-line="20" class="code-line">
+<h2 id="%E6%A4%9C%E8%A8%BC%E7%B5%90%E6%9E%9C%E3%82%B5%E3%83%9E%E3%83%AA%E3%83%BC" data-line="19" class="code-line"><a class="header-anchor-link" href="#%E6%A4%9C%E8%A8%BC%E7%B5%90%E6%9E%9C%E3%82%B5%E3%83%9E%E3%83%AA%E3%83%BC" aria-hidden="true"></a> 検証結果サマリー</h2>
+<table data-line="21" class="code-line">
+<thead data-line="21" class="code-line">
+<tr data-line="21" class="code-line">
 <th>確認したかったこと</th>
 <th>結果</th>
 </tr>
 </thead>
-<tbody data-line="22" class="code-line">
-<tr data-line="22" class="code-line">
+<tbody data-line="23" class="code-line">
+<tr data-line="23" class="code-line">
 <td>ID-JAG を取得できるか</td>
 <td>成功</td>
 </tr>
-<tr data-line="23" class="code-line">
+<tr data-line="24" class="code-line">
 <td>ID-JAG のクレーム構造</td>
 <td>確認済み（後述）</td>
 </tr>
-<tr data-line="24" class="code-line">
+<tr data-line="25" class="code-line">
 <td><code>audience</code> を任意の値に設定できるか</td>
 <td>不可（固定値のみ。変更には申請が必要）</td>
 </tr>
-<tr data-line="25" class="code-line">
+<tr data-line="26" class="code-line">
 <td><code>resource</code> パラメータを任意の値に設定できるか</td>
 <td>可能（指定値が ID-JAG の <code>resource</code> クレームに反映される）</td>
 </tr>
-<tr data-line="26" class="code-line">
+<tr data-line="27" class="code-line">
 <td>サードパーティ認可サーバーへ ID-JAG を渡してアクセストークンを発行させられるか</td>
 <td>現時点で困難（後述の制約による）</td>
 </tr>
-<tr data-line="27" class="code-line">
+<tr data-line="28" class="code-line">
 <td>汎用 OIDC アプリ単体で Token Exchange を実行できるか</td>
 <td>不可（OIN カタログの XAA 対応アプリが必須）</td>
 </tr>
 </tbody>
 </table>
-<h2 id="id-jag-%E3%81%AE%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%A0%E6%A7%8B%E9%80%A0" data-line="29" class="code-line"><a class="header-anchor-link" href="#id-jag-%E3%81%AE%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%A0%E6%A7%8B%E9%80%A0" aria-hidden="true"></a> ID-JAG のクレーム構造</h2>
-<p data-line="31" class="code-line">Token Exchange 成功時、レスポンスの <code>access_token</code> フィールドに JWT として格納された ID-JAG を確認した。</p>
-<p data-line="33" class="code-line">レスポンス構造:</p>
-<div class="code-block-container"><pre class="shiki github-dark" style="background-color:#151e2c;color:#e1e4e8"><code class="code-line" data-line="35"><span class="line"><span style="color:#E1E4E8">{</span></span>
+<h2 id="id-jag-%E3%81%AE%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%A0%E6%A7%8B%E9%80%A0" data-line="30" class="code-line"><a class="header-anchor-link" href="#id-jag-%E3%81%AE%E3%82%AF%E3%83%AC%E3%83%BC%E3%83%A0%E6%A7%8B%E9%80%A0" aria-hidden="true"></a> ID-JAG のクレーム構造</h2>
+<p data-line="32" class="code-line">Token Exchange 成功時、レスポンスの <code>access_token</code> フィールドに JWT として格納された ID-JAG を確認した。</p>
+<p data-line="34" class="code-line">レスポンス構造:</p>
+<div class="code-block-container"><pre class="shiki github-dark" style="background-color:#151e2c;color:#e1e4e8"><code class="code-line" data-line="36"><span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"><span style="color:#79B8FF">  "access_token"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"&lt;ID-JAG の JWT&gt;"</span><span style="color:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#79B8FF">  "token_type"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"N_A"</span><span style="color:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#79B8FF">  "expires_in"</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">300</span><span style="color:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#79B8FF">  "issued_token_type"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"urn:ietf:params:oauth:token-type:id-jag"</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"></span></code></pre></div><p data-line="44" class="code-line">ID-JAG ペイロードに含まれるクレーム:</p>
-<table data-line="46" class="code-line">
-<thead data-line="46" class="code-line">
-<tr data-line="46" class="code-line">
+<span class="line"></span></code></pre></div><p data-line="45" class="code-line">ID-JAG ペイロードに含まれるクレーム:</p>
+<table data-line="47" class="code-line">
+<thead data-line="47" class="code-line">
+<tr data-line="47" class="code-line">
 <th>クレーム</th>
 <th>値</th>
 </tr>
 </thead>
-<tbody data-line="48" class="code-line">
-<tr data-line="48" class="code-line">
+<tbody data-line="49" class="code-line">
+<tr data-line="49" class="code-line">
 <td><code>iss</code></td>
 <td>Okta Org 認可サーバーの URL</td>
 </tr>
-<tr data-line="49" class="code-line">
+<tr data-line="50" class="code-line">
 <td><code>sub</code></td>
 <td>ユーザー識別子（元 ID Token の <code>sub</code> と同一）</td>
 </tr>
-<tr data-line="50" class="code-line">
+<tr data-line="51" class="code-line">
 <td><code>aud</code></td>
 <td>Token Exchange 時に指定した audience（<code>http://localhost:5001</code>）</td>
 </tr>
-<tr data-line="51" class="code-line">
+<tr data-line="52" class="code-line">
 <td><code>iat</code></td>
 <td>発行時刻</td>
 </tr>
-<tr data-line="52" class="code-line">
+<tr data-line="53" class="code-line">
 <td><code>exp</code></td>
 <td>有効期限（expires_in: 300 秒）</td>
 </tr>
-<tr data-line="53" class="code-line">
+<tr data-line="54" class="code-line">
 <td><code>jti</code></td>
 <td>JWT 一意 ID</td>
 </tr>
-<tr data-line="54" class="code-line">
+<tr data-line="55" class="code-line">
 <td><code>resource</code></td>
 <td>リクエスト時に指定した <code>resource</code> パラメータの値</td>
 </tr>
-<tr data-line="55" class="code-line">
+<tr data-line="56" class="code-line">
 <td><code>client_id</code></td>
 <td>OIN アプリに紐づく固定の識別子（<code>wiki0-at-todo0</code> という環境の Client ID ではなく固定値であることを確認）</td>
 </tr>
 </tbody>
 </table>
-<p data-line="57" class="code-line">注記:</p>
-<ul data-line="59" class="code-line">
-<li data-line="59" class="code-line"><code>token_type</code> が <code>N_A</code> であり、通常の Bearer トークンとは区別されている。</li>
-<li data-line="60" class="code-line"><code>issued_token_type</code> に <code>urn:ietf:params:oauth:token-type:id-jag</code> が含まれており、RFC 8693 準拠のトークン種別通知が行われている。</li>
-<li data-line="61" class="code-line"><code>expires_in</code> は 300 秒（5 分）と短く、中間トークンとしての性質を反映している。</li>
+<p data-line="58" class="code-line">注記:</p>
+<ul data-line="60" class="code-line">
+<li data-line="60" class="code-line"><code>token_type</code> が <code>N_A</code> であり、通常の Bearer トークンとは区別されている。</li>
+<li data-line="61" class="code-line"><code>issued_token_type</code> に <code>urn:ietf:params:oauth:token-type:id-jag</code> が含まれており、RFC 8693 準拠のトークン種別通知が行われている。</li>
+<li data-line="62" class="code-line"><code>expires_in</code> は 300 秒（5 分）と短く、中間トークンとしての性質を反映している。</li>
 </ul>
-<h2 id="%E7%99%BA%E8%A6%8B%E3%81%97%E3%81%9F%E5%88%B6%E7%B4%84" data-line="63" class="code-line"><a class="header-anchor-link" href="#%E7%99%BA%E8%A6%8B%E3%81%97%E3%81%9F%E5%88%B6%E7%B4%84" aria-hidden="true"></a> 発見した制約</h2>
-<h3 id="audience-%E3%81%8C%E5%9B%BA%E5%AE%9A%E5%80%A4%E3%81%AB%E7%B8%9B%E3%82%89%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B" data-line="65" class="code-line"><a class="header-anchor-link" href="#audience-%E3%81%8C%E5%9B%BA%E5%AE%9A%E5%80%A4%E3%81%AB%E7%B8%9B%E3%82%89%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B" aria-hidden="true"></a> <code>audience</code> が固定値に縛られている</h3>
-<ul data-line="67" class="code-line">
-<li data-line="67" class="code-line">Token Exchange で指定できる <code>audience</code> は、OIN カタログ登録済みリソースアプリ（Todo0）の識別子（<code>http://localhost:5001</code>）に限定される。</li>
-<li data-line="68" class="code-line">別の値を指定すると <code>invalid_target</code> (400) エラーが返る。</li>
+<h2 id="%E7%99%BA%E8%A6%8B%E3%81%97%E3%81%9F%E5%88%B6%E7%B4%84" data-line="64" class="code-line"><a class="header-anchor-link" href="#%E7%99%BA%E8%A6%8B%E3%81%97%E3%81%9F%E5%88%B6%E7%B4%84" aria-hidden="true"></a> 発見した制約</h2>
+<h3 id="audience-%E3%81%8C%E5%9B%BA%E5%AE%9A%E5%80%A4%E3%81%AB%E7%B8%9B%E3%82%89%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B" data-line="66" class="code-line"><a class="header-anchor-link" href="#audience-%E3%81%8C%E5%9B%BA%E5%AE%9A%E5%80%A4%E3%81%AB%E7%B8%9B%E3%82%89%E3%82%8C%E3%81%A6%E3%81%84%E3%82%8B" aria-hidden="true"></a> <code>audience</code> が固定値に縛られている</h3>
+<ul data-line="68" class="code-line">
+<li data-line="68" class="code-line">Token Exchange で指定できる <code>audience</code> は、OIN カタログ登録済みリソースアプリ（Todo0）の識別子（<code>http://localhost:5001</code>）に限定される。</li>
+<li data-line="69" class="code-line">別の値を指定すると <code>invalid_target</code> (400) エラーが返る。</li>
 </ul>
-<table data-line="70" class="code-line">
-<thead data-line="70" class="code-line">
-<tr data-line="70" class="code-line">
+<table data-line="71" class="code-line">
+<thead data-line="71" class="code-line">
+<tr data-line="71" class="code-line">
 <th>指定した audience</th>
 <th>結果</th>
 </tr>
 </thead>
-<tbody data-line="72" class="code-line">
-<tr data-line="72" class="code-line">
+<tbody data-line="73" class="code-line">
+<tr data-line="73" class="code-line">
 <td><code>http://localhost:5001</code>（Todo0 デフォルト）</td>
 <td>成功</td>
 </tr>
-<tr data-line="73" class="code-line">
+<tr data-line="74" class="code-line">
 <td>Org AS の Issuer URL</td>
 <td><code>invalid_target</code></td>
 </tr>
-<tr data-line="74" class="code-line">
+<tr data-line="75" class="code-line">
 <td>Custom AS の Issuer URL</td>
 <td><code>invalid_target</code></td>
 </tr>
-<tr data-line="75" class="code-line">
+<tr data-line="76" class="code-line">
 <td>任意の URL</td>
 <td><code>invalid_target</code></td>
 </tr>
 </tbody>
 </table>
-<ul data-line="77" class="code-line">
-<li data-line="77" class="code-line"><code>audience</code> の変更には <code>xaa@okta.com</code> へのメール申請が必要であり、Admin Console からの変更は不可（2026-03-30 時点）。</li>
+<ul data-line="78" class="code-line">
+<li data-line="78" class="code-line"><code>audience</code> の変更には <code>xaa@okta.com</code> へのメール申請が必要であり、Admin Console からの変更は不可（2026-03-30 時点）。</li>
 </ul>
-<h3 id="id-jag-%E7%99%BA%E8%A1%8C%E3%81%AF-org-%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E9%99%90%E5%AE%9A" data-line="79" class="code-line"><a class="header-anchor-link" href="#id-jag-%E7%99%BA%E8%A1%8C%E3%81%AF-org-%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E9%99%90%E5%AE%9A" aria-hidden="true"></a> ID-JAG 発行は Org 認可サーバー限定</h3>
-<ul data-line="81" class="code-line">
-<li data-line="81" class="code-line">ID-JAG を発行するための Token Exchange はOINカタログのアプリを使用する場合、 Org 認可サーバー（<code>/oauth2/v1/token</code>）でのみ動作する。
+<h3 id="id-jag-%E7%99%BA%E8%A1%8C%E3%81%AF-org-%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E9%99%90%E5%AE%9A" data-line="80" class="code-line"><a class="header-anchor-link" href="#id-jag-%E7%99%BA%E8%A1%8C%E3%81%AF-org-%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E9%99%90%E5%AE%9A" aria-hidden="true"></a> ID-JAG 発行は Org 認可サーバー限定</h3>
 <ul data-line="82" class="code-line">
-<li data-line="82" class="code-line">なお、通常の Token Exchange（ID-JAG 以外のトークン交換）は Custom 認可サーバーでも利用可能であり、本制約はあくまで ID-JAG 発行に固有の制限である認識です。</li>
+<li data-line="82" class="code-line">ID-JAG を発行するための Token Exchange はOINカタログのアプリを使用する場合、 Org 認可サーバー（<code>/oauth2/v1/token</code>）でのみ動作する。
+<ul data-line="83" class="code-line">
+<li data-line="83" class="code-line">なお、通常の Token Exchange（ID-JAG 以外のトークン交換）は Custom 認可サーバーでも利用可能であり、本制約はあくまで ID-JAG 発行に固有の制限である認識です。</li>
 </ul>
 </li>
-<li data-line="83" class="code-line">Org 認可サーバーはスコープ・クレームのカスタマイズが制限されており、外部リソースサーバー向けのカスタムスコープを ID-JAG に含めることが難しい。</li>
+<li data-line="84" class="code-line">Org 認可サーバーはスコープ・クレームのカスタマイズが制限されており、外部リソースサーバー向けのカスタムスコープを ID-JAG に含めることが難しい。</li>
 </ul>
-<h3 id="oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" data-line="85" class="code-line"><a class="header-anchor-link" href="#oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" aria-hidden="true"></a> OIN カタログ登録済みアプリが必須</h3>
-<ul data-line="87" class="code-line">
-<li data-line="87" class="code-line">Managed Connections タブは OIN カタログに登録済みかつ XAA 対応のアプリにしか表示されない。</li>
-<li data-line="88" class="code-line">汎用 App（OIDC アプリとして手動作成したもの）では Managed Connections の設定自体が不可能であり、ID-JAG 発行のための Token Exchange が実行できない。</li>
-<li data-line="89" class="code-line">また、Cross App AccessにおけるIdPとResource Authorization ServerはOINカタログアプリであることが必要。
-<ul data-line="90" class="code-line">
-<li data-line="90" class="code-line">そのため、独自のResource Authorization ServerにID-JAGを渡そうにも、Resource Authorization Serverに相当するOINカタログアプリも作成が必要となる。</li>
-<li data-line="91" class="code-line">Cross App Accessのプロトコルで考えると不要な登場人物が存在してしまう。</li>
+<h3 id="oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" data-line="86" class="code-line"><a class="header-anchor-link" href="#oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E7%99%BB%E9%8C%B2%E6%B8%88%E3%81%BF%E3%82%A2%E3%83%97%E3%83%AA%E3%81%8C%E5%BF%85%E9%A0%88" aria-hidden="true"></a> OIN カタログ登録済みアプリが必須</h3>
+<ul data-line="88" class="code-line">
+<li data-line="88" class="code-line">Managed Connections タブは OIN カタログに登録済みかつ XAA 対応のアプリにしか表示されない。</li>
+<li data-line="89" class="code-line">汎用 App（OIDC アプリとして手動作成したもの）では Managed Connections の設定自体が不可能であり、ID-JAG 発行のための Token Exchange が実行できない。</li>
+<li data-line="90" class="code-line">また、Cross App AccessにおけるIdPとResource Authorization ServerはOINカタログアプリであることが必要。
+<ul data-line="91" class="code-line">
+<li data-line="91" class="code-line">そのため、独自のResource Authorization ServerにID-JAGを渡そうにも、Resource Authorization Serverに相当するOINカタログアプリも作成が必要となる。</li>
+<li data-line="92" class="code-line">Cross App Accessのプロトコルで考えると不要な登場人物が存在してしまう。</li>
 </ul>
 </li>
 </ul>
-<h2 id="%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" data-line="94" class="code-line"><a class="header-anchor-link" href="#%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" aria-hidden="true"></a> サードパーティ認可サーバーへの拡張が困難な理由</h2>
-<p data-line="96" class="code-line">当初の目標であった「ID-JAG を Okta 外部の認可サーバーに渡してアクセストークンを発行させる」構成を実現するには、以下の 3 つの制約をすべてクリアする必要がある：</p>
-<table data-line="98" class="code-line">
-<thead data-line="98" class="code-line">
-<tr data-line="98" class="code-line">
+<h2 id="%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" data-line="95" class="code-line"><a class="header-anchor-link" href="#%E3%82%B5%E3%83%BC%E3%83%89%E3%83%91%E3%83%BC%E3%83%86%E3%82%A3%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%81%B8%E3%81%AE%E6%8B%A1%E5%BC%B5%E3%81%8C%E5%9B%B0%E9%9B%A3%E3%81%AA%E7%90%86%E7%94%B1" aria-hidden="true"></a> サードパーティ認可サーバーへの拡張が困難な理由</h2>
+<p data-line="97" class="code-line">当初の目標であった「ID-JAG を Okta 外部の認可サーバーに渡してアクセストークンを発行させる」構成を実現するには、以下の 3 つの制約をすべてクリアする必要がある：</p>
+<table data-line="99" class="code-line">
+<thead data-line="99" class="code-line">
+<tr data-line="99" class="code-line">
 <th>制約</th>
 <th>詳細</th>
 <th>現時点での回避策</th>
 </tr>
 </thead>
-<tbody data-line="100" class="code-line">
-<tr data-line="100" class="code-line">
+<tbody data-line="101" class="code-line">
+<tr data-line="101" class="code-line">
 <td><code>audience</code> の固定</td>
 <td>任意の外部サーバー識別子を audience に設定できない</td>
 <td>Okta への申請（<code>xaa@okta.com</code>）が必要</td>
 </tr>
-<tr data-line="101" class="code-line">
+<tr data-line="102" class="code-line">
 <td>Org AS 限定</td>
 <td>カスタムスコープを ID-JAG に含められない</td>
 <td>現時点で回避策なし</td>
 </tr>
-<tr data-line="102" class="code-line">
+<tr data-line="103" class="code-line">
 <td>OIN アプリ必須</td>
 <td>外部リソース向けカスタムアプリで Managed Connections を設定できない</td>
 <td>現時点で回避策なし</td>
 </tr>
 </tbody>
 </table>
-<h2 id="%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" data-line="104" class="code-line"><a class="header-anchor-link" href="#%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" aria-hidden="true"></a> 確認事項</h2>
-<p data-line="106" class="code-line">以下の点について確認したいです。</p>
-<h3 id="q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" data-line="108" class="code-line"><a class="header-anchor-link" href="#q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" aria-hidden="true"></a> Q1. <code>audience</code> の自由設定はいつ頃対応予定か</h3>
-<p data-line="110" class="code-line">現時点では <code>xaa@okta.com</code> へのメール申請が必要とのことだが、GA リリース時に Admin Console または API から自由に設定できるようになる予定はありますでしょうか。</p>
-<h3 id="q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" data-line="112" class="code-line"><a class="header-anchor-link" href="#q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q2. OIN カタログ以外のカスタムアプリで Managed Connections を設定できるようにする予定はあるか</h3>
-<p data-line="114" class="code-line">外部リソースサーバーとの統合を想定した場合、OIN カタログへの登録なしに XAA を利用できる仕組みが必要になると考えます。この対応の予定がありますでしょうか。</p>
-<h3 id="q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" data-line="116" class="code-line"><a class="header-anchor-link" href="#q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q3. カスタム認可サーバーを使用せずともカスタムスコープを設定は可能になるか</h3>
-<p data-line="118" class="code-line">スコープなどの管理はIdPに寄せることができると統制しやすいと思うので、カスタムスコープを設定できると嬉しいと感じております。<br />
+<h2 id="%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" data-line="105" class="code-line"><a class="header-anchor-link" href="#%E7%A2%BA%E8%AA%8D%E4%BA%8B%E9%A0%85" aria-hidden="true"></a> 確認事項</h2>
+<p data-line="107" class="code-line">以下の点について確認したいです。</p>
+<h3 id="q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" data-line="109" class="code-line"><a class="header-anchor-link" href="#q1.-audience-%E3%81%AE%E8%87%AA%E7%94%B1%E8%A8%AD%E5%AE%9A%E3%81%AF%E3%81%84%E3%81%A4%E9%A0%83%E5%AF%BE%E5%BF%9C%E4%BA%88%E5%AE%9A%E3%81%8B" aria-hidden="true"></a> Q1. <code>audience</code> の自由設定はいつ頃対応予定か</h3>
+<p data-line="111" class="code-line">現時点では <code>xaa@okta.com</code> へのメール申請が必要とのことだが、GA リリース時に Admin Console または API から自由に設定できるようになる予定はありますでしょうか。</p>
+<h3 id="q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" data-line="113" class="code-line"><a class="header-anchor-link" href="#q2.-oin-%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0%E4%BB%A5%E5%A4%96%E3%81%AE%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%A2%E3%83%97%E3%83%AA%E3%81%A7-managed-connections-%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%A7%E3%81%8D%E3%82%8B%E3%82%88%E3%81%86%E3%81%AB%E3%81%99%E3%82%8B%E4%BA%88%E5%AE%9A%E3%81%AF%E3%81%82%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q2. OIN カタログ以外のカスタムアプリで Managed Connections を設定できるようにする予定はあるか</h3>
+<p data-line="115" class="code-line">外部リソースサーバーとの統合を想定した場合、OIN カタログへの登録なしに XAA を利用できる仕組みが必要になると考えます。この対応の予定がありますでしょうか。</p>
+<h3 id="q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" data-line="117" class="code-line"><a class="header-anchor-link" href="#q3.-%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%AA%8D%E5%8F%AF%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%9B%E3%81%9A%E3%81%A8%E3%82%82%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97%E3%82%92%E8%A8%AD%E5%AE%9A%E3%81%AF%E5%8F%AF%E8%83%BD%E3%81%AB%E3%81%AA%E3%82%8B%E3%81%8B" aria-hidden="true"></a> Q3. カスタム認可サーバーを使用せずともカスタムスコープを設定は可能になるか</h3>
+<p data-line="119" class="code-line">スコープなどの管理はIdPに寄せることができると統制しやすいと思うので、カスタムスコープを設定できると嬉しいと感じております。<br />
 こちらの機能について対応予定はありますでしょうか。</p>
-<h2 id="%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" data-line="121" class="code-line"><a class="header-anchor-link" href="#%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" aria-hidden="true"></a> 参考情報</h2>
-<ul data-line="123" class="code-line">
-<li data-line="123" class="code-line"><a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2025/09/03/cross-app-access</a></li>
-<li data-line="124" class="code-line"><a href="https://developer.okta.com/blog/2026/02/17/xaa-resource-app" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2026/02/17/xaa-resource-app</a></li>
-<li data-line="125" class="code-line"><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/</a></li>
-<li data-line="126" class="code-line">RFC 8693: <a href="https://datatracker.ietf.org/doc/html/rfc8693" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/html/rfc8693</a></li>
+<h2 id="%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" data-line="122" class="code-line"><a class="header-anchor-link" href="#%E5%8F%82%E8%80%83%E6%83%85%E5%A0%B1" aria-hidden="true"></a> 参考情報</h2>
+<ul data-line="124" class="code-line">
+<li data-line="124" class="code-line"><a href="https://developer.okta.com/blog/2025/09/03/cross-app-access" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2025/09/03/cross-app-access</a></li>
+<li data-line="125" class="code-line"><a href="https://developer.okta.com/blog/2026/02/17/xaa-resource-app" target="_blank" rel="nofollow noopener noreferrer">https://developer.okta.com/blog/2026/02/17/xaa-resource-app</a></li>
+<li data-line="126" class="code-line"><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/</a></li>
+<li data-line="127" class="code-line">RFC 8693: <a href="https://datatracker.ietf.org/doc/html/rfc8693" target="_blank" rel="nofollow noopener noreferrer">https://datatracker.ietf.org/doc/html/rfc8693</a></li>
 </ul>
 
   </div>

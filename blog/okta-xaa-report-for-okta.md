@@ -1,5 +1,6 @@
 # Okta XAA (Cross App Access) 検証レポート
-※ このレポートにおけるCross App AccessはAI Agentを使用しない前提になっています。
+※ このレポートにおけるCross App AccessはAI Agentを使用せず以下の記事をベースに検証したものです
+https://developer.okta.com/blog/2025/09/03/cross-app-access
 
 ## 検証概要
 

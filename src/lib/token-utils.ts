@@ -39,7 +39,7 @@ export function decodeJWTPayload(token: string): TokenPayload | null {
  */
 export interface TokenExchangeParams {
   idToken: string;
-  audience?: string;
+  audience: string;
   scope?: string;
 }
 
@@ -57,10 +57,7 @@ export function buildTokenExchangeBody(params: TokenExchangeParams): URLSearchPa
     'resource': 'https://example.com', // Resource Serverの識別子（必要に応じて変更）
   });
 
-  if (params.audience) {
-    console.log('Token Exchange audience:', params.audience);
-    body.append('audience', params.audience);
-  }
+  body.append('audience', params.audience);
 
   if (params.scope) {
     body.append('scope', params.scope);

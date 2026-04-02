@@ -79,12 +79,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const resolvedAudience = audience || process.env.OKTA_RESOURCE_AUDIENCE;
+    if (!resolvedAudience) {
+      return NextResponse.json(
+        {
+          error: 'audience is required',
+          hint: 'audience を指定してください。現在 Okta 側の制約により http://localhost:5001 のみ受け付けられます。',
+        },
+        { status: 400 }
+      );
+    }
+
     const tokenEndpoint = `${oktaDomain}/oauth2/v1/token`;
 
     // Token Exchangeリクエストボディ（subject_token等）
     const exchangeBody = buildTokenExchangeBody({
       idToken: token.idToken as string,
-      audience: audience || process.env.OKTA_RESOURCE_AUDIENCE,
+      audience: resolvedAudience,
       scope,
     });
 

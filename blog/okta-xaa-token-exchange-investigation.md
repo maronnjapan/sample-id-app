@@ -65,19 +65,20 @@
 
 ### 1.1 この記事の目的
 
-- Okta の **Cross App Access (XAA)** を使い、**Token Exchange (RFC 8693)** で ID Token を **ID-JAG (Identity Assertion JWT)** に変換するデモアプリを実装・検証した
+- Okta の **Cross App Access (XAA)** を構成する、**Token Exchange (RFC 8693)** で ID Token を **ID-JAG (Identity Assertion JWT)** に変換するデモアプリを実装・検証した
 - 主目的は「ID-JAG がどのようなトークンとして発行されるか」「中身（クレーム）はどうなっているか」を実際に確認すること
 - 加えて、中身を確認することでアクセストークンの発行はOkta以外の認可サーバーで行うことが可能かも確認したい
 - 結果として ID-JAG の取得自体は成功したが、「サードパーティのリソースサーバーへの拡張」にはいくつかの制限が判明した
-- XAA や Token Exchange を検証しようとしている人が「どこまでできて、どこからが現時点で難しいか」を具体的な実装とともに把握できることを意図している
+- XAA を検証しようとしている人が「どこまでできて、どこからが現時点で難しいか」を具体的な実装とともに把握できることを意図している
 
 ### 1.2 検証の背景：なぜ XAA に注目したか
 
 - AI エージェントが複数サービスを横断して動作するシステムを構築する場面で、「あるサービスの権限を持ちながら別のサービスにアクセスする」問題が生じる
 - OAuth 2.0 の標準アクセストークンはサービスごとに独立して発行されるため、複数サービスをまたぐアクセス委譲には別の仕組みが必要
-- Okta の XAA は、**AI エージェントを想定したマルチアプリ間のアクセス委譲**を RFC 8693 (Token Exchange) で解決しようとする仕組み
+- Okta の XAA は、**AI エージェントを想定したマルチアプリ間のアクセス委譲**を RFC 8693 (Token Exchange) とRFC 7523( JSON Web Token (JWT)Profile for OAuth 2.0 Client Authentication and Authorization Grants)をベースにして解決しようとする仕組み
 
 > Okta 公式記事: https://developer.okta.com/blog/2025/09/03/cross-app-access
+> https://oauth.net/cross-app-access/
 
 ### 1.3 検証を通じてわかったこと（先に結論）
 
@@ -87,7 +88,7 @@
 | ID-JAG に何のクレームが含まれるか | **確認できた**（aud, sub, iss など標準クレーム＋制約あり） |
 | audience を自由に設定できるか | **現時点では不可**（固定値 or Okta への申請が必要） |
 | resource を自由に設定できるか | **可能**（任意の値を指定でき、ID-JAG に反映される） |
-| サードパーティの認可サーバーに ID-JAG を渡してアクセストークンを発行させられるか | **現時点では困難** |
+| サードパーティの認可サーバーに ID-JAG を渡してアクセストークンを発行させられるか | **現時点で実用化するのは困難** |
 | 汎用 OIDC アプリ単体で Token Exchange を実行できるか | **できない**（OIN カタログの専用アプリが必須） |
 
 ---
@@ -96,8 +97,7 @@
 
 ### 2.1 XAA の概要とユースケース
 
-- Cross App Access (XAA) は Okta が 2025 年から提供している認証・認可の拡張機能（2026-03-30 時点で **Early Access**）
-- 複数アプリ間で安全にユーザーの身元を委譲するためのプロトコル
+- Cross App Access (XAA) は複数アプリ間でユーザーの代理としてサービスの権限を委譲するためのプロトコル（Okta が発起人であり、RFC 8693 Token Exchange と RFC 7523 をベースにしている）
 - AI エージェントが複数サービスを呼び出す場面を主なユースケースとして設計されている
 - 典型的なシナリオ：
 
@@ -107,7 +107,7 @@
   → ユーザーの代理として、リソースアプリに対してアクセス権を得る
 ```
 
-- 従来は個別ログインや OAuth 2.0 On-Behalf-Of フローが必要だったところを、Token Exchange (RFC 8693) でより宣言的に扱えるようにしている
+- 従来はサービスごとに都度権限を委譲するための手続きが必要だったところを、XAAによって管理者が一度接続を設定するだけで中央集権的に権限管理をしつつ、ユーザーの追加認証負担を下げた形で達成できるようになった。
 
 ### 2.2 Token Exchange (RFC 8693) との関係
 
@@ -130,7 +130,7 @@ audience=<送り先>
 
 ### 2.3 ID-JAG (Identity Assertion JWT) とは何か
 
-- **ID-JAG (Identity Assertion JWT)** は Okta が RFC 8693 に独自拡張として定義した中間トークンの形式
+- **ID-JAG (Identity Assertion JWT Authorization Grant)** は RFC 8693 とは独立した IETF ドラフト（`draft-ietf-oauth-identity-assertion-authz-grant`）で定義されている OAuth 2.0 認可グラントの形式
 - `requested_token_type`: `urn:ietf:params:oauth:token-type:id-jag`
 - ID-JAG の位置づけ：
   - **発行者**: Okta の Org 認可サーバー（`/oauth2/v1/token`）
@@ -149,8 +149,8 @@ audience=<送り先>
 | **Org 認可サーバー** | `/oauth2/v1/token` | Okta org 全体のシステムサーバー。XAA Token Exchange はここのみ使用可 |
 | **Custom 認可サーバー** | `/oauth2/{id}/v1/token` | スコープ・クレーム等をカスタマイズ可能な汎用サーバー |
 
-- **2026-03-30 時点の制約**: Token Exchange で ID-JAG を発行できるのは **Org 認可サーバーのみ**
-- Custom 認可サーバー（`/oauth2/default` 等）に同じリクエストを送ると `unsupported_grant_type` エラーが返ることを本検証で確認済み
+- **2026-03-30 時点の制約**: XAA による ID-JAG 発行は **Org 認可サーバーを使う OIN カタログ専用アプリ経由でのみ可能**（少なくとも Free Org の場合、汎用 OIDC アプリや Custom 認可サーバーからは利用できない）
+- Custom 認可サーバー（`/oauth2/default` 等）に同じリクエストを送ると `unsupported_grant_type` エラーが返ることが公式ドキュメント上示唆されている
 
 ---
 
@@ -171,7 +171,7 @@ audience=<送り先>
 
 - **"Manage Connections" タブは OIN 登録済みかつ XAA 対応のアプリにしか表示されない**
 - 汎用の OIDC アプリや Custom App を作っても、このタブが出現しない
-- Managed Connections の設定自体ができないため、Token Exchange が実行不可能になる
+- Managed Connections の設定自体ができないため、XAAの文脈でのToken Exchange が実行不可能になる
 - Okta が提供するサンプルアプリ（OIN カタログ登録済み）を使う必要がある：
 
 | アプリ名 | 役割 |
@@ -357,9 +357,9 @@ await fetch(tokenEndpoint, {
   - `subject_token`: ログイン時に取得した ID Token
   - `subject_token_type`: `urn:ietf:params:oauth:token-type:id_token`
   - `requested_token_type`: `urn:ietf:params:oauth:token-type:id-jag`（**Okta 独自拡張**。RFC 8693 標準のトークン種別にはない）
-  - `resource`: Custom 認可サーバーの Issuer URL（本検証では `https://example.com` を指定）
-- 任意パラメータ（指定時のみ追加）：
   - `audience`: ID-JAG の送り先（リソースアプリ識別子）
+- 任意パラメータ（指定時のみ追加）：
+  - `resource`: リソースアプリ用のアクセストークンを発行する認可サーバー（本検証では `https://example.com` を指定）
   - `scope`: リソースアプリ向けのスコープ
 - `resource` パラメータについて：
   - RFC 8693 では「要求先のリソース」を表す任意パラメータとして定義
@@ -397,24 +397,6 @@ const idJagPayload = idJagToken ? decodeJWTPayload(idJagToken) : null;
 | `invalid_scope` (400) | 未定義スコープを指定した時 | リソースアプリで未許可のスコープ | リソースアプリのスコープ設定を確認 |
 | `401 Unauthorized` | Client ID / Secret 誤り時 | クライアント認証失敗 | `OKTA_CLIENT_ID` / `OKTA_CLIENT_SECRET` を確認 |
 | `403 Forbidden` | Managed Connections 設定前 | アクセス権がない | Managed Connections の設定を確認 |
-
-### 4.9 ユニットテスト（Vitest / モックなし）
-
-- `src/lib/token-utils.test.ts` に Vitest のユニットテストを実装
-- 設計方針：**モックを使わず**、実際の実装コードを直接テスト
-- テスト内容：
-  - `decodeJWTPayload`:
-    - 有効な JWT からペイロードをデコードできる
-    - `scope` クレームを含む JWT をデコードできる
-    - `aud` が配列の JWT をデコードできる
-    - 不正な形式のトークンで `null` を返す
-    - Base64 デコード不可能なペイロードで `null` を返す
-  - `buildTokenExchangeBody`:
-    - 必須パラメータのみでリクエストボディを構築する（`audience`, `scope` は含まれない）
-    - `audience` を含むリクエストボディを構築する
-    - `scope` を含むリクエストボディを構築する
-    - 全パラメータを含むリクエストボディを構築する
-
 ---
 
 ## 5. 動作確認：ID-JAG の取得と中身の確認
@@ -441,6 +423,9 @@ const idJagPayload = idJagToken ? decodeJWTPayload(idJagToken) : null;
 | `iat` | 発行時刻 |
 | `exp` | 有効期限 |
 | `jti` | JWT の一意 ID |
+| `sub` | ユーザーID |
+| `resource` | リソースサーバー用のアクセストークンを発行する認可サーバーのURI |
+| `client_id` | 認可サーバーにトークンの発行をリクエストするクライアントのID |
 
 - 元の ID Token との比較で、**`aud` クレームが指定した audience 値に変化している**点が ID-JAG の特徴
 - リソースアプリは「このトークンは自分宛てに発行された」と確認できる
@@ -511,7 +496,7 @@ Okta ID Token
 - **2026-03-30 時点の制約**: Token Exchange で使用できる audience は OIN カタログ登録済みリソースアプリ（Todo0）の識別子に縛られている
 - Todo0 のデフォルト audience は `http://localhost:5001` に固定
 - 別の値を使おうとすると `invalid_target` エラーになることを本検証で確認
-- audience の値を変更するには **Okta チームへのメール申請（`xaa@okta.com` 宛）が必要**
+- audience の値を変更するには **Okta チームへのメール申請が必要**
   - Admin Console からの変更は不可（2026-03-30 時点）
 - つまり、**任意の URL を audience に設定して ID-JAG を発行させる**使い方は、Okta への申請なしには不可能
 
@@ -530,7 +515,7 @@ https://your-org.okta.com/oauth2/aus.../v1/token   ← Custom AS（不可）
 
 - Org 認可サーバーは Okta のシステムサーバーであり、スコープやクレームのカスタマイズが制限されている
 - 外部リソース向けのカスタムスコープ定義には Custom 認可サーバーが必要
-- ID-JAG の発行が Org AS 限定のため、両立が難しい
+- ID-JAG の発行が Org AS 限定のため、ID-JAGにスコープ情報を載せるのは難しい。
 
 ### 6.4 OIN カタログ専用アプリが必須な理由
 
@@ -575,8 +560,6 @@ https://your-org.okta.com/oauth2/aus.../v1/token   ← Custom AS（不可）
 - Okta Org AS で ID-JAG を取得する
 - ID-JAG のペイロード（クレーム）を確認する
 - OIN カタログの Agent0 / Todo0 を使った動作検証
-- NextAuth.js を使った Okta OIDC 認証の実装
-- `client_secret_basic` による Token Exchange クライアント認証
 
 **現時点では難しいこと:**
 
@@ -584,13 +567,6 @@ https://your-org.okta.com/oauth2/aus.../v1/token   ← Custom AS（不可）
 - Okta ドメイン外のサードパーティ認可サーバーに ID-JAG を渡してアクセストークンを発行させる
 - 汎用 Custom App のみで Token Exchange を実行する（OIN アプリが別途必要）
 - Custom 認可サーバーを使った Token Exchange
-
-### 7.3 Okta への確認事項（未解決の疑問点）
-
-- `xaa@okta.com` またはコミュニティフォーラムへの質問候補：
-  1. **audience を Admin Console で自由設定できるようになるロードマップはあるか**
-  2. **汎用 OIDC アプリ（Custom App）での Managed Connections サポートは予定されているか**
-  3. **通常の OIDC アプリ単体で Token Exchange を実行できないという現在の理解は正しいか**（技術的・設計上の理由は何か）
 
 ---
 
@@ -619,3 +595,4 @@ https://your-org.okta.com/oauth2/aus.../v1/token   ← Custom AS（不可）
 > **参考記事**:
 > - https://developer.okta.com/blog/2025/09/03/cross-app-access
 > - https://developer.okta.com/blog/2026/02/17/xaa-resource-app
+> - https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/

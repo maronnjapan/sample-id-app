@@ -37,6 +37,12 @@ export function TokenExchangeClient({ session }: TokenExchangeClientProps) {
   };
 
   const handleTokenExchange = async () => {
+    if (!audience.trim()) {
+      setTokenExchangeError('audience は必須です。');
+      setErrorHint('現在 Okta 側の制約により http://localhost:5001 のみ受け付けられます。');
+      return;
+    }
+
     setIsLoading(true);
     setTokenExchangeResult(null);
     setTokenExchangeError(null);
@@ -48,7 +54,7 @@ export function TokenExchangeClient({ session }: TokenExchangeClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           scope: scope || undefined,
-          audience: audience || undefined,
+          audience,
         }),
       });
 
@@ -124,16 +130,17 @@ export function TokenExchangeClient({ session }: TokenExchangeClientProps) {
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
                   Audience（ID-JAG の送り先アプリの Client ID または Issuer URL）:
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
                   type="text"
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  placeholder="例: 0oa... (Client ID) または https://your-org.okta.com/oauth2/default"
+                  placeholder="http://localhost:5001"
                   className="w-full p-2 border border-gray-300 rounded-md text-black"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  空欄の場合は環境変数 OKTA_RESOURCE_AUDIENCE にフォールバックします（未設定時は audience なしで送信）
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  注意: Okta 側の制約により、現在は <code>http://localhost:5001</code> のみ受け付けられます。それ以外の値を指定すると Okta がエラーを返します。
                 </p>
               </div>
               <div>
@@ -150,7 +157,7 @@ export function TokenExchangeClient({ session }: TokenExchangeClientProps) {
               </div>
               <button
                 onClick={handleTokenExchange}
-                disabled={isLoading}
+                disabled={isLoading || !audience.trim()}
                 className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white py-2 px-4 rounded-md"
               >
                 {isLoading ? 'Token Exchange 実行中...' : 'Token Exchange 実行（ID Token → ID-JAG）'}

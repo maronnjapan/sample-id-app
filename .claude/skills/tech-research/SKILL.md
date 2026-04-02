@@ -32,7 +32,7 @@ Claude Codeのコンテキスト節約と、最新ドキュメントへのアク
 ### 2. Geminiに調査を依頼する
 
 ```bash
-gemini "Research the following and provide a concise summary in Japanese (max 500 words).
+gemini -p "Research the following and provide a concise summary in Japanese (max 500 words).
 Include: key findings, code examples if relevant, and any caveats or limitations.
 
 Topic: {QUERY}

@@ -60,29 +60,33 @@ describe('decodeJWTPayload', () => {
 });
 
 describe('buildTokenExchangeBody', () => {
-  it('必須パラメータのみでリクエストボディを構築する', () => {
-    const body = buildTokenExchangeBody({ idToken: 'test-id-token' });
+  it('必須パラメータ（idToken + audience）でリクエストボディを構築する', () => {
+    const body = buildTokenExchangeBody({
+      idToken: 'test-id-token',
+      audience: 'http://localhost:5001',
+    });
 
     expect(body.get('grant_type')).toBe('urn:ietf:params:oauth:grant-type:token-exchange');
     expect(body.get('subject_token')).toBe('test-id-token');
     expect(body.get('subject_token_type')).toBe('urn:ietf:params:oauth:token-type:id_token');
     expect(body.get('requested_token_type')).toBe('urn:ietf:params:oauth:token-type:id-jag');
-    expect(body.get('audience')).toBeNull();
+    expect(body.get('audience')).toBe('http://localhost:5001');
     expect(body.get('scope')).toBeNull();
   });
 
-  it('audienceを含むリクエストボディを構築する', () => {
+  it('audienceは常にリクエストボディに含まれる', () => {
     const body = buildTokenExchangeBody({
       idToken: 'test-id-token',
-      audience: 'https://example.okta.com/oauth2/default',
+      audience: 'http://localhost:5001',
     });
 
-    expect(body.get('audience')).toBe('https://example.okta.com/oauth2/default');
+    expect(body.get('audience')).toBe('http://localhost:5001');
   });
 
   it('scopeを含むリクエストボディを構築する', () => {
     const body = buildTokenExchangeBody({
       idToken: 'test-id-token',
+      audience: 'http://localhost:5001',
       scope: 'chat.read chat.history',
     });
 
@@ -92,7 +96,7 @@ describe('buildTokenExchangeBody', () => {
   it('全パラメータを含むリクエストボディを構築する', () => {
     const body = buildTokenExchangeBody({
       idToken: 'test-id-token',
-      audience: 'https://resource.okta.com/oauth2/default',
+      audience: 'http://localhost:5001',
       scope: 'todos.read todos.write',
     });
 
@@ -100,7 +104,7 @@ describe('buildTokenExchangeBody', () => {
     expect(body.get('subject_token')).toBe('test-id-token');
     expect(body.get('subject_token_type')).toBe('urn:ietf:params:oauth:token-type:id_token');
     expect(body.get('requested_token_type')).toBe('urn:ietf:params:oauth:token-type:id-jag');
-    expect(body.get('audience')).toBe('https://resource.okta.com/oauth2/default');
+    expect(body.get('audience')).toBe('http://localhost:5001');
     expect(body.get('scope')).toBe('todos.read todos.write');
   });
 });

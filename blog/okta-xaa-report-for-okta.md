@@ -121,7 +121,6 @@ ID-JAG ペイロードに含まれるクレーム:
 
 ## 参考情報
 
-- 検証リポジトリ: https://github.com/maronnjapan/sample-id-app (ブランチ: `okta-toke-exchange`)
 - https://developer.okta.com/blog/2025/09/03/cross-app-access
 - https://developer.okta.com/blog/2026/02/17/xaa-resource-app
 - https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/

@@ -56,3 +56,10 @@ dist
 /proxy-oauth-token-request
 
 .wrangler
+
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+*.key
+*.pem

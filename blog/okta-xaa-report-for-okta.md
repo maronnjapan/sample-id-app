@@ -49,7 +49,8 @@ ID-JAG ペイロードに含まれるクレーム:
 | `iss` | Okta Org 認可サーバーの URL |
 | `sub` | ユーザー識別子（元 ID Token の `sub` と同一） |
 | `aud` | Token Exchange 時に指定した audience（`http://localhost:5001`） |
-| `iat` / `exp` | 発行時刻 / 有効期限（expires_in: 300 秒） |
+| `iat` | 発行時刻 |
+| `exp` | 有効期限（expires_in: 300 秒） |
 | `jti` | JWT 一意 ID |
 | `resource` | リクエスト時に指定した `resource` パラメータの値 |
 | `client_id` | OIN アプリに紐づく固定の識別子（`wiki0-at-todo0` という環境の Client ID ではなく固定値であることを確認） |

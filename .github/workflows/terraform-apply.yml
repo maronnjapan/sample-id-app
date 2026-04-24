@@ -140,6 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect_deletion, grant_super_admin]
     if: |
+      !cancelled() &&
       always() &&
       needs.detect_deletion.result == 'success'
 

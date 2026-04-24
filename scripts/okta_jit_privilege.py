@@ -217,6 +217,10 @@ def revoke_role(token: str, role_id: str) -> None:
         resp.raise_for_status()
 
 
+def list_super_admin_roles(token: str) -> list[dict]:
+    return [role for role in list_roles(token) if role.get("type") == "SUPER_ADMIN"]
+
+
 # ---------------------------------------------------------------------------
 # Step 4
 # ---------------------------------------------------------------------------
@@ -310,14 +314,17 @@ def main() -> None:
         print("[JIT] Push approved. Access token obtained.")
 
         # Guard: in lease mode, do not auto-revoke an existing active assignment.
-        leftover = list_roles(access_token)
+        leftover = list_super_admin_roles(access_token)
         if leftover:
             if JIT_MODE == "grant-with-lease":
                 raise RuntimeError(
-                    "Existing admin role assignment detected. Refusing to revoke it automatically in lease mode."
+                    "Existing SUPER_ADMIN assignment detected. Refusing to revoke it automatically in lease mode."
                 )
 
-            print(f"[JIT] WARNING: {len(leftover)} leftover role(s) from a previous run. Revoking before proceeding.")
+            print(
+                f"[JIT] WARNING: {len(leftover)} leftover SUPER_ADMIN role(s) from a previous run. "
+                "Revoking before proceeding."
+            )
             for r in leftover:
                 revoke_role(access_token, r["id"])
                 print(f"[JIT]   revoked stale role {r['id']} ({r.get('type', '?')})")

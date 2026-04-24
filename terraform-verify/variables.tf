@@ -24,9 +24,3 @@ variable "policy_name_prefix" {
   type        = string
   default     = "JIT Verify"
 }
-
-
-variable "tf_api_token" {
-  description = "HCP Terraform API Token."
-  type        = string
-}

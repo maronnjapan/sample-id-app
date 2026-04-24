@@ -1,0 +1,87 @@
+name: Grant SUPER_ADMIN (JIT via Okta OOB Push)
+
+on:
+  pull_request:
+    branches: [main]
+    # opened/synchronize/reopened: validation
+    # closed: merged only
+    types: [opened, synchronize, reopened, closed]
+
+# ロール付与先が1つのため、workflow 全体で直列実行する。
+concurrency:
+  group: jit-super-admin
+  cancel-in-progress: false
+
+jobs:
+  grant_super_admin:
+    name: JIT SUPER_ADMIN ${{ github.event.pull_request.merged == true && '(Merged PR)' || '(Validation)' }}
+    runs-on: ubuntu-latest
+
+    # closed イベントでは merged == true の場合のみ実行
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    env:
+      OKTA_DOMAIN: ${{ secrets.OKTA_DOMAIN }}
+      BRIDGE_CLIENT_ID: ${{ secrets.OKTA_BRIDGE_CLIENT_ID }}
+      TERRAFORM_CLIENT_ID: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+      JIT_MODE: grant-with-lease
+      ROLE_LEASE_SECONDS: ${{ github.event.pull_request.merged == true && '1800' || '60' }}
+
+    steps:
+      # ------------------------------------------------------------------
+      # 1. Checkout
+      # ------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # 2. Resolve the approving admin's Okta login from the merger/author's
+      #    GitHub public email. If it is unavailable, stop the workflow.
+      # ------------------------------------------------------------------
+      - name: Resolve admin email for OOB push
+        id: resolve_email
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_LOGIN: ${{ github.event.pull_request.merged_by.login || github.event.pull_request.user.login }}
+        run: |
+          TARGET_EMAIL=$(gh api "users/${TARGET_LOGIN}" --jq '.email // empty' 2>/dev/null || true)
+          if [ -n "$TARGET_EMAIL" ]; then
+            echo "Resolved Okta login from GitHub: ${TARGET_EMAIL}"
+            echo "admin_email=${TARGET_EMAIL}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ERROR: Cannot determine admin email from GitHub public profile for ${TARGET_LOGIN}." >&2
+            echo "ERROR: Publish the approver's email on GitHub or adjust the workflow to resolve Okta logins another way." >&2
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------
+      # 3. Set up Python
+      # ------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      # ------------------------------------------------------------------
+      # 4. JIT privilege escalation
+      # ------------------------------------------------------------------
+      - name: Trigger OOB push, grant SUPER_ADMIN, and revoke after lease
+        env:
+          ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
+        run: python scripts/okta_jit_privilege.py
+
+      # ------------------------------------------------------------------
+      # 5. Post-run note
+      # ------------------------------------------------------------------
+      - name: Post-run note
+        run: |
+          echo "This workflow grants SUPER_ADMIN only for a limited lease window."
+          echo "Terraform apply is expected to run from a local terminal during that window."
+          echo "Configured lease seconds: ${ROLE_LEASE_SECONDS}"

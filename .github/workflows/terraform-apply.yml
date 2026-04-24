@@ -74,7 +74,8 @@ jobs:
       # ------------------------------------------------------------------
       - name: Trigger OOB push, grant SUPER_ADMIN, and revoke after lease
         env:
-          ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
+          # ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
+          ADMIN_EMAIL: "maronn-infomation@maronn-room.com"
         run: python scripts/okta_jit_privilege.py
 
       # ------------------------------------------------------------------

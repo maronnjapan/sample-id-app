@@ -106,4 +106,4 @@ jobs:
         run: |
           echo "This workflow grants SUPER_ADMIN only for a limited lease window."
           echo "Terraform apply is expected to run from a local terminal during that window."
-          echo "Configured lease seconds: ${ROLE_LEASE_SECONDS}"
+          echo "Configured lease seconds: ${ROLE_LEASE_SECONDS}."

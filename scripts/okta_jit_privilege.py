@@ -24,15 +24,56 @@ import sys
 import json
 import time
 import subprocess
+from urllib.parse import urlparse
 
 import requests
 
-OKTA_DOMAIN = os.environ["OKTA_DOMAIN"]          # e.g. myorg.okta.com
-BRIDGE_CLIENT_ID = os.environ["BRIDGE_CLIENT_ID"]
-TERRAFORM_CLIENT_ID = os.environ["TERRAFORM_CLIENT_ID"]
-ADMIN_EMAIL = os.environ["ADMIN_EMAIL"]           # Okta login of the approving admin
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if value:
+        return value
+
+    raise RuntimeError(
+        f"Required environment variable '{name}' is empty. "
+        "In GitHub Actions this usually means the repository secret is unset "
+        "or unavailable to this event type."
+    )
+
+
+def _normalize_okta_domain(value: str) -> str:
+    parsed = urlparse(value if "://" in value else f"https://{value}")
+    host = (parsed.netloc or parsed.path).strip().strip("/")
+
+    if not host:
+        raise RuntimeError(
+            "OKTA_DOMAIN is empty or malformed. Expected 'myorg.okta.com' "
+            "or 'https://myorg.okta.com'."
+        )
+
+    if parsed.netloc and parsed.path not in ("", "/"):
+        raise RuntimeError(
+            f"OKTA_DOMAIN must not include a path: {value!r}. "
+            "Use only the Okta org hostname."
+        )
+
+    if "/" in host:
+        raise RuntimeError(
+            f"OKTA_DOMAIN must be a hostname, but got {value!r}."
+        )
+
+    return host
+
+
+OKTA_DOMAIN = _normalize_okta_domain(_require_env("OKTA_DOMAIN"))  # e.g. myorg.okta.com
+BRIDGE_CLIENT_ID = _require_env("BRIDGE_CLIENT_ID")
+TERRAFORM_CLIENT_ID = _require_env("TERRAFORM_CLIENT_ID")
+ADMIN_EMAIL = _require_env("ADMIN_EMAIL")          # Okta login of the approving admin
 JIT_MODE = os.environ.get("JIT_MODE", "grant-and-run-terraform")
 ROLE_LEASE_SECONDS = int(os.environ.get("ROLE_LEASE_SECONDS", "0"))
+REQUIRE_NUMBER_CHALLENGE = os.environ.get("REQUIRE_NUMBER_CHALLENGE", "false").lower() in {
+    "1", "true", "yes", "on"
+}
 
 BASE_URL = f"https://{OKTA_DOMAIN}"
 # Must use org authorization server — custom auth servers cannot issue okta.* scopes
@@ -49,12 +90,24 @@ def _post_form(path: str, data: dict, token: str | None = None) -> requests.Resp
     headers = {"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    return requests.post(f"{BASE_URL}{path}", headers=headers, data=data, timeout=30)
+    try:
+        return requests.post(f"{BASE_URL}{path}", headers=headers, data=data, timeout=30)
+    except requests.exceptions.ConnectionError as exc:
+        raise RuntimeError(
+            f"Failed to connect to Okta at {BASE_URL}. "
+            "Check OKTA_DOMAIN and the runner's DNS/network access."
+        ) from exc
 
 
 def _api(method: str, path: str, token: str, **kwargs) -> requests.Response:
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    return requests.request(method, f"{BASE_URL}{path}", headers=headers, timeout=30, **kwargs)
+    try:
+        return requests.request(method, f"{BASE_URL}{path}", headers=headers, timeout=30, **kwargs)
+    except requests.exceptions.ConnectionError as exc:
+        raise RuntimeError(
+            f"Failed to connect to Okta at {BASE_URL}. "
+            "Check OKTA_DOMAIN and the runner's DNS/network access."
+        ) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -178,6 +231,39 @@ def wait_for_lease(seconds: int) -> None:
         remaining -= sleep_for
 
 
+def log_push_challenge(auth_data: dict) -> None:
+    print("[ACTION REQUIRED] Approve the Okta Verify push notification on your phone.")
+
+    binding_method = auth_data.get("binding_method", "unknown")
+    binding_code = auth_data.get("binding_code")
+
+    if binding_method == "transfer":
+        if not binding_code:
+            raise RuntimeError(
+                "Okta returned binding_method=transfer but no binding_code. "
+                "The user can't complete the number challenge without the code."
+            )
+
+        print("[JIT] Okta Verify push requires number challenge (binding_method=transfer).")
+        print(f"[BINDING CODE] {binding_code}")
+        print("[JIT] Approve the push and tap the matching number in Okta Verify.")
+        return
+
+    if binding_method == "none":
+        print("[JIT] Okta Verify push does not require number challenge (binding_method=none).")
+        if REQUIRE_NUMBER_CHALLENGE:
+            raise RuntimeError(
+                "REQUIRE_NUMBER_CHALLENGE=true, but Okta returned binding_method=none. "
+                "Enable Okta Verify number challenge in the org settings or disable REQUIRE_NUMBER_CHALLENGE."
+            )
+        return
+
+    if binding_code:
+        print(f"[JIT] Okta returned binding_method={binding_method!r} with binding_code={binding_code}.")
+    else:
+        print(f"[JIT] Okta returned binding_method={binding_method!r}. No binding code was provided.")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -189,14 +275,7 @@ def main() -> None:
     oob_code: str = auth_data["oob_code"]
     interval: int = auth_data.get("interval", 5)
     expires_in: int = auth_data.get("expires_in", 300)
-
-    # binding_code is only present when binding_method=transfer (Codex: not always returned)
-    binding_code: str | None = auth_data.get("binding_code")
-    if binding_code:
-        print(f"[ACTION REQUIRED] Approve the Okta Verify push notification on your phone.")
-        print(f"[BINDING CODE] {binding_code}  ← confirm this matches the number shown in the app")
-    else:
-        print("[ACTION REQUIRED] Approve the Okta Verify push notification on your phone.")
+    log_push_challenge(auth_data)
 
     access_token: str | None = None
     role_id: str | None = None

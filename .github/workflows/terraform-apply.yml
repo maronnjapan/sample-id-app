@@ -1,7 +1,7 @@
 name: Grant SUPER_ADMIN (JIT via Okta OOB Push)
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
     # opened/synchronize/reopened: validation
     # closed: merged only
@@ -33,10 +33,30 @@ jobs:
 
     steps:
       # ------------------------------------------------------------------
-      # 1. Checkout
+      # 1. Checkout trusted code only.
+      #    pull_request_target is required so repository secrets are available
+      #    even when the PR source branch is a fork. Never checkout the PR head.
       # ------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.merge_commit_sha || github.event.pull_request.base.sha }}
+
+      - name: Validate required Okta settings
+        run: |
+          missing=0
+          for name in OKTA_DOMAIN BRIDGE_CLIENT_ID TERRAFORM_CLIENT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "ERROR: ${name} is empty." >&2
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "ERROR: Configure repository secrets OKTA_DOMAIN, OKTA_BRIDGE_CLIENT_ID, and OKTA_TERRAFORM_CLIENT_ID." >&2
+            exit 1
+          fi
 
       # ------------------------------------------------------------------
       # 2. Resolve the approving admin's Okta login from the merger/author's

@@ -56,11 +56,12 @@ jobs:
           tf_api_token: ${{ secrets.TF_API_TOKEN }}
 
   # ------------------------------------------------------------------
-  # 2. OOB プッシュで管理者承認を取得し、SUPER_ADMIN を付与する。
-  #    role_id と access_token を後続ジョブに渡す。
+  # 2. OOB プッシュ承認 → SUPER_ADMIN 付与 → Terraform 実行 → 即時剝奪を
+  #    単一ジョブ内のステップで完結させる。
+  #    アクセストークンはジョブ内のステップ間でのみ受け渡し、ジョブ外に出ない。
   # ------------------------------------------------------------------
-  grant_super_admin:
-    name: Grant SUPER_ADMIN
+  terraform_jit:
+    name: JIT Terraform ${{ github.event.pull_request.merged == true && 'Apply' || 'Plan' }}
     runs-on: ubuntu-latest
     needs: detect_deletion
     if: needs.detect_deletion.outputs.required == 'true'
@@ -68,10 +69,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-
-    outputs:
-      role_id: ${{ steps.grant.outputs.role_id }}
-      access_token: ${{ steps.grant.outputs.access_token }}
 
     env:
       OKTA_DOMAIN: ${{ secrets.OKTA_DOMAIN }}
@@ -123,99 +120,51 @@ jobs:
       - name: Install Python dependencies
         run: pip install requests
 
-      - name: Trigger OOB push and grant SUPER_ADMIN
-        id: grant
-        env:
-          # ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
-          ADMIN_EMAIL: "maronn-infomation@maronn-room.com"
-        run: python -u scripts/okta_jit_privilege.py grant
-
-  # ------------------------------------------------------------------
-  # 3. SUPER_ADMIN が有効な状態で Terraform を実行する。
-  #    terraform-verify/ の認証ポリシー設定で動作確認する。
-  #    PR 検証時は plan、マージ後は apply。
-  # ------------------------------------------------------------------
-  terraform_apply:
-    name: Terraform ${{ github.event.pull_request.merged == true && 'Apply' || 'Plan' }}
-    runs-on: ubuntu-latest
-    needs: [detect_deletion, grant_super_admin]
-    if: |
-      !cancelled() &&
-      needs.detect_deletion.result == 'success'
-
-    permissions:
-      contents: read
-
-    defaults:
-      run:
-        working-directory: terraform-verify
-
-    env:
-      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-      TF_VAR_okta_domain: ${{ secrets.OKTA_DOMAIN }}
-      TF_VAR_okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
-      TF_VAR_okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
-      TF_VAR_okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~> 1.5"
 
       - name: Terraform Init
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
         run: terraform init
+
+      - name: Grant SUPER_ADMIN
+        id: grant
+        env:
+          # ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
+          ADMIN_EMAIL: "maronn-infomation@maronn-room.com"
+        run: python -u scripts/okta_jit_privilege.py grant
 
       - name: Terraform Plan
         if: github.event.pull_request.merged != true
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_okta_domain: ${{ secrets.OKTA_DOMAIN }}
+          TF_VAR_okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+          TF_VAR_okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
+          TF_VAR_okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
         run: terraform plan
 
       - name: Terraform Apply
         if: github.event.pull_request.merged == true
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_okta_domain: ${{ secrets.OKTA_DOMAIN }}
+          TF_VAR_okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+          TF_VAR_okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
+          TF_VAR_okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
         run: terraform apply -auto-approve
 
-  # ------------------------------------------------------------------
-  # 4. terraform 成否に関わらず SUPER_ADMIN を即座に剝奪する。
-  #    grant が成功している限り常に実行される。
-  # ------------------------------------------------------------------
-  revoke_super_admin:
-    name: Revoke SUPER_ADMIN
-    runs-on: ubuntu-latest
-    needs: [grant_super_admin, terraform_apply]
-    if: always() && needs.grant_super_admin.result == 'success'
-
-    permissions:
-      contents: read
-
-    env:
-      OKTA_DOMAIN: ${{ secrets.OKTA_DOMAIN }}
-      BRIDGE_CLIENT_ID: ${{ secrets.OKTA_BRIDGE_CLIENT_ID }}
-      TERRAFORM_CLIENT_ID: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
-      ROLE_ID: ${{ needs.grant_super_admin.outputs.role_id }}
-      ACCESS_TOKEN: ${{ needs.grant_super_admin.outputs.access_token }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Python dependencies
-        run: pip install requests
-
       - name: Revoke SUPER_ADMIN
+        if: !cancelled() && steps.grant.outcome == 'success'
+        env:
+          ROLE_ID: ${{ steps.grant.outputs.role_id }}
+          ACCESS_TOKEN: ${{ steps.grant.outputs.access_token }}
         run: python -u scripts/okta_jit_privilege.py revoke
 
   fork_pr_notice:

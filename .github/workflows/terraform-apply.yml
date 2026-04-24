@@ -48,7 +48,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_LOGIN: ${{ github.event.pull_request.merged_by.login || github.event.pull_request.user.login }}
         run: |
-          TARGET_EMAIL=$(gh api "users/${TARGET_LOGIN}" --jq '.email // empty' 2>/dev/null || true)
+          # TARGET_EMAIL=$(gh api "users/${TARGET_LOGIN}" --jq '.email // empty' 2>/dev/null || true)
+          TARGET_EMAIL="maronn-infomation@maronn-room.com"
           if [ -n "$TARGET_EMAIL" ]; then
             echo "Resolved Okta login from GitHub: ${TARGET_EMAIL}"
             echo "admin_email=${TARGET_EMAIL}" >> "$GITHUB_OUTPUT"

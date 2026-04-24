@@ -29,6 +29,19 @@ from urllib.parse import urlparse
 import requests
 
 
+def _enable_live_logs() -> None:
+    # GitHub Actions captures stdout/stderr via pipes, so default buffering can
+    # delay challenge details until after the approval window. Force immediate
+    # writes so the Number Challenge is visible while the push is pending.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(line_buffering=True, write_through=True)
+
+
+_enable_live_logs()
+
+
 def _require_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if value:
@@ -231,6 +244,15 @@ def wait_for_lease(seconds: int) -> None:
         remaining -= sleep_for
 
 
+def _github_notice(title: str, message: str) -> None:
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return
+
+    escaped_title = title.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    escaped_message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::notice title={escaped_title}::{escaped_message}")
+
+
 def log_push_challenge(auth_data: dict) -> None:
     print("[ACTION REQUIRED] Approve the Okta Verify push notification on your phone.")
 
@@ -246,6 +268,7 @@ def log_push_challenge(auth_data: dict) -> None:
 
         print("[JIT] Okta Verify push requires number challenge (binding_method=transfer).")
         print(f"[BINDING CODE] {binding_code}")
+        _github_notice("Okta Verify Number Challenge", binding_code)
         print("[JIT] Approve the push and tap the matching number in Okta Verify.")
         return
 

@@ -26,7 +26,7 @@ variable "policy_name_prefix" {
 }
 
 
-variable "TF_API_TOKEN" {
+variable "tf_api_token" {
   description = "HCP Terraform API Token."
   type        = string
 }

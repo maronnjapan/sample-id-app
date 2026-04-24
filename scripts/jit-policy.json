@@ -1,0 +1,10 @@
+{
+  "protected_resource_types": [
+    "okta_app_signon_policy",
+    "okta_app_signon_policy_rule"
+  ],
+  "terraform_dirs": [
+    "terraform",
+    "terraform-verify"
+  ]
+}

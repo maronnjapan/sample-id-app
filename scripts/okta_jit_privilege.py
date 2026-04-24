@@ -2,37 +2,36 @@
 """
 Okta Direct Authentication (OOB) JIT privilege escalation script.
 
-Flow:
-  1. POST /oauth2/v1/primary-authenticate  → get oob_code (+ optional binding_code)
-  2. Poll POST /oauth2/v1/token            → wait for push approval → access_token
-  3. POST /oauth2/v1/clients/{id}/roles   → grant SUPER_ADMIN to Terraform app
-  4. Optional: keep the role for a lease window and revoke from CI
-  5. Optional: terraform apply/plan
-  6. Optional: DELETE /oauth2/v1/clients/{id}/roles/{roleId}  (finally)
+Subcommands:
+  grant  — Steps 1-3: trigger OOB push, wait for approval, grant SUPER_ADMIN.
+           Outputs role_id and access_token for the revoke step.
+  revoke — Step 4: revoke SUPER_ADMIN using role_id and access_token from grant.
 
-Corrections applied from Codex review:
-  - scope included in /token poll request
-  - interval from response used for polling cadence
-  - binding_code is optional (present only when binding_method=transfer)
-  - error categorization: pending→retry, slow_down→backoff, terminal→fail
-  - finally block guarantees role revocation
-  - leftover role check at startup
+Environment variables (both subcommands):
+  OKTA_DOMAIN          Okta org hostname (e.g. myorg.okta.com)
+  BRIDGE_CLIENT_ID     Client ID of the CI bridge app
+  TERRAFORM_CLIENT_ID  Client ID of the Terraform app to grant/revoke role on
+
+grant only:
+  ADMIN_EMAIL          Okta login of the admin who will approve the push
+
+revoke only:
+  ROLE_ID              Role ID emitted by grant
+  ACCESS_TOKEN         Admin access token emitted by grant
 """
 
+import json
 import os
 import sys
-import json
 import time
-import subprocess
 from urllib.parse import urlparse
 
 import requests
 
 
 def _enable_live_logs() -> None:
-    # GitHub Actions captures stdout/stderr via pipes, so default buffering can
-    # delay challenge details until after the approval window. Force immediate
-    # writes so the Number Challenge is visible while the push is pending.
+    # GitHub Actions captures stdout via pipes; force immediate writes so
+    # the Number Challenge appears while the push is still pending.
     for stream in (sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is not None:
@@ -46,7 +45,6 @@ def _require_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if value:
         return value
-
     raise RuntimeError(
         f"Required environment variable '{name}' is empty. "
         "In GitHub Actions this usually means the repository secret is unset "
@@ -78,24 +76,29 @@ def _normalize_okta_domain(value: str) -> str:
     return host
 
 
-OKTA_DOMAIN = _normalize_okta_domain(_require_env("OKTA_DOMAIN"))  # e.g. myorg.okta.com
+def _set_ci_output(name: str, value: str, sensitive: bool = False) -> None:
+    """Emit a key-value output for downstream CI steps or jobs.
+
+    In GitHub Actions: writes to $GITHUB_OUTPUT and masks sensitive values.
+    Elsewhere: prints KEY=VALUE to stdout (Screwdriver, local, etc.).
+    """
+    if sensitive and os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::add-mask::{value}", flush=True)
+
+    github_output = os.environ.get("GITHUB_OUTPUT", "")
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"{name}={value}\n")
+    else:
+        print(f"[OUTPUT] {name}={'***' if sensitive else value}")
+
+
+OKTA_DOMAIN = _normalize_okta_domain(_require_env("OKTA_DOMAIN"))
 BRIDGE_CLIENT_ID = _require_env("BRIDGE_CLIENT_ID")
 TERRAFORM_CLIENT_ID = _require_env("TERRAFORM_CLIENT_ID")
-ADMIN_EMAIL = _require_env("ADMIN_EMAIL")          # Okta login of the approving admin
-JIT_MODE = os.environ.get("JIT_MODE", "grant-and-run-terraform")
-ROLE_LEASE_SECONDS = int(os.environ.get("ROLE_LEASE_SECONDS", "0"))
-REQUIRE_NUMBER_CHALLENGE = os.environ.get("REQUIRE_NUMBER_CHALLENGE", "false").lower() in {
-    "1", "true", "yes", "on"
-}
 
 BASE_URL = f"https://{OKTA_DOMAIN}"
-# Must use org authorization server — custom auth servers cannot issue okta.* scopes
 TOKEN_SCOPES = "openid profile okta.roles.manage"
-
-# Errors that mean "still waiting" — safe to retry
-_PENDING_ERRORS = {"authorization_pending", "slow_down"}
-
-# CI job timeout guard (GitHub Actions default job timeout applies externally)
 MAX_POLL_SECONDS = 600
 
 
@@ -123,15 +126,12 @@ def _api(method: str, path: str, token: str, **kwargs) -> requests.Response:
         ) from exc
 
 
-# ---------------------------------------------------------------------------
-# Step 1
-# ---------------------------------------------------------------------------
-def start_oob_auth() -> dict:
+def start_oob_auth(admin_email: str) -> dict:
     resp = _post_form(
         "/oauth2/v1/primary-authenticate",
         {
             "client_id": BRIDGE_CLIENT_ID,
-            "login_hint": ADMIN_EMAIL,
+            "login_hint": admin_email,
             "channel_hint": "push",
             "challenge_hint": "urn:okta:params:oauth:grant-type:oob",
         },
@@ -141,9 +141,6 @@ def start_oob_auth() -> dict:
     return resp.json()
 
 
-# ---------------------------------------------------------------------------
-# Step 2
-# ---------------------------------------------------------------------------
 def poll_for_token(oob_code: str, interval: int, expires_in: int) -> str:
     deadline = time.monotonic() + min(expires_in, MAX_POLL_SECONDS)
     current_interval = max(interval, 5)
@@ -162,14 +159,12 @@ def poll_for_token(oob_code: str, interval: int, expires_in: int) -> str:
         if resp.status_code == 200:
             return resp.json()["access_token"]
 
-        # Rate-limited: back off then retry
         if resp.status_code == 429:
             retry_after = int(resp.headers.get("Retry-After", current_interval * 2))
             print(f"[poll] 429 rate-limited, waiting {retry_after}s")
             time.sleep(retry_after)
             continue
 
-        # Server error: transient, retry once
         if resp.status_code >= 500:
             print(f"[poll] {resp.status_code} server error, retrying in {current_interval}s")
             time.sleep(current_interval)
@@ -188,15 +183,11 @@ def poll_for_token(oob_code: str, interval: int, expires_in: int) -> str:
             time.sleep(current_interval)
             continue
 
-        # Any other error is terminal
         raise RuntimeError(f"Token polling failed: {json.dumps(error_data)}")
 
     raise TimeoutError(f"OOB approval not received within {MAX_POLL_SECONDS}s")
 
 
-# ---------------------------------------------------------------------------
-# Role management helpers
-# ---------------------------------------------------------------------------
 def list_roles(token: str) -> list[dict]:
     resp = _api("GET", f"/oauth2/v1/clients/{TERRAFORM_CLIENT_ID}/roles", token)
     if resp.status_code == 404:
@@ -221,37 +212,9 @@ def list_super_admin_roles(token: str) -> list[dict]:
     return [role for role in list_roles(token) if role.get("type") == "SUPER_ADMIN"]
 
 
-# ---------------------------------------------------------------------------
-# Step 4
-# ---------------------------------------------------------------------------
-def run_terraform() -> None:
-    # TERRAFORM_COMMAND=plan  → インフラ変更なし（PR作成・更新時の動作確認用）
-    # TERRAFORM_COMMAND=apply → 実際に適用（マージ時）
-    command = os.environ.get("TERRAFORM_COMMAND", "plan")
-    if command == "apply":
-        cmd = ["terraform", "apply", "-auto-approve"]
-    else:
-        cmd = ["terraform", "plan"]
-    subprocess.run(cmd, check=True)
-
-
-def wait_for_lease(seconds: int) -> None:
-    if seconds <= 0:
-        return
-
-    print(f"[JIT] Holding SUPER_ADMIN for {seconds}s before CI revokes it.")
-    remaining = seconds
-    while remaining > 0:
-        sleep_for = min(30, remaining)
-        print(f"[JIT] Lease remaining: {remaining}s")
-        time.sleep(sleep_for)
-        remaining -= sleep_for
-
-
 def _github_notice(title: str, message: str) -> None:
     if os.environ.get("GITHUB_ACTIONS") != "true":
         return
-
     escaped_title = title.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     escaped_message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     print(f"::notice title={escaped_title}::{escaped_message}")
@@ -269,16 +232,19 @@ def log_push_challenge(auth_data: dict) -> None:
                 "Okta returned binding_method=transfer but no binding_code. "
                 "The user can't complete the number challenge without the code."
             )
-
         print("[JIT] Okta Verify push requires number challenge (binding_method=transfer).")
         print(f"[BINDING CODE] {binding_code}")
         _github_notice("Okta Verify Number Challenge", binding_code)
         print("[JIT] Approve the push and tap the matching number in Okta Verify.")
         return
 
+    require_number_challenge = os.environ.get("REQUIRE_NUMBER_CHALLENGE", "false").lower() in {
+        "1", "true", "yes", "on",
+    }
+
     if binding_method == "none":
         print("[JIT] Okta Verify push does not require number challenge (binding_method=none).")
-        if REQUIRE_NUMBER_CHALLENGE:
+        if require_number_challenge:
             raise RuntimeError(
                 "REQUIRE_NUMBER_CHALLENGE=true, but Okta returned binding_method=none. "
                 "Enable Okta Verify number challenge in the org settings or disable REQUIRE_NUMBER_CHALLENGE."
@@ -292,72 +258,77 @@ def log_push_challenge(auth_data: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Subcommand: grant
 # ---------------------------------------------------------------------------
-def main() -> None:
-    print(f"[JIT] Starting OOB push flow for '{ADMIN_EMAIL}' → app '{TERRAFORM_CLIENT_ID}' (mode={JIT_MODE})")
+def cmd_grant() -> None:
+    """Steps 1-3: Trigger OOB push, wait for admin approval, grant SUPER_ADMIN.
 
-    # Step 1 — initiate push
-    auth_data = start_oob_auth()
+    Writes role_id and access_token as CI outputs for the revoke subcommand.
+    """
+    admin_email = _require_env("ADMIN_EMAIL")
+    print(f"[JIT] Starting OOB push flow for '{admin_email}' → app '{TERRAFORM_CLIENT_ID}'")
+
+    auth_data = start_oob_auth(admin_email)
     oob_code: str = auth_data["oob_code"]
     interval: int = auth_data.get("interval", 5)
     expires_in: int = auth_data.get("expires_in", 300)
     log_push_challenge(auth_data)
 
-    access_token: str | None = None
-    role_id: str | None = None
+    print(f"[JIT] Polling for approval (interval={interval}s, expires_in={expires_in}s)...")
+    access_token = poll_for_token(oob_code, interval, expires_in)
+    print("[JIT] Push approved. Access token obtained.")
 
+    leftover = list_super_admin_roles(access_token)
+    if leftover:
+        raise RuntimeError(
+            f"Existing SUPER_ADMIN assignment(s) detected: {[r['id'] for r in leftover]}. "
+            "Refusing to proceed — revoke the stale role(s) manually before re-running."
+        )
+
+    role_id = assign_super_admin(access_token)
+    print(f"[JIT] SUPER_ADMIN granted (roleId={role_id})")
+
+    _set_ci_output("role_id", role_id)
+    _set_ci_output("access_token", access_token, sensitive=True)
+
+
+# ---------------------------------------------------------------------------
+# Subcommand: revoke
+# ---------------------------------------------------------------------------
+def cmd_revoke() -> None:
+    """Step 4: Revoke the SUPER_ADMIN role that was granted by cmd_grant."""
+    role_id = _require_env("ROLE_ID")
+    access_token = _require_env("ACCESS_TOKEN")
+
+    # Mask the token before any logging in this process
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::add-mask::{access_token}", flush=True)
+
+    print(f"[JIT] Revoking SUPER_ADMIN (roleId={role_id})...")
     try:
-        # Step 2 — poll for approval
-        print(f"[JIT] Polling for approval (interval={interval}s, expires_in={expires_in}s)...")
-        access_token = poll_for_token(oob_code, interval, expires_in)
-        print("[JIT] Push approved. Access token obtained.")
+        revoke_role(access_token, role_id)
+        print(f"[JIT] SUPER_ADMIN revoked (roleId={role_id})")
+    except Exception as exc:
+        print(f"[JIT] CRITICAL: failed to revoke role {role_id}: {exc}", file=sys.stderr)
+        sys.exit(2)
 
-        # Guard: in lease mode, do not auto-revoke an existing active assignment.
-        leftover = list_super_admin_roles(access_token)
-        if leftover:
-            if JIT_MODE == "grant-with-lease":
-                raise RuntimeError(
-                    "Existing SUPER_ADMIN assignment detected. Refusing to revoke it automatically in lease mode."
-                )
 
-            print(
-                f"[JIT] WARNING: {len(leftover)} leftover SUPER_ADMIN role(s) from a previous run. "
-                "Revoking before proceeding."
-            )
-            for r in leftover:
-                revoke_role(access_token, r["id"])
-                print(f"[JIT]   revoked stale role {r['id']} ({r.get('type', '?')})")
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+def main() -> None:
+    if len(sys.argv) < 2:
+        print("Usage: okta_jit_privilege.py <grant|revoke>", file=sys.stderr)
+        sys.exit(1)
 
-        # Step 3 — grant SUPER_ADMIN
-        role_id = assign_super_admin(access_token)
-        print(f"[JIT] SUPER_ADMIN granted (roleId={role_id})")
-
-        if JIT_MODE == "grant-only":
-            print("[JIT] grant-only mode: leaving SUPER_ADMIN assigned for a separate local operation.")
-            return
-
-        if JIT_MODE == "grant-with-lease":
-            wait_for_lease(ROLE_LEASE_SECONDS)
-            print("[JIT] Lease window ended. Revoking SUPER_ADMIN from CI.")
-            return
-
-        # Step 4 — run Terraform (plan or apply depending on TERRAFORM_COMMAND)
-        cmd = os.environ.get("TERRAFORM_COMMAND", "plan")
-        print(f"[JIT] Running terraform {cmd}...")
-        run_terraform()
-        print(f"[JIT] terraform {cmd} succeeded.")
-
-    finally:
-        # Always revoke — even if Terraform or push approval failed
-        if JIT_MODE != "grant-only" and access_token and role_id:
-            try:
-                revoke_role(access_token, role_id)
-                print(f"[JIT] SUPER_ADMIN revoked (roleId={role_id})")
-            except Exception as exc:
-                print(f"[JIT] CRITICAL: failed to revoke role {role_id}: {exc}", file=sys.stderr)
-                # Exit non-zero so CI marks the job failed and on-call is alerted
-                sys.exit(2)
+    subcommand = sys.argv[1]
+    if subcommand == "grant":
+        cmd_grant()
+    elif subcommand == "revoke":
+        cmd_revoke()
+    else:
+        print(f"Unknown subcommand: {subcommand!r}. Expected 'grant' or 'revoke'.", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

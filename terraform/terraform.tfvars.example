@@ -1,0 +1,6 @@
+okta_org_name          = "xxxxxxx"
+okta_base_url          = "okta.com"
+okta_tf_app_client_id  = "xxxxxxx"
+okta_tf_private_key    = "filePath"
+okta_tf_private_key_id = "xxxxxxx"
+admin_user_logins      = ["super_admin_user_mail_in_okta"]

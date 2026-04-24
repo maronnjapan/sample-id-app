@@ -1,0 +1,5 @@
+okta_domain         = "xxxxx.okta.com"
+okta_client_id      = "xxxxx"
+okta_private_key    = "filePath or private key content"
+okta_private_key_id = "xxxxxxxxx"
+TF_API_TOKEN        = "your_hcp_terraform_api_token"

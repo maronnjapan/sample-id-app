@@ -1,11 +1,15 @@
 name: Grant SUPER_ADMIN (JIT via Okta OOB Push)
 
 on:
+  # PR 作成・更新時の検証は pull_request で受ける。
+  # 新規ワークフローは main に入る前だと pull_request_target では起動しないため。
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  # マージ後の特権リースは trusted な base branch 定義から実行する。
   pull_request_target:
     branches: [main]
-    # opened/synchronize/reopened: validation
-    # closed: merged only
-    types: [opened, synchronize, reopened, closed]
+    types: [closed]
 
 # ロール付与先が1つのため、workflow 全体で直列実行する。
 concurrency:
@@ -17,8 +21,10 @@ jobs:
     name: JIT SUPER_ADMIN ${{ github.event.pull_request.merged == true && '(Merged PR)' || '(Validation)' }}
     runs-on: ubuntu-latest
 
-    # closed イベントでは merged == true の場合のみ実行
-    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    # same-repo の PR 検証と、merge 済み PR の privileged path のみを扱う。
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
 
     permissions:
       contents: read
@@ -33,15 +39,17 @@ jobs:
 
     steps:
       # ------------------------------------------------------------------
-      # 1. Checkout trusted code only.
-      #    pull_request_target is required so repository secrets are available
-      #    even when the PR source branch is a fork. Never checkout the PR head.
+      # 1. Checkout workflow/script under test.
+      #    PR validation must use pull_request so newly added workflows can run
+      #    before they exist on main. The merged-PR path keeps using
+      #    pull_request_target so the privileged flow is still defined by the
+      #    trusted base branch.
       # ------------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.merge_commit_sha || github.event.pull_request.base.sha }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
 
       - name: Validate required Okta settings
         run: |
@@ -107,3 +115,15 @@ jobs:
           echo "This workflow grants SUPER_ADMIN only for a limited lease window."
           echo "Terraform apply is expected to run from a local terminal during that window."
           echo "Configured lease seconds: ${ROLE_LEASE_SECONDS}."
+
+  fork_pr_notice:
+    name: JIT SUPER_ADMIN (Fork PR Notice)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+
+    steps:
+      - name: Explain why privileged validation is skipped for forks
+        run: |
+          echo "Skipping Okta JIT validation for a fork PR."
+          echo "Repository secrets are not exposed to pull_request runs from forks."
+          echo "Merged PR handling remains on pull_request_target from the trusted base branch."

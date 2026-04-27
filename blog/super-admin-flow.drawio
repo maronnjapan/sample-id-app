@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-27T00:00:00.000Z" agent="Claude Code" version="21.0.0" type="device">
+  <diagram id="super-admin-flow" name="Super Admin 付与・剝奪フロー">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Start: CI/CD パイプライン開始 -->
+        <mxCell id="A" value="CI/CD パイプライン開始" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="310" y="40" width="240" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: 認証ポリシーの削除を検出? -->
+        <mxCell id="B" value="認証ポリシーの削除を検出?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e8e8e8;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="160" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- End (Skip): Super Admin 付与・剝奪をスキップしてterraform apply -->
+        <mxCell id="SKIP" value="Super Admin 付与・剝奪をスキップして&#xa;terraform apply" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="640" y="170" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Action: Okta Verify でプッシュ通知送信 -->
+        <mxCell id="C" value="Okta Verify でプッシュ通知送信&#xa;対象ユーザーのスマホへ通知" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d0d0d0;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="340" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: ユーザーがプッシュ通知を承認? -->
+        <mxCell id="D" value="ユーザーがプッシュ通知を承認?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e8e8e8;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="490" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- End (Error): エラー終了 -->
+        <mxCell id="ERR" value="エラー終了" style="ellipse;whiteSpace=wrap;html=1;fillColor=#b0b0b0;strokeColor=#000000;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="510" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Action: SUPER_ADMIN ロール付与 -->
+        <mxCell id="E" value="SUPER_ADMIN ロール付与&#xa;Terraform 用アプリに一時付与" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d8d8d8;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="670" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Action: Terraform Apply -->
+        <mxCell id="F" value="Terraform Apply&#xa;terraform apply -auto-approve" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="830" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Action: SUPER_ADMIN ロール即時剝奪 -->
+        <mxCell id="G" value="SUPER_ADMIN ロール即時剝奪&#xa;Terraform 完了後すぐに削除" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d8d8d8;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="990" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- End: 終了 -->
+        <mxCell id="END" value="終了" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1150" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: A → B -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="A" target="B" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: B → SKIP (No) -->
+        <mxCell id="e2" value="No" style="edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="B" target="SKIP" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: B → C (Yes) -->
+        <mxCell id="e3" value="Yes" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="B" target="C" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: C → D -->
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="C" target="D" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: D → ERR (拒否/タイムアウト) -->
+        <mxCell id="e5" value="拒否/タイムアウト" style="edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="D" target="ERR" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: D → E (承認) -->
+        <mxCell id="e6" value="承認" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="D" target="E" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: E → F -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="E" target="F" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: F → G -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="F" target="G" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: G → END -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="G" target="END" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

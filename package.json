@@ -1,0 +1,35 @@
+{
+  "name": "sample-id-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Auth0 Token Vault 風 AWS 構成（検証・研修用）",
+  "bin": {
+    "token-vault": "bin/app.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "diff": "cdk diff",
+    "seed": "tsx scripts/seed.ts",
+    "mint-jwt": "tsx scripts/mint-jwt.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.658.0",
+    "@aws-sdk/client-kms": "^3.658.0",
+    "@aws-sdk/client-secrets-manager": "^3.658.0",
+    "@aws-sdk/lib-dynamodb": "^3.658.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.7.4",
+    "aws-cdk": "^2.254.0",
+    "aws-cdk-lib": "^2.254.0",
+    "constructs": "^10.3.0",
+    "esbuild": "^0.24.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

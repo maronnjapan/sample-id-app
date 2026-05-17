@@ -7,7 +7,7 @@
 
 - Super Adminにすることによるリスク
     - 現状のスコープ(ネットワークゾーンと認証ポリシーの作成・編集のみ可能)の場合、Super AdminとOrg Adminで認証ポリシー削除以外の差異が発生する事象は確認できなかった。
-    - ケースとしては対象のAPI ServiceにSuper Adminを付与し、以下を試した。
+    - ケースとしては対象のAPI ServiceにSuper Adminを付与し、以下を試す。
         - Super AdminをAPI Serviceに昇格することで、任意のユーザーを管理者に昇格できるか？
             - 不可。`okta.roles.manage`がないため、権限エラーとなる。
         - 

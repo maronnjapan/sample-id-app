@@ -56,3 +56,5 @@ dist
 /proxy-oauth-token-request
 
 .wrangler
+
+*.tfvars

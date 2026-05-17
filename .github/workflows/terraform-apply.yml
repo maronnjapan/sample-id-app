@@ -1,0 +1,182 @@
+name: Grant SUPER_ADMIN (JIT via Okta OOB Push)
+
+on:
+  # PR 作成・更新時の検証は pull_request で受ける。
+  # 新規ワークフローは main に入る前だと pull_request_target では起動しないため。
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  # マージ後の特権リースは trusted な base branch 定義から実行する。
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+
+# ロール付与先が1つのため、workflow 全体で直列実行する。
+concurrency:
+  group: jit-super-admin
+  cancel-in-progress: false
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. terraform plan -json で Auth Policy 削除の有無を判定する。
+  #    tfstate は GitHub Contents API で永続化し、正確な差分を取得する。
+  #    検出ロジックは scripts/detect_tf_deletion.sh に集約されており
+  #    CI システムを問わず同じスクリプトを呼び出せる。
+  # ------------------------------------------------------------------
+  detect_deletion:
+    name: Detect Auth Policy Deletion
+    runs-on: ubuntu-latest
+
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
+
+    permissions:
+      contents: read
+
+    outputs:
+      required: ${{ steps.detect.outputs.detected }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
+
+      - name: Detect Auth Policy deletion via Terraform plan
+        id: detect
+        uses: ./.github/actions/detect-tf-deletion
+        with:
+          okta_domain: ${{ secrets.OKTA_DOMAIN }}
+          okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+          okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
+          okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
+          tf_api_token: ${{ secrets.TF_API_TOKEN }}
+
+  # ------------------------------------------------------------------
+  # 2. OOB プッシュ承認 → SUPER_ADMIN 付与 → Terraform 実行 → 即時剝奪を
+  #    単一ジョブ内のステップで完結させる。
+  #    アクセストークンはジョブ内のステップ間でのみ受け渡し、ジョブ外に出ない。
+  # ------------------------------------------------------------------
+  terraform_jit:
+    name: JIT Terraform ${{ github.event.pull_request.merged == true && 'Apply' || 'Plan' }}
+    runs-on: ubuntu-latest
+    needs: detect_deletion
+    if: needs.detect_deletion.outputs.required == 'true'
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    env:
+      OKTA_DOMAIN: ${{ secrets.OKTA_DOMAIN }}
+      BRIDGE_CLIENT_ID: ${{ secrets.OKTA_BRIDGE_CLIENT_ID }}
+      TERRAFORM_CLIENT_ID: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
+
+      - name: Validate required Okta settings
+        run: |
+          missing=0
+          for name in OKTA_DOMAIN BRIDGE_CLIENT_ID TERRAFORM_CLIENT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "ERROR: ${name} is empty." >&2
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "ERROR: Configure repository secrets OKTA_DOMAIN, OKTA_BRIDGE_CLIENT_ID, and OKTA_TERRAFORM_CLIENT_ID." >&2
+            exit 1
+          fi
+
+      - name: Resolve admin email for OOB push
+        id: resolve_email
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_LOGIN: ${{ github.event.pull_request.merged_by.login || github.event.pull_request.user.login }}
+        run: |
+          # TARGET_EMAIL=$(gh api "users/${TARGET_LOGIN}" --jq '.email // empty' 2>/dev/null || true)
+          TARGET_EMAIL="maronn-infomation@maronn-room.com"
+          if [ -n "$TARGET_EMAIL" ]; then
+            echo "Resolved Okta login from GitHub: ${TARGET_EMAIL}"
+            echo "admin_email=${TARGET_EMAIL}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ERROR: Cannot determine admin email from GitHub public profile for ${TARGET_LOGIN}." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.5"
+
+      - name: Terraform Init
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        run: terraform init
+
+      - name: Grant SUPER_ADMIN
+        id: grant
+        env:
+          # ADMIN_EMAIL: ${{ steps.resolve_email.outputs.admin_email }}
+          ADMIN_EMAIL: "maronn-infomation@maronn-room.com"
+        run: python -u scripts/okta_jit_privilege.py grant
+
+      - name: Terraform Plan
+        if: github.event.pull_request.merged != true
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_okta_domain: ${{ secrets.OKTA_DOMAIN }}
+          TF_VAR_okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+          TF_VAR_okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
+          TF_VAR_okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        if: github.event.pull_request.merged == true
+        working-directory: terraform-verify
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_okta_domain: ${{ secrets.OKTA_DOMAIN }}
+          TF_VAR_okta_client_id: ${{ secrets.OKTA_TERRAFORM_CLIENT_ID }}
+          TF_VAR_okta_private_key: ${{ secrets.OKTA_TF_PRIVATE_KEY }}
+          TF_VAR_okta_private_key_id: ${{ secrets.OKTA_TF_PRIVATE_KEY_ID }}
+        run: terraform apply -auto-approve
+
+      - name: Revoke SUPER_ADMIN
+        if: |
+          !cancelled() && 
+          steps.grant.outcome == 'success'
+        env:
+          ROLE_ID: ${{ steps.grant.outputs.role_id }}
+          ACCESS_TOKEN: ${{ steps.grant.outputs.access_token }}
+        run: python -u scripts/okta_jit_privilege.py revoke
+
+  fork_pr_notice:
+    name: JIT SUPER_ADMIN (Fork PR Notice)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+
+    steps:
+      - name: Explain why privileged validation is skipped for forks
+        run: |
+          echo "Skipping Okta JIT validation for a fork PR."
+          echo "Repository secrets are not exposed to pull_request runs from forks."
+          echo "Merged PR handling remains on pull_request_target from the trusted base branch."

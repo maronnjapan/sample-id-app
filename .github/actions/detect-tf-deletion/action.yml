@@ -1,0 +1,76 @@
+name: Detect Terraform Resource Deletion
+description: >
+  Runs terraform plan -json and inspects the output to detect deletions of
+  protected resources. Reliable against all indirect deletion patterns
+  (count=0, for_each={}, moved blocks) — unlike git-diff-based detection.
+  Terraform state is persisted in HCP Terraform.
+
+inputs:
+  tf_dir:
+    description: Directory containing Terraform configuration
+    required: true
+    default: terraform-verify
+  policy_file:
+    description: Path to the JIT policy JSON config
+    default: scripts/jit-policy.json
+  okta_domain:
+    description: Okta org domain for Terraform provider authentication
+    required: true
+  okta_client_id:
+    description: Client ID of the Terraform app
+    required: true
+  okta_private_key:
+    description: PEM private key for the Terraform app
+    required: true
+  okta_private_key_id:
+    description: Key ID for the PEM private key
+    required: true
+  tf_api_token:
+    description: HCP Terraform API token
+    required: true
+
+outputs:
+  detected:
+    description: "'true' when a protected resource deletion is found in the plan"
+    value: ${{ steps.run.outputs.detected }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~> 1.5"
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      shell: bash
+      env:
+        TF_TOKEN_app_terraform_io: ${{ inputs.tf_api_token }}
+      working-directory: ${{ inputs.tf_dir }}
+      run: terraform init
+
+    - id: run
+      shell: bash
+      env:
+        TF_DIR: ${{ inputs.tf_dir }}
+        POLICY_FILE: ${{ inputs.policy_file }}
+        TF_TOKEN_app_terraform_io: ${{ inputs.tf_api_token }}
+        TF_VAR_okta_domain: ${{ inputs.okta_domain }}
+        TF_VAR_okta_client_id: ${{ inputs.okta_client_id }}
+        TF_VAR_okta_private_key: ${{ inputs.okta_private_key }}
+        TF_VAR_okta_private_key_id: ${{ inputs.okta_private_key_id }}
+      run: |
+        set +e
+        bash scripts/detect_tf_deletion.sh
+        _rc=$?
+        set -e
+
+        case $_rc in
+          0) detected=true  ;;
+          1) detected=false ;;
+          *) echo "ERROR: detect_tf_deletion.sh exited with code ${_rc}" >&2; exit $_rc ;;
+        esac
+
+        echo "detected=${detected}" >> "$GITHUB_OUTPUT"
+        echo "- Protected resource deletion detected: **${detected}**" >> "$GITHUB_STEP_SUMMARY"

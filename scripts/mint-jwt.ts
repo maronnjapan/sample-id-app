@@ -13,6 +13,7 @@
  */
 import { generateKeyPairSync } from 'node:crypto';
 import { signJwt } from '../src/common/jwt';
+import * as fs from 'node:fs';
 
 function arg(name: string, fallback?: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -59,3 +60,14 @@ console.log(
     2,
   ),
 );
+
+
+fs.writeFileSync('minted-jwt.json', JSON.stringify(
+  {
+    access_token_subject_token: accessToken,
+    my_account_api_token: myAccountToken,
+    secrets_manager_field: { mock_jwt_private_key_pem: privateKeyPem },
+  },
+  null,
+  2,
+));

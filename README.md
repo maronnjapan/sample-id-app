@@ -138,8 +138,61 @@ npx cdk diff
 npx cdk deploy
 ```
 
-デプロイ後、出力（CfnOutput）に API のベース URL・KMS Key ARN・Secrets Manager の
-シークレット名が表示されます。
+デプロイが完了すると、ターミナルに次のような出力（CfnOutput）が表示されます。
+
+```
+Outputs:
+TokenVaultStack.ApiBaseUrl       = https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com
+TokenVaultStack.KmsKeyArn        = arn:aws:kms:ap-northeast-1:123456789012:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+TokenVaultStack.ProviderSecretName = token-vault/providers
+TokenVaultStack.ConnectUri       = https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/connected-accounts/connect
+```
+
+### 4-1. デプロイ後に出力値を再取得する
+
+`cdk deploy` の出力を見逃した場合は、以下のいずれかの方法で取得できます。
+
+**方法A: CloudFormation スタックから一括取得**
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name TokenVaultStack \
+  --query "Stacks[0].Outputs" \
+  --output table
+```
+
+**方法B: 値を個別に取得**
+
+```bash
+# API Gateway のベース URL
+aws cloudformation describe-stacks \
+  --stack-name TokenVaultStack \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiBaseUrl'].OutputValue" \
+  --output text
+
+# KMS キーの ARN
+aws cloudformation describe-stacks \
+  --stack-name TokenVaultStack \
+  --query "Stacks[0].Outputs[?OutputKey=='KmsKeyArn'].OutputValue" \
+  --output text
+```
+
+**方法C: AWS リソースから直接取得**
+
+```bash
+# API Gateway（HTTP API 名 "token-vault" で絞り込み）
+aws apigatewayv2 get-apis \
+  --query "Items[?Name=='token-vault'].ApiEndpoint" \
+  --output text
+
+# KMS（エイリアス alias/token-vault で検索）
+aws kms describe-key \
+  --key-id alias/token-vault \
+  --query "KeyMetadata.Arn" \
+  --output text
+```
+
+取得した値は後続のステップ（`--kms-key-arn` / `API_BASE_URL`）で使用します。
 
 ### 5. シークレットの投入
 
@@ -168,7 +221,7 @@ npx tsx scripts/mint-jwt.ts \
 ```bash
 aws secretsmanager put-secret-value \
   --secret-id token-vault/providers \
-  --secret-string file://secret.json
+  --secret-string "file://minted-jwt.json"
 ```
 
 > `--issuer` / `--my-account-audience` は CDK の context（`jwtIssuer` /

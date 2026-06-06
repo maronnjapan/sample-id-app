@@ -47,6 +47,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# aws cdk
+cdk.out
+.cdk.staging
+
 /.next
 
 dist
@@ -56,3 +60,5 @@ dist
 /proxy-oauth-token-request
 
 .wrangler
+
+minted-jwt.json

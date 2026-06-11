@@ -11,13 +11,19 @@ T(P_old):
       new.system_catchall = DENY                    # 既定のまま。追加ルール無し
   else:  # P_old.catchall.action == ALLOW
       new.append( custom_catchall = Rule(
-          conditions = ANY,                          # ★完全無条件（narrowing 一切なし）
+          conditions = ANY,                          # ★完全無条件（narrowing 一切なし）= INV-1
           action     = ALLOW,
-          requirements = P_old.catchall.requirements # ★旧 Catch-all と完全一致
+          requirements = P_old.catchall.requirements # ★認証要件まで完全一致（縮約しない）= INV-2
       ))
       new.system_catchall = DENY                     # フェイルセーフとして Deny を温存
   return new
 ```
+
+> **重要（ANY ALLOW ではない）**：Catch-all の ALLOW は「誰でも素通し」ではなく、
+> **必ず認証要件（factorMode / constraints / 再認証間隔 …）という設定を伴う**。
+> したがって等価性は「ALLOW で ANY」では決まらず、`action == ALLOW` **かつ**
+> `requirements` が旧 Catch-all と完全一致して初めて成立する。
+> `T` は `requirements` を **丸ごとコピー** し、`access` だけに縮約しない。
 
 ## 2.2 命題
 
@@ -57,20 +63,29 @@ T(P_old):
 従って Deny は通常運用では **到達不能（dead code）** であり、
 カスタムルールが誤って無効化・削除された場合にのみ作用する安全網である。
 
-## 2.4 証明が依存する唯一の前提
+## 2.4 証明が依存する前提
 
-等価性は **次の1点が満たされる限りにおいてのみ** 成立する:
+等価性は **次の2点が満たされる限りにおいてのみ** 成立する:
 
 > **前提 INV-1：カスタム Catch-all の conditions は完全に無条件（ANY / 空）である。**
+>
+> **前提 INV-2：カスタム Catch-all の ALLOW は具体的な認証要件を伴い（≠ ANY ALLOW）、
+> その要件が旧 Catch-all と完全一致する。**
 
-もしカスタム Catch-all に少しでも条件（ゾーン限定・グループ限定・platform 限定 …）が付くと、
+**INV-1** が崩れると（ゾーン限定・グループ限定・platform 限定 … が少しでも付くと）、
 その条件を外れる fall-through リクエストが **システム Deny Catch-all に落ちてしまい**、
 旧 Allow と食い違う（旧=Allow / 新=Deny）。
 
-→ この INV-1 は **人手レビューに委ねず自動で強制** する。
-  - **L1（構造）**：`structural_diff.py` がカスタム Catch-all の conditions が空であることを assert。
-  - **L2（挙動）**：fall-through 経路を狙ったシナリオで両者 ALLOW 一致を確認し、
-    かつ「カスタムルールを除けば Deny になる」ことを回帰観点として記録。
+**INV-2** が崩れると（要件が `access` だけに縮約され ANY ALLOW 化すると）、
+decision は ALLOW で一致しても **要求される認証強度（多要素・再認証間隔等）が変わり**、
+`(decision, requirements)` の一致＝挙動等価が崩れる。
+Catch-all ALLOW は仕様上かならず認証要件を伴うため、要件空＝取りこぼし/誤変換の徴候。
+
+→ この2つは **人手レビューに委ねず自動で強制** する。
+  - **L1（構造）**：`structural_diff.assert_inv1()` が
+    INV-1（conditions が空）と INV-2（requirements が access 以外を持ち、旧と一致）を assert。
+  - **L2（挙動）**：fall-through 経路を狙ったシナリオで両者の `(decision, requirements)`
+    一致を確認し、かつ「カスタムルールを除けば Deny になる」ことを回帰観点として記録。
 
 ## 2.5 要件（requirements）一致の注意点
 
@@ -86,3 +101,8 @@ T(P_old):
 
 除外（揮発フィールド）: `id` / `created` / `lastUpdated` / `_links` / priority の**絶対値**。
 priority は **相対順序のみ** を比較する。
+
+**取りこぼし防止**：`canonicalize._norm_requirements` は上記の既知フィールドに加え、
+**既知でないキーも揮発キーを除いて取り込む**（`req.*` プレフィックス）。
+これは「知らないフィールドを黙って捨てて ALLOW 要件を `{access: ALLOW}` に縮約してしまう」
+＝ ANY ALLOW 化を防ぐための保険であり、INV-2 と対になる。

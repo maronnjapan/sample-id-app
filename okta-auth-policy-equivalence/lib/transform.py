@@ -15,8 +15,12 @@ def expected_new(old: CanonPolicy) -> CanonPolicy:
 
     - 明示ルール（非 system catch-all）はそのまま。
     - 旧 Catch-all が DENY: 追加なし。system catch-all は DENY のまま。
-    - 旧 Catch-all が ALLOW: 末尾に「無条件 ALLOW（旧要件と同一）」のカスタムルールを足し、
-      その後ろに system DENY catch-all を置く。
+    - 旧 Catch-all が ALLOW: 末尾に「条件 ANY ＋ 旧 Catch-all と同一の認証要件を持つ
+      ALLOW」のカスタムルールを足し、その後ろに system DENY catch-all を置く。
+
+    注意: ここでコピーするのは access だけでなく **認証要件（requirements）全体**。
+    Catch-all ALLOW は「ANY ALLOW（素通しの許可）」ではなく必ず設定済みの
+    認証要件を伴うため、要件を丸ごと引き継ぐ（縮約しない）。INV-2 がこれを担保する。
     """
     old_catchall = old.system_catchall
     explicit = list(old.explicit_rules)
@@ -31,13 +35,14 @@ def expected_new(old: CanonPolicy) -> CanonPolicy:
 
     n = len(rebuilt)
     if old_catchall.access == "ALLOW":
-        # 無条件 ALLOW カスタム Catch-all（旧 Catch-all の要件をコピー）
+        # 条件 ANY ＋ 旧 Catch-all の認証要件をそのままコピーしたカスタム Catch-all。
+        # requirements を丸ごと引き継ぐ＝ ANY ALLOW に縮約しない（INV-2）。
         rebuilt.append(
             CanonRule(
                 index=n,
-                conditions={},  # ★ INV-1: 完全無条件
+                conditions={},  # ★ INV-1: 完全無条件（ANY）
                 access="ALLOW",
-                requirements=old_catchall.requirements,
+                requirements=old_catchall.requirements,  # ★ INV-2: 認証要件を保存
                 is_system_catchall=False,
             )
         )

@@ -19,11 +19,17 @@ Terraform 版は既存ポリシーと **次の2点だけ** が意図的に異な
    （`okta_app_signon_policy` 作成時、Okta は既定 Catch-all を `DENY` で自動生成する。これをそのまま使う）
 
 2. **既存ポリシーの Catch-All が Allow の場合のみ**、Terraform 版には
-   **無条件マッチのカスタム Catch-All ルール**（実体のあるルール）を末尾に追加し、
-   その内容（action / 認証要件）を既存 Catch-All と完全一致させる。
+   **条件 ANY（完全無条件）のカスタム Catch-All ルール**（実体のあるルール）を末尾に追加し、
+   その **action と認証要件を既存 Catch-All と完全一致** させる。
    システム既定 Catch-all は Deny のまま（フェイルセーフ）。
 
-→ つまり「Deny 既定 + 無条件 Allow カスタムルール」が
+   > ⚠️ **Catch-All の ALLOW は「ANY ALLOW（誰でも素通し）」ではない**。
+   > ALLOW は既定値ではなく、必ず認証要件（factorMode / constraints / 再認証間隔 …）という
+   > **設定を伴う**。したがってカスタム Catch-All は「条件 ANY」かつ「旧と同一の認証要件」の
+   > 両方を満たして初めて等価になる（要件を `access` だけに縮約してはいけない）。
+   > これを INV-2 として自動強制する（`docs/02`）。
+
+→ つまり「Deny 既定 + 〈条件 ANY ＋ 旧と同一の認証要件〉Allow カスタムルール」が
 　「旧 Allow Catch-all」と挙動等価であることを証明・検証できれば、全体の等価性が言える。
 
 ---
@@ -44,9 +50,16 @@ Terraform 版は既存ポリシーと **次の2点だけ** が意図的に異な
 
 ```
 docs/01-equivalence-model.md   等価性の形式的定義と入力空間
-docs/02-catch-all-proof.md     Catch-all 変換の等価性証明と前提条件
+docs/02-catch-all-proof.md     Catch-all 変換の等価性証明と前提条件（INV-1 / INV-2）
 docs/03-operations-runbook.md  CI / 運用フロー（ドリフト検知・カットオーバー）
+docs/04-check-items-and-guarantee-boundary.md
+                               チェック項目一覧と「静的に担保／実適用しないと分からない」の境界
 ```
+
+> **本番無影響で適用したい場合は `docs/04` を参照。**
+> 「設定の同一性」は apply 前に L1 で網羅的に担保でき、「実評価の同一性」は
+> 未割当ポリシーへの read-only Simulation で本番影響ゼロのまま裏取りできる。
+> 本番に実際に触れるのは **アプリ割当の切替（カットオーバー）だけ** であることを明示している。
 
 ---
 

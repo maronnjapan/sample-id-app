@@ -1,9 +1,0 @@
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "connected-account",
-  "compatibility_date": "2025-11-17",
-  "main": "./src/index.tsx",
-  "observability": {
-    "enabled": true
-  }
-}

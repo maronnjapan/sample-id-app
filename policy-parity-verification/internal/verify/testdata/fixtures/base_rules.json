@@ -1,0 +1,115 @@
+[
+  {
+    "id": "rulOne",
+    "name": "Rule One",
+    "status": "ACTIVE",
+    "priority": 1,
+    "created": "2026-01-01T00:00:00.000Z",
+    "lastUpdated": "2026-01-02T00:00:00.000Z",
+    "conditions": {
+      "people": {
+        "groups": {
+          "include": ["00gB", "00gA"],
+          "exclude": []
+        },
+        "users": {
+          "include": ["00u1"],
+          "exclude": []
+        }
+      },
+      "network": {
+        "include": ["nzB", "nzA"],
+        "exclude": []
+      },
+      "app": {
+        "include": ["0oa_rule_existing"]
+      }
+    },
+    "actions": {
+      "appSignOn": {
+        "access": "ALLOW",
+        "verificationMethod": {
+          "factorMode": "2FA",
+          "type": "ASSURANCE",
+          "reauthenticateIn": null,
+          "authenticators": ["okta_verify", "password"],
+          "constraints": [
+            {
+              "type": "knowledge",
+              "methods": ["password"]
+            },
+            {
+              "type": "possession",
+              "methods": ["otp", "push"]
+            }
+          ]
+        }
+      },
+      "signon": {
+        "session": {
+          "maxSessionIdleMinutes": 120,
+          "maxSessionLifetimeMinutes": 480,
+          "usePersistentCookie": false
+        }
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "https://example.okta.com/api/v1/policies/rstExisting/rules/rulOne"
+      }
+    }
+  },
+  {
+    "id": "rulTwo",
+    "name": "Rule Two",
+    "status": "ACTIVE",
+    "priority": 2,
+    "created": "2026-01-01T00:00:00.000Z",
+    "lastUpdated": "2026-01-02T00:00:00.000Z",
+    "conditions": {
+      "people": {
+        "groups": {
+          "include": ["00gA"],
+          "exclude": []
+        },
+        "users": {
+          "include": [],
+          "exclude": []
+        }
+      },
+      "network": {
+        "include": ["nzA"],
+        "exclude": []
+      }
+    },
+    "actions": {
+      "appSignOn": {
+        "access": "DENY",
+        "verificationMethod": {
+          "factorMode": "1FA",
+          "type": "ASSURANCE",
+          "reauthenticateIn": null,
+          "authenticators": ["password"],
+          "constraints": [
+            {
+              "type": "knowledge",
+              "methods": ["password"]
+            }
+          ]
+        }
+      },
+      "signon": {
+        "session": {
+          "maxSessionIdleMinutes": 60,
+          "maxSessionLifetimeMinutes": 240,
+          "usePersistentCookie": false
+        }
+      }
+    },
+    "_links": {
+      "self": {
+        "href": "https://example.okta.com/api/v1/policies/rstExisting/rules/rulTwo"
+      }
+    }
+  }
+]

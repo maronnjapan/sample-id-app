@@ -219,23 +219,24 @@ policy-parity-verification/
 │   ├── exclude-paths.yaml          # 比較対象外 path 定義(§6)※最小限
 │   ├── normalize-rules.yaml        # 正規化ルール定義(§7)
 │   └── known-defaults.yaml         # 文書化済み API default の注入定義(§7.5)
-├── scripts/
-│   ├── fetch_policy.py             # S1: API response 取得
-│   ├── normalize.py                # S2: 正規化
-│   ├── deep_diff.py                # S3: deep diff + 分類
-│   ├── extract_state.py            # S4: state 抽出・比較
-│   ├── schema_coverage.py          # S5: schema × API 突合
-│   ├── check_audit_log.py          # S6: 変更凍結確認
-│   └── build_report.py             # S7: レポート生成
-├── tests/
-│   ├── fixtures/
-│   │   ├── base_policy.json        # 基準 fixture(実 response を匿名化して保存)
-│   │   └── base_rules.json
-│   ├── mutations/                  # 差分注入定義(§9 のケースに対応)
-│   │   ├── m01_change_mfa.yaml
-│   │   ├── m02_change_priority.yaml
-│   │   └── ...
-│   └── test_verifier.py            # 検証ロジック自体のテスト
+├── go.mod / go.sum
+├── cmd/
+│   └── policyparity/
+│       └── main.go                 # サブコマンド分岐のみ(ロジックは internal/ へ)
+├── internal/
+│   ├── oktaclient/                 # Okta SDK (v6) ラッパ(認証・429 リトライ・ページネーション・raw JSON 取得)
+│   ├── fetch/                      # S1: API response 取得
+│   ├── normalize/                  # S2: 正規化
+│   ├── diffcmp/                    # S3: deep diff + 分類
+│   ├── tfstate/                    # S4: state 抽出・比較
+│   ├── coverage/                   # S5: schema × API 突合
+│   ├── audit/                      # S6: 変更凍結確認
+│   ├── report/                     # S7: レポート生成
+│   └── verify/
+│       ├── verifier_test.go        # 検証ロジック自体のテスト(§9、table-driven)
+│       └── testdata/
+│           ├── fixtures/           # base_policy.json / base_rules.json(実 response を匿名化して保存)
+│           └── mutations/          # m01_change_mfa.yaml 等、差分注入定義(§9 のケースに対応)
 ├── artifacts/                      # 実行ごとの成果物(git 管理 or 保全先へ退避)
 │   └── {run_id}/
 │       ├── raw/existing_policy.json / existing_rules.json
@@ -255,38 +256,39 @@ policy-parity-verification/
 
 ```bash
 RUN_ID=$(date +%Y%m%dT%H%M%S)
+go build -o bin/policyparity ./cmd/policyparity   # CI ではバージョンタグ付きでビルド固定
 
 # L0: 変更凍結確認(基準時刻以降に既存ポリシーへの変更イベントがないこと)
-python scripts/check_audit_log.py --policy-id "$EXISTING_ID" \
+bin/policyparity audit --policy-id "$EXISTING_ID" \
   --since "$FREEZE_TIMESTAMP" --out artifacts/$RUN_ID/audit.json
 
 # L1: 取得 → 正規化 → diff
-python scripts/fetch_policy.py --policy-id "$EXISTING_ID" --out artifacts/$RUN_ID/raw/existing
-python scripts/fetch_policy.py --policy-id "$NEW_ID"      --out artifacts/$RUN_ID/raw/new
-python scripts/normalize.py --in artifacts/$RUN_ID/raw/existing --rules config/normalize-rules.yaml \
+bin/policyparity fetch --policy-id "$EXISTING_ID" --out artifacts/$RUN_ID/raw/existing
+bin/policyparity fetch --policy-id "$NEW_ID"      --out artifacts/$RUN_ID/raw/new
+bin/policyparity normalize --in artifacts/$RUN_ID/raw/existing --rules config/normalize-rules.yaml \
   --exclude config/exclude-paths.yaml --out artifacts/$RUN_ID/normalized/existing.json
-python scripts/normalize.py --in artifacts/$RUN_ID/raw/new --rules config/normalize-rules.yaml \
+bin/policyparity normalize --in artifacts/$RUN_ID/raw/new --rules config/normalize-rules.yaml \
   --exclude config/exclude-paths.yaml --out artifacts/$RUN_ID/normalized/new.json
-python scripts/deep_diff.py artifacts/$RUN_ID/normalized/existing.json \
+bin/policyparity diff artifacts/$RUN_ID/normalized/existing.json \
   artifacts/$RUN_ID/normalized/new.json --out artifacts/$RUN_ID/diff/diff_result.json
 
 # L2: provider schema カバレッジ
 tofu providers schema -json > artifacts/$RUN_ID/coverage/provider_schema.json
-python scripts/schema_coverage.py --schema artifacts/$RUN_ID/coverage/provider_schema.json \
+bin/policyparity coverage --schema artifacts/$RUN_ID/coverage/provider_schema.json \
   --api-response artifacts/$RUN_ID/raw/existing --resource-types okta_app_signon_policy,okta_app_signon_policy_rule \
   --out artifacts/$RUN_ID/coverage/gap_report.json
 
 # L3: plan 冪等性 + state 比較
 tofu plan -detailed-exitcode -no-color > artifacts/$RUN_ID/plan/plan.txt; echo $? > artifacts/$RUN_ID/plan/plan_exitcode.txt
 tofu show -json > artifacts/$RUN_ID/state/state.json
-python scripts/extract_state.py --state artifacts/$RUN_ID/state/state.json \
+bin/policyparity state --state artifacts/$RUN_ID/state/state.json \
   --existing-addr "$EXISTING_ADDR" --new-addr "$NEW_ADDR" --out artifacts/$RUN_ID/state/state_diff.json
 
 # L4: 検証系の検証(fixture ミューテーション)
-pytest tests/test_verifier.py -q
+go test ./... 
 
 # レポート生成
-python scripts/build_report.py --run artifacts/$RUN_ID --out artifacts/$RUN_ID/report.md
+bin/policyparity report --run artifacts/$RUN_ID --out artifacts/$RUN_ID/report.md
 ```
 
 `Makefile` に `make verify RUN_ID=...` として一括実行を定義し、ローカル・CI で同一コマンドとする。
@@ -413,29 +415,31 @@ python scripts/build_report.py --run artifacts/$RUN_ID --out artifacts/$RUN_ID/r
 
 ---
 
-## 8. 検証スクリプト仕様
+## 8. 検証ツール仕様(`policyparity` サブコマンド)
 
 共通仕様:
 
-- 言語: Python 3.11+(標準ライブラリ + `pyyaml` + `deepdiff` 程度に依存を絞る)
+- 言語: Go 1.24+(okta-sdk-golang v6 の最低要件)。単一バイナリ `policyparity` のサブコマンド(`fetch` / `normalize` / `diff` / `state` / `coverage` / `audit` / `report`)として実装する。単一バイナリ化により配布・CI でのバージョン固定が容易になり、terraform-provider-okta と同一エコシステムのため挙動調査時の相互参照もしやすい
+- 依存: `github.com/okta/okta-sdk-golang/v6`(API transport。v6.0.0 以降、`import "github.com/okta/okta-sdk-golang/v6/okta"`)、`gopkg.in/yaml.v3`(ルール定義)、標準 `encoding/json`。deep diff は差分 path の報告形式と分類を完全に制御するため自前の再帰比較で実装する(`google/go-cmp` はユニットテスト内の補助用途に限定)
+- **Okta SDK 利用方針(重要)**: SDK は認証(SSWS token / OAuth 2.0 private_key_jwt スコープドトークン)、レート制限(429)バックオフ、ページネーションを担う transport 層として使用する。ただし**保存・比較対象は必ず raw JSON ボディ**(SDK の `APIResponse` から取得)とし、SDK の型付き構造体へのデコード結果を比較に用いない。型付き構造体は SDK のモデル定義に存在しないフィールドを欠落させ得るため、§7.13 の fail-closed(unknown field 検出)と両立しない。SDK モデルは fixture の匿名化補助など非判定用途に限る
 - 終了コード規約(全スクリプト共通): `0` = 成功(差分なし/正常完了)、`1` = 検証上の不一致を検出、`2` = 実行エラー(認証失敗、path 未分類、設定不備等)。**「エラーで比較できなかった」と「比較して差分があった」を必ず区別する**
 - すべての出力は JSON(機械可読)+ 人間可読サマリを stderr に出す
-- 秘匿情報(API トークン)は環境変数(`IDP_API_TOKEN`)からのみ取得し、出力ファイル・ログに書かない
+- 秘匿情報は Okta SDK 標準の設定機構(環境変数 `OKTA_CLIENT_TOKEN` / `OKTA_CLIENT_PRIVATEKEY` 等、または `~/.okta/okta.yaml`)からのみ取得し、出力ファイル・ログに書かない。CI では OAuth 2.0 スコープドトークン(最小スコープ: `okta.policies.read` + 監査ログ用 `okta.logs.read`)を推奨
 - CI では `make verify` として同一パイプラインを実行し、artifacts をビルド成果物として保全する
 
-### S1. fetch_policy.py — API response 取得
+### S1. `policyparity fetch` — API response 取得
 
 | 項目 | 内容 |
 |---|---|
 | 目的 | ポリシー本体とルール一覧の API response を無加工で取得・保存する(L1 の入力、および証跡) |
-| 入力 | `--policy-id`, `--base-url`(config から), 環境変数 `IDP_API_TOKEN` |
+| 入力 | `--policy-id`, `--org-url`(config から)、認証情報は SDK 標準設定(上記共通仕様) |
 | 出力 | `{out}/policy.json`(本体)、`{out}/rules.json`(ルール配列)、`{out}/meta.json`(取得時刻 UTC、API バージョン、HTTP ヘッダの関連情報、リクエスト URL) |
 | 終了コード | 0=取得成功 / 2=HTTP エラー・認証エラー |
 | エラー時挙動 | レスポンスボディを含めて stderr に出力し、部分ファイルを残さない(アトミック書き込み) |
-| 実行例 | `python scripts/fetch_policy.py --policy-id rst1abc... --out artifacts/$RUN_ID/raw/existing` |
-| 備考 | 既存・新規は**可能な限り近接した時刻に、同一 API バージョンで**取得する。ページネーションがある rules API は全ページ取得する |
+| 実行例 | `bin/policyparity fetch --policy-id rst1abc... --out artifacts/$RUN_ID/raw/existing` |
+| 備考 | 既存・新規は**可能な限り近接した時刻に、同一 API バージョンで**取得する。rules API のページネーションと 429 リトライは SDK に委ねる。保存するのは `APIResponse` から取り出した raw ボディ(無加工バイト列)であり、SDK 構造体を再シリアライズした JSON ではない(フィールド欠落・キー順変化を防ぐため) |
 
-### S2. normalize.py — 正規化
+### S2. `policyparity normalize` — 正規化
 
 | 項目 | 内容 |
 |---|---|
@@ -444,24 +448,32 @@ python scripts/build_report.py --run artifacts/$RUN_ID --out artifacts/$RUN_ID/r
 | 出力 | canonical JSON(キーソート・整形済み)、`normalize_log.json`(除外ヒット一覧、削除した null キー、ソートした配列 path、適用した default 注入) |
 | 終了コード | 0=正常 / 2=未分類の配列 path 検出、ルールファイル不正 |
 | エラー時挙動 | 未分類配列 path を全件列挙して停止(§7.9) |
-| 実行例 | `python scripts/normalize.py --in raw/existing --rules config/normalize-rules.yaml --exclude config/exclude-paths.yaml --out normalized/existing.json` |
+| 実行例 | `bin/policyparity normalize --in raw/existing --rules config/normalize-rules.yaml --exclude config/exclude-paths.yaml --out normalized/existing.json` |
 
 疑似コード:
 
-```python
-def normalize(doc, rules, excludes, path="$"):
-    doc = drop_excluded_paths(doc, excludes, hit_log)      # §6(ヒットを記録)
-    doc = drop_null_keys(doc, rules.null_significant, log) # §7.2
-    doc = apply_documented_defaults(doc, rules.defaults)   # §7.5(定義がある場合のみ)
-    for arr_path in find_all_array_paths(doc):
-        if arr_path in rules.unordered: stable_sort(arr_path)
-        elif arr_path in rules.ordered: pass
-        else: fail_unclassified(arr_path)                  # exit 2
-    if is_rules_array(path): sort_by_priority(doc)         # §7.10
-    return sort_keys_recursively(doc)
+```go
+// doc は json.Unmarshal で map[string]any / []any に展開した raw JSON
+func Normalize(doc any, rules Rules, ex Excludes, log *NormalizeLog) (any, error) {
+    doc = dropExcludedPaths(doc, ex, log)            // §6(ヒットを記録)
+    doc = dropNullKeys(doc, rules.NullSignificant)   // §7.2
+    doc = applyDocumentedDefaults(doc, rules.Defaults) // §7.5(定義がある場合のみ)
+    for _, p := range findAllArrayPaths(doc) {
+        switch {
+        case rules.Unordered.Has(p):
+            stableSort(doc, p)
+        case rules.Ordered.Has(p):
+            // 何もしない(順序込みで比較)
+        default:
+            return nil, &UnclassifiedArrayPathError{Path: p} // → exit 2
+        }
+    }
+    sortRulesByPriority(doc)                         // §7.10(priority 値自体は比較対象に残る)
+    return sortKeysRecursively(doc), nil             // 実装上は正規化出力時にキー順を固定
+}
 ```
 
-### S3. deep_diff.py — deep diff + 判定
+### S3. `policyparity diff` — deep diff + 判定
 
 | 項目 | 内容 |
 |---|---|
@@ -470,10 +482,10 @@ def normalize(doc, rules, excludes, path="$"):
 | 出力 | `diff_result.json`: `{"identical": bool, "diffs": [{"path", "existing_value", "new_value", "kind"(changed/added/removed/order)}], "compared_key_count": n, "compared_paths_digest": "..."}` |
 | 終了コード | 0=完全一致 / 1=差分あり / 2=入力不正 |
 | エラー時挙動 | 片方のファイル欠落等は exit 2 |
-| 実行例 | `python scripts/deep_diff.py normalized/existing.json normalized/new.json --out diff/diff_result.json` |
+| 実行例 | `bin/policyparity diff normalized/existing.json normalized/new.json --out diff/diff_result.json` |
 | 備考 | 型込み比較(§7.7)。`compared_key_count` と比較 path 一覧を出力し、「何を比較したか」をレビュー可能にする(§5 チェックリスト照合に使用) |
 
-### S4. extract_state.py — state 抽出・比較(L3)
+### S4. `policyparity state` — state 抽出・比較(L3)
 
 | 項目 | 内容 |
 |---|---|
@@ -483,7 +495,7 @@ def normalize(doc, rules, excludes, path="$"):
 | 終了コード | 0/1/2(共通規約) |
 | 備考 | 除外: `id`, `name`, timestamps, provider 内部属性。L1 と独立した第二のレンズとして結果をレポートに併記する |
 
-### S5. schema_coverage.py — provider schema × API 突合(L2)
+### S5. `policyparity coverage` — provider schema × API 突合(L2)
 
 | 項目 | 内容 |
 |---|---|
@@ -492,20 +504,20 @@ def normalize(doc, rules, excludes, path="$"):
 | 出力 | `gap_report.json`: `{"unmapped_api_fields": [...], "mapped": n, "suspect": [...]}` |
 | 終了コード | 0=ギャップなし / 1=ギャップあり(→リスク台帳へ) / 2=エラー |
 | エラー時挙動 | マッピング判定が曖昧なフィールドは `suspect` に入れ、**存在しない扱い(=ギャップ側)に倒す** |
-| 実行例 | `python scripts/schema_coverage.py --schema coverage/provider_schema.json --api-response raw/existing --resource-types okta_app_signon_policy,okta_app_signon_policy_rule --out coverage/gap_report.json` |
+| 実行例 | `bin/policyparity coverage --schema coverage/provider_schema.json --api-response raw/existing --resource-types okta_app_signon_policy,okta_app_signon_policy_rule --out coverage/gap_report.json` |
 | 備考 | ギャップは即 fail ではなく「L1 で値一致は確認済みだが provider 管理外」としてリスク台帳(§13)に記録し、レポート必須記載とする |
 
-### S6. check_audit_log.py — 変更凍結確認(L0)
+### S6. `policyparity audit` — 変更凍結確認(L0)
 
 | 項目 | 内容 |
 |---|---|
 | 目的 | 基準時刻以降、既存ポリシー(およびそのルール)に対する変更イベントがないことを System Log で確認する |
-| 入力 | `--policy-id`, `--since`(凍結宣言時刻)、System Log API |
+| 入力 | `--policy-id`, `--since`(凍結宣言時刻)。System Log API へのアクセスも SDK 経由(`okta.logs.read`) |
 | 出力 | `audit.json`(該当イベント一覧。0 件が期待値) |
 | 終了コード | 0=変更なし / 1=変更イベント検出(比較の前提崩れ→再取得からやり直し) / 2=エラー |
-| 実行例 | `python scripts/check_audit_log.py --policy-id $EXISTING_ID --since 2026-07-01T00:00:00Z` |
+| 実行例 | `bin/policyparity audit --policy-id $EXISTING_ID --since 2026-07-01T00:00:00Z` |
 
-### S7. build_report.py — 検証レポート生成
+### S7. `policyparity report` — 検証レポート生成
 
 | 項目 | 内容 |
 |---|---|
@@ -527,7 +539,7 @@ def normalize(doc, rules, excludes, path="$"):
 
 ## 9. 検証ロジック自体の妥当性確認(テスト仕様)
 
-目的: 「差分ゼロ」という結果が、検出器の欠陥によるものでないことを証明する。`tests/test_verifier.py` で fixture(実 response を匿名化した `base_policy.json` / `base_rules.json`)に mutation を適用し、S2→S3 パイプラインの判定を検証する。CI で毎回実行し、**このテストが green であることを最終 PASS の必要条件**とする(S7 が結果を取り込む)。
+目的: 「差分ゼロ」という結果が、検出器の欠陥によるものでないことを証明する。`internal/verify/verifier_test.go` の table-driven テストで、fixture(実 response を匿名化した `testdata/fixtures/base_policy.json` / `base_rules.json`)に `testdata/mutations/` の mutation を適用し、S2→S3 パイプラインの判定を検証する(`go test ./...` で実行)。CI で毎回実行し、**このテストが green であることを最終 PASS の必要条件**とする(S7 が結果を取り込む)。
 
 ### テストケース一覧
 
@@ -601,7 +613,7 @@ def normalize(doc, rules, excludes, path="$"):
 2. **バージョン固定の記録**: `tofu version`、provider version(lock ファイル)、API バージョンを記録する。
 3. **比較対象外項目の確定**: `exclude-paths.yaml` をレビューし、decision-log に承認を記録する(§6)。
 4. **正規化ルールの確定**: `normalize-rules.yaml` の配列分類(§7.9)・null 規則(§7.2)をレビュー承認する。
-5. **検証ロジックのテスト実行**: `pytest tests/test_verifier.py`(T01〜T22, T24)。green でなければ検証に進まない。
+5. **検証ロジックのテスト実行**: `go test ./...`(T01〜T22, T24)。green でなければ検証に進まない。
 6. **L0 実行**: S6 で凍結違反がないことを確認する。
 7. **L1 実行**: S1 で両ポリシーを近接時刻に取得 → S2 正規化 → S3 diff。
 8. **差分の分類**(差分があった場合): 各差分 path を以下のいずれかに分類し、decision-log に記録する。
@@ -643,6 +655,7 @@ S7 が生成する `report.md` のテンプレート:
 ## 3. 実行環境
 - Terraform / OpenTofu version:
 - provider name / version(lock hash):
+- policyparity バイナリ version / okta-sdk-golang version(go.mod):
 - IdP API バージョン / base URL:
 - 使用した検証方式: L0〜L5 のうち実施したもの
 - 使用した情報源: API endpoints / state / provider schema / 監査ログ
@@ -712,6 +725,8 @@ S7 が生成する `report.md` のテンプレート:
 | R14 | 検証後に手動変更が入る | 「同一」宣言の陳腐化 | L0 の監査ログ確認を定期実行(または CI での定期 L1 再実行)+ 管理画面変更の運用禁止ルール |
 | R15 | 設定値が同一でも実行時挙動が完全同一とは限らない | 理論上の残リスク | 同一テナント・同一評価エンジンである点で実質リスクは小。L5 の代表パステストで補強。保証範囲を §10.3 で正直に限定 |
 | R16 | 取得タイミング差による過渡的不一致 | 誤 FAIL | 近接時刻取得 + FAIL 時は再取得して再現性を確認 |
+| R17 | Okta SDK の型付き構造体経由でデータを扱うことによるフィールド欠落 | unknown field 検出(§7.13)の無効化=重大差分の見逃し | 比較・保存は raw JSON ボディ限定と仕様で強制(§8 共通仕様)。T19 が SDK 経路の退行も検出できるよう、fixture には SDK モデルに存在しない疑似フィールドを常設する |
+| R18 | SDK version 更新による transport 挙動変化(ページネーション・リトライ) | 取得漏れ・比較不能 | go.mod で固定 + レポートに SDK version を記録。更新時は T01/T23 を再実行 |
 
 ---
 
@@ -724,8 +739,8 @@ S7 が生成する `report.md` のテンプレート:
 | 比較対象項目一覧 | §5 の表 + diff_result.json の compared paths | §5 |
 | 比較対象外項目一覧 | exclude-paths.yaml + 理由 | §6 |
 | 正規化ルール定義 | normalize-rules.yaml + known-defaults.yaml | §7 |
-| 検証スクリプト | S1〜S7(+任意 S8) | §8 |
-| 検証ロジックのテストコード | tests/test_verifier.py + fixtures + mutations | §9 |
+| 検証ツール | `policyparity` バイナリ(サブコマンド S1〜S7、+任意 S8) | §8 |
+| 検証ロジックのテストコード | `internal/verify/verifier_test.go`(table-driven)+ testdata/fixtures + testdata/mutations | §9 |
 | 検証手順書 | §11 の手順 | §11 |
 | 検証結果レポート | report.md(テンプレート準拠) | §12 |
 | 差分修正記録 | decision-log.md + レポート §12 修正履歴 | §11 手順 8〜11 |

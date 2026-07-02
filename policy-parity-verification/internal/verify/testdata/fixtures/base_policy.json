@@ -1,0 +1,35 @@
+{
+  "id": "rstExisting",
+  "name": "Existing Auth Policy",
+  "type": "ACCESS_POLICY",
+  "status": "ACTIVE",
+  "description": "Parity verification fixture",
+  "priority": 10,
+  "created": "2026-01-01T00:00:00.000Z",
+  "lastUpdated": "2026-01-02T00:00:00.000Z",
+  "createdBy": "00u_created_by",
+  "lastUpdatedBy": "00u_updated_by",
+  "conditions": {
+    "people": {
+      "groups": {
+        "include": ["00gB", "00gA"],
+        "exclude": []
+      },
+      "users": {
+        "include": ["00u1"],
+        "exclude": []
+      }
+    },
+    "app": {
+      "include": ["0oa_app_existing"]
+    }
+  },
+  "xProviderUnknownStable": {
+    "enabled": true
+  },
+  "_links": {
+    "self": {
+      "href": "https://example.okta.com/api/v1/policies/rstExisting"
+    }
+  }
+}

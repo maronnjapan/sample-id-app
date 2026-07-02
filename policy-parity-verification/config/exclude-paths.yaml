@@ -1,0 +1,65 @@
+paths:
+  - path: $.name
+    reason: 新規ポリシーは意図的に名前を変えるため(P6)
+  - path: $.id
+    reason: ポリシー自身のシステム採番 ID のため
+  - path: $.rules[*].id
+    reason: ルール自身のシステム採番 ID のため
+  - path: $.created
+    reason: 作成時刻であり設定値ではないため
+  - path: $.lastUpdated
+    reason: 更新時刻であり設定値ではないため
+  - path: $.rules[*].created
+    reason: 作成時刻であり設定値ではないため
+  - path: $.rules[*].lastUpdated
+    reason: 更新時刻であり設定値ではないため
+  - path: $._links
+    reason: HATEOAS link であり ID を含む URL メタデータのため
+  - path: $.rules[*]._links
+    reason: HATEOAS link であり ID を含む URL メタデータのため
+  - path: $.createdBy
+    reason: 作成主体メタデータであり設定値ではないため
+  - path: $.lastUpdatedBy
+    reason: 更新主体メタデータであり設定値ではないため
+  - path: $.rules[*].createdBy
+    reason: 作成主体メタデータであり設定値ではないため
+  - path: $.rules[*].lastUpdatedBy
+    reason: 更新主体メタデータであり設定値ではないため
+  - path: $.conditions.app
+    reason: アプリ割り当て・アプリ参照条件は比較対象外(P7)のため
+  - path: $.conditions.clients
+    reason: アプリ/クライアント参照条件は比較対象外(P7)のため
+  - path: $.rules[*].conditions.app
+    reason: アプリ割り当て・アプリ参照条件は比較対象外(P7)のため
+  - path: $.rules[*].conditions.clients
+    reason: アプリ/クライアント参照条件は比較対象外(P7)のため
+
+state_paths:
+  - path: $.id
+    reason: provider state 上の自己 ID は新旧で一致しないため
+  - path: $.name
+    reason: 新規ポリシーは意図的に名前を変えるため(P6)
+  - path: $.created
+    reason: 作成時刻であり設定値ではないため
+  - path: $.lastUpdated
+    reason: 更新時刻であり設定値ではないため
+  - path: $._links
+    reason: provider state 上の HATEOAS link メタデータのため
+
+coverage_ignore_paths:
+  - path: $.id
+    reason: provider 表現不足評価の対象外とする自己 ID メタデータ
+  - path: $.rules[*].id
+    reason: provider 表現不足評価の対象外とする自己 ID メタデータ
+  - path: $.created
+    reason: provider 表現不足評価の対象外とする時刻メタデータ
+  - path: $.lastUpdated
+    reason: provider 表現不足評価の対象外とする時刻メタデータ
+  - path: $.rules[*].created
+    reason: provider 表現不足評価の対象外とする時刻メタデータ
+  - path: $.rules[*].lastUpdated
+    reason: provider 表現不足評価の対象外とする時刻メタデータ
+  - path: $._links
+    reason: provider 表現不足評価の対象外とする HATEOAS link
+  - path: $.rules[*]._links
+    reason: provider 表現不足評価の対象外とする HATEOAS link

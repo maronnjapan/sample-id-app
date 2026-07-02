@@ -1,0 +1,14 @@
+org_url: https://example.okta.com
+freeze_timestamp: "2026-07-01T00:00:00Z"
+
+existing:
+  policy_id: rst_existing_example
+  terraform_address: okta_app_signon_policy.existing
+
+new:
+  policy_id: rst_new_example
+  terraform_address: okta_app_signon_policy.new
+
+resource_types:
+  - okta_app_signon_policy
+  - okta_app_signon_policy_rule

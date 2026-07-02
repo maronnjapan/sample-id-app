@@ -1,0 +1,39 @@
+ignore_api_paths:
+  - path: $.createdBy
+    reason: 作成主体メタデータであり provider カバレッジ評価対象外
+  - path: $.lastUpdatedBy
+    reason: 更新主体メタデータであり provider カバレッジ評価対象外
+  - path: $.rules[*].createdBy
+    reason: 作成主体メタデータであり provider カバレッジ評価対象外
+  - path: $.rules[*].lastUpdatedBy
+    reason: 更新主体メタデータであり provider カバレッジ評価対象外
+
+mappings:
+  - api: $.type
+    resource_type: okta_app_signon_policy
+    tf: type
+    reason: provider schema と API の同名項目
+  - api: $.description
+    resource_type: okta_app_signon_policy
+    tf: description
+    reason: provider schema と API の同名項目
+  - api: $.priority
+    resource_type: okta_app_signon_policy
+    tf: priority
+    reason: provider schema と API の同名項目
+  - api: $.status
+    resource_type: okta_app_signon_policy
+    tf: status
+    reason: provider schema と API の同名項目
+  - api: $.rules[*].name
+    resource_type: okta_app_signon_policy_rule
+    tf: name
+    reason: rules 配下を rule resource の root として対応
+  - api: $.rules[*].priority
+    resource_type: okta_app_signon_policy_rule
+    tf: priority
+    reason: rules 配下を rule resource の root として対応
+  - api: $.rules[*].status
+    resource_type: okta_app_signon_policy_rule
+    tf: status
+    reason: rules 配下を rule resource の root として対応

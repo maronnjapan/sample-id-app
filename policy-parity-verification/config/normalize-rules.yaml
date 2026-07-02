@@ -1,0 +1,69 @@
+priority_sort_array_paths:
+  - $.rules
+
+ordered_array_paths:
+  - $.rules[*].actions.appSignOn.verificationMethod.constraints
+  - $.rules[*].conditions.elCondition.conditions
+  - $.rules[*].conditions.chain.conditions
+
+unordered_array_paths:
+  - $.conditions.people.groups.include
+  - $.conditions.people.groups.exclude
+  - $.conditions.people.users.include
+  - $.conditions.people.users.exclude
+  - $.conditions.network.include
+  - $.conditions.network.exclude
+  - $.conditions.network.zones.include
+  - $.conditions.network.zones.exclude
+  - $.rules[*].conditions.people.groups.include
+  - $.rules[*].conditions.people.groups.exclude
+  - $.rules[*].conditions.people.users.include
+  - $.rules[*].conditions.people.users.exclude
+  - $.rules[*].conditions.network.include
+  - $.rules[*].conditions.network.exclude
+  - $.rules[*].conditions.network.zones.include
+  - $.rules[*].conditions.network.zones.exclude
+  - $.rules[*].conditions.device.platforms
+  - $.rules[*].conditions.identityProvider.include
+  - $.rules[*].conditions.identityProvider.exclude
+  - $.rules[*].actions.appSignOn.verificationMethod.authenticators
+  - $.rules[*].actions.appSignOn.verificationMethod.constraints[*].methods
+  - $.rules[*].actions.appSignOn.verificationMethod.constraints[*].required
+  - $.rules[*].actions.appSignOn.verificationMethod.constraints[*].knowledge.methods
+  - $.rules[*].actions.appSignOn.verificationMethod.constraints[*].possession.methods
+
+null_significant_paths:
+  - $.rules[*].actions.appSignOn.verificationMethod.reauthenticateIn
+
+empty_array_equals_absent_paths: []
+empty_string_equals_absent_paths: []
+case_insensitive_paths: []
+defaults: []
+
+required_compared_path_patterns:
+  - path: $.type
+    reason: policy type は必須比較項目
+  - path: $.status
+    reason: policy status は必須比較項目
+  - path: $.description
+    reason: policy description は必須比較項目
+  - path: $.priority
+    reason: policy priority は必須比較項目
+  - path: $.conditions.people.groups.include
+    reason: group 条件は必須比較項目
+  - path: $.rules[*].priority
+    reason: rule priority / evaluation order は必須比較項目
+  - path: $.rules[*].status
+    reason: rule status は必須比較項目
+  - path: $.rules[*].name
+    reason: rule name は設定同一性の一部として比較する
+  - path: $.rules[*].conditions.network.include
+    reason: network / zone 条件は必須比較項目
+  - path: $.rules[*].conditions.people.groups.include
+    reason: rule group 条件は必須比較項目
+  - path: $.rules[*].actions.appSignOn.access
+    reason: access 判定は必須比較項目
+  - path: $.rules[*].actions.appSignOn.verificationMethod.factorMode
+    reason: MFA / authenticator 設定は必須比較項目
+  - path: $.rules[*].actions.signon.session.maxSessionIdleMinutes
+    reason: session setting は必須比較項目

@@ -1,6 +1,0 @@
-__pycache__/
-.pytest_cache/
-*.pyc
-# 実 snapshot（example 以外）は秘匿情報を含む場合があるため運用ポリシーに従う
-# golden/policy_old.json
-# golden/policy_new.json

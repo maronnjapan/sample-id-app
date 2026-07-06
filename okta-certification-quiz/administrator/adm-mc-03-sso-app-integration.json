@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "fileId": "adm-mc-03-sso-app-integration",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Part II: Custom Application Integration (SAML 2.0, attribute mapping, Okta Expression Language, Org2Org, routing rules)",
+    "examSectionJa": "パートII: カスタムアプリケーション統合(SAML 2.0、属性マッピング、Okta Expression Language、Org2Org、ルーティングルール)",
+    "examWeight": 30,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 10
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-033",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "saml-roles",
+      "difficulty": "basic",
+      "question": "SAML 2.0 フェデレーションにおける Identity Provider (IdP) と Service Provider (SP) の役割について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "IdP はユーザーを認証してアイデンティティを提供し、SP はサービス(アプリ)を提供して IdP からのアサーションを検証・信頼する" },
+        { "id": "B", "text": "SP がユーザーを認証し、IdP がアプリを提供する" },
+        { "id": "C", "text": "IdP と SP は直接サーバー間通信でアサーションを交換し、ブラウザは関与しない" },
+        { "id": "D", "text": "IdP と SP は常に同一の組織でなければならない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "IdP は認証とアイデンティティ提供、SP はサービス提供とアサーション検証という役割分担です。SAML の Web Browser SSO ではやり取りはブラウザを仲介して行われ、SP が IdP に直接接続することはありません(C は誤り)。SP は IdP の公開証明書で SAML Response の署名を検証して初めて主張を信頼します。D のような組織の制約はなく、むしろ組織間フェデレーションが SAML の主要ユースケースです。",
+      "sources": [
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" }
+      ],
+      "tags": ["saml", "idp", "sp"]
+    },
+    {
+      "id": "OCA-MC-034",
+      "type": "multiple-select",
+      "domain": "sso-federation",
+      "topic": "saml-assertion",
+      "difficulty": "intermediate",
+      "question": "Okta(IdP)が発行する SAML アサーション(SAML Response 内)に含まれる要素として正しいものを 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "NameID(ユーザーの識別子)" },
+        { "id": "B", "text": "Attribute Statements(ユーザー属性: メール、部署など)" },
+        { "id": "C", "text": "デジタル署名(改ざん検証用)" },
+        { "id": "D", "text": "ユーザーの平文パスワード" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "SAML アサーションには、対象ユーザーを識別する NameID(A)、構成した属性を伝える Attribute Statements(B)、そして IdP の秘密鍵による署名(C。SP は IdP の公開証明書で検証)が含まれます。パスワード(D)がアサーションに含まれることはありません — SSO の本質は資格情報を SP に渡さずに認証結果を伝えることです。",
+      "sources": [
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" },
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" }
+      ],
+      "tags": ["saml", "assertion", "nameid", "attribute-statements"]
+    },
+    {
+      "id": "OCA-MC-035",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "sp-vs-idp-initiated",
+      "difficulty": "intermediate",
+      "question": "SP-initiated フローと IdP-initiated フローの違いとして正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "SP-initiated ではユーザーが先にアプリ(SP)にアクセスし、SP が SAML Request を生成して IdP へリダイレクトする。IdP-initiated では IdP のポータル(例: Okta ダッシュボード)から始まり、SAML Request なしで IdP が SAML Response を送る" },
+        { "id": "B", "text": "IdP-initiated は SP が SAML Request を送るフローである" },
+        { "id": "C", "text": "SP-initiated は Okta ダッシュボードのアプリアイコンから始まるフローである" },
+        { "id": "D", "text": "両者は同じもので呼び方が違うだけである" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "SP-initiated: ユーザーが保護されたリソース(アプリ)へ直接アクセス→SP が SAML Request を発行し IdP へリダイレクト→認証後に SAML Response が SP の ACS へ POST される。IdP-initiated: IdP のポータル(Okta の End-User Dashboard のアプリアイコン)から開始し、IdP が SAML Request なしで SAML Response を送信する。B と C はそれぞれ逆の説明になっており誤り、D も誤りです。",
+      "sources": [
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" }
+      ],
+      "tags": ["saml", "sp-initiated", "idp-initiated"]
+    },
+    {
+      "id": "OCA-MC-036",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "acs-audience",
+      "difficulty": "advanced",
+      "question": "カスタム SAML 2.0 アプリを Okta で作成する際に入力する「Single sign-on URL (ACS URL)」と「Audience URI (SP Entity ID)」の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ACS URL は SP 側で SAML Response を受け取るエンドポイント、Audience URI はアサーションの想定受信者である SP を一意に識別する ID" },
+        { "id": "B", "text": "ACS URL は Okta の管理者ページの URL、Audience URI はユーザーのメールアドレス" },
+        { "id": "C", "text": "どちらも Okta が自動生成する値で SP からの情報は不要" },
+        { "id": "D", "text": "ACS URL は証明書のダウンロード先を指す" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ACS(Assertion Consumer Service)URL は SP が SAML Response を受け取る(POST される)エンドポイントであり、Audience URI(SP Entity ID)はアサーションの対象となる SP の一意識別子です。どちらも SP(アプリ)側から提供される値を Okta のカスタム SAML アプリウィザードに設定します(C は誤り)。B・D は事実無根です。",
+      "sources": [
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" },
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" }
+      ],
+      "tags": ["saml", "acs-url", "audience-uri", "custom-saml-app"]
+    },
+    {
+      "id": "OCA-MC-037",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "relaystate",
+      "difficulty": "advanced",
+      "question": "SAML の RelayState パラメータの用途として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "認証完了後にユーザーを遷移させたい先(ディープリンク等)の情報を SAML Request/Response と一緒に受け渡すための HTTP パラメータ" },
+        { "id": "B", "text": "SAML アサーションの暗号化鍵を格納するパラメータ" },
+        { "id": "C", "text": "IdP のセッションタイムアウトを設定するパラメータ" },
+        { "id": "D", "text": "ユーザーのパスワードを一時的に保持するパラメータ" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "RelayState は SAML Request に含めて送ると IdP が Response とともにそのまま返す(エコーバックする)HTTP パラメータで、SP は認証完了後の遷移先(ユーザーが最初にアクセスしていたディープリンクなど)の状態を保持するために使用します。B・C・D のような機能はありません。",
+      "sources": [
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" }
+      ],
+      "tags": ["saml", "relaystate", "deep-link"]
+    },
+    {
+      "id": "OCA-MC-038",
+      "type": "single-choice",
+      "domain": "app-integration",
+      "topic": "attribute-statements-el",
+      "difficulty": "advanced",
+      "question": "カスタム SAML アプリの Attribute Statements で、ユーザーのメールアドレスの @ より前の部分(ローカルパート)を送信したい。使用する Okta Expression Language の式として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "String.substringBefore(user.email, \"@\")" },
+        { "id": "B", "text": "user.email.split(\"@\")[0]" },
+        { "id": "C", "text": "SUBSTRING(user.email, 0, INDEXOF(\"@\"))" },
+        { "id": "D", "text": "user.email - \"@example.com\"" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta Expression Language では String 名前空間の関数を使用します。String.substringBefore(user.email, \"@\") は @ より前の文字列を返す公式ドキュメント記載の関数です。B は JavaScript、C は SQL 風の構文で、Okta Expression Language には存在しません。D のような文字列の減算はできません。",
+      "sources": [
+        { "title": "Okta Expression Language overview (Okta Developer)", "url": "https://developer.okta.com/docs/reference/okta-expression-language/" },
+        { "title": "Modify attributes with expressions (Okta Help Center)", "url": "https://help.okta.com/en-us/Content/Topics/users-groups-profiles/usgp-attribute-mappings-expressions.htm" }
+      ],
+      "tags": ["expression-language", "attribute-statements", "custom-saml-app"]
+    },
+    {
+      "id": "OCA-MC-039",
+      "type": "single-choice",
+      "domain": "app-integration",
+      "topic": "custom-attribute-flow",
+      "difficulty": "intermediate",
+      "question": "カスタム SAML アプリに対して、Okta ユーザープロファイルのカスタム属性「costCenter」の値を送信したい。正しい作業の順序はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Profile Editor で Okta ユーザープロファイルに costCenter 属性を追加 → ユーザーに値を設定 → アプリの属性(Attribute Statements またはアプリプロファイル+マッピング)で costCenter を参照するよう構成 → テストユーザーで送信値を確認" },
+        { "id": "B", "text": "アプリを削除して再インストールすると自動的に属性が送られる" },
+        { "id": "C", "text": "System Log に costCenter と入力する" },
+        { "id": "D", "text": "Network Zone に costCenter を定義する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "カスタム属性を SAML で送るには、(1) スキーマ定義(Profile Editor で Okta ユーザープロファイルに属性追加)、(2) 値の投入(手動・インポート・ソース同期)、(3) アプリへの出力構成(SAML の Attribute Statements で user.costCenter を参照、またはアプリユーザープロファイルに属性を追加してマッピング)、(4) 検証(テストユーザーでのアサーション確認またはアプリ側での受信確認)という流れになります。B・C・D は手順として意味を成しません。",
+      "sources": [
+        { "title": "Work with user profiles (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-user-profiles-main.htm" },
+        { "title": "About attribute mappings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-attribute-mappings.htm" }
+      ],
+      "tags": ["custom-attribute", "attribute-statements", "workflow"]
+    },
+    {
+      "id": "OCA-MC-040",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "org2org",
+      "difficulty": "advanced",
+      "question": "Okta Org2Org アプリ統合の主なユースケースとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "複数の Okta org を運用する企業(M&A やハブ&スポーク構成)で、org 間のユーザープロビジョニングと SAML SSO を実現する" },
+        { "id": "B", "text": "Okta org と Facebook を接続する" },
+        { "id": "C", "text": "1 つの org の中で部署ごとに画面テーマを変える" },
+        { "id": "D", "text": "org のデータを毎晩バックアップする" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Org2Org は Okta org 同士を接続するための統合で、ソース org(IdP 側)に Org2Org アプリを追加し、ターゲット org(SP 側)へのユーザー/グループのプロビジョニングと SAML SSO を構成します。M&A で複数 org を統合するケースや、中央のハブ org と子会社のスポーク org を接続するハブ&スポーク構成で使用されます。B・C・D は Org2Org の機能ではありません。",
+      "sources": [
+        { "title": "Org2Org (SAML 2.0) app integration - Professional exam reference (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" },
+        { "title": "Add app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/apps/apps-overview-add-apps.htm" }
+      ],
+      "tags": ["org2org", "hub-and-spoke", "multi-org"]
+    },
+    {
+      "id": "OCA-MC-041",
+      "type": "single-choice",
+      "domain": "sso-federation",
+      "topic": "routing-rules",
+      "difficulty": "advanced",
+      "question": "「ドメイン @partner.example.com のユーザーだけを外部 IdP へ、それ以外は Okta で認証させたい」という要件を実現する機能はどれですか?",
+      "choices": [
+        { "id": "A", "text": "IdP ルーティングルール(Identity Provider Routing Rules)" },
+        { "id": "B", "text": "Group Push" },
+        { "id": "C", "text": "Device Assurance ポリシー" },
+        { "id": "D", "text": "Import safeguards" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ルーティングルールは、ユーザー名/ドメイン、IP(ネットワークゾーン)、デバイスプラットフォーム、アクセス先アプリなどの条件に基づいて、認証を処理する IdP を振り分ける機能です。条件に一致しないユーザーは既定の IdP である Okta で認証されます。ドメインリストによる振り分けはまさに代表的ユースケースです。B はグループのアプリ連携、C はデバイス状態評価、D はインポート時の保護機能で、いずれも認証の振り分けはできません。",
+      "sources": [
+        { "title": "Identity Provider routing rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/configure-routing-rules.htm" }
+      ],
+      "tags": ["routing-rules", "identity-provider", "federation"]
+    },
+    {
+      "id": "OCA-MC-042",
+      "type": "single-choice",
+      "domain": "app-integration",
+      "topic": "verify-attribute-delivery",
+      "difficulty": "intermediate",
+      "question": "カスタム SAML アプリで構成した属性が、実際にアプリへ正しく送信されているかを確認する方法として最も適切なものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "テストユーザーでアプリへ SSO し、アプリ側に反映されたプロファイル値(またはブラウザの SAML トレースで Attribute Statements)を確認する" },
+        { "id": "B", "text": "Okta の org 名を変更してみる" },
+        { "id": "C", "text": "ユーザーを Suspend して挙動を見る" },
+        { "id": "D", "text": "確認する方法はない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "属性送信の検証は、テストユーザーで実際に SSO を行い、アプリ側で受信された属性値を確認するのが基本です(試験のユースケースでも「グループ内ユーザーの属性データがアプリに反映されることを確認する」ことが求められます)。開発者向けにはブラウザの SAML トレースツールでアサーション内の Attribute Statements を直接確認する方法もあります。また Okta のアプリ設定にはアサーションのプレビュー機能もあります。B・C は無関係で、D は誤りです。",
+      "sources": [
+        { "title": "About attribute mappings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-attribute-mappings.htm" },
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" }
+      ],
+      "tags": ["verification", "attribute-statements", "testing"]
+    }
+  ]
+}

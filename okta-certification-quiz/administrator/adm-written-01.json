@@ -1,0 +1,496 @@
+{
+  "meta": {
+    "fileId": "adm-written-01",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Written questions Part 1 (AD/LDAP Integration, Profile Sourcing, Lifecycle)",
+    "examSectionJa": "記述問題 パート1(AD/LDAP 統合、プロファイルソーシング、ライフサイクル)",
+    "examWeight": "Part I(AD Integration 47% / Profiles, Sourcing and Write-Back 53%)の理解度を言語化して確認する補強教材",
+    "questionType": "written",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。採点は rubric に厳密に従うこと。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 8
+  },
+  "questions": [
+    {
+      "id": "OCA-WR-001",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "ad-agent-architecture",
+      "difficulty": "advanced",
+      "question": "単一 AD ドメイン(ユーザー数 5,000)の企業に、可用性を重視した Okta AD 統合アーキテクチャを設計します。(1) AD エージェントの台数・配置に関する推奨構成とその理由、(2) エージェントと Okta 間のネットワーク要件(通信の方向とポート、ファイアウォールへの影響)、(3) サービスアカウントの構成(既定アカウントと、パスワードリセット機能を使う場合に必要な追加権限)、(4) エージェントの正常性を日常的に監視する方法、の 4 点を説明してください。",
+      "modelAnswer": "(1) 各ドメインに 2 つ以上の AD エージェントを、それぞれ別のサーバーにインストールする。委任認証を有効にすると Okta サインインの成否がエージェントに依存するため、単一エージェントは単一障害点となる。別サーバーに複数配置することで高可用性とフェイルオーバーを確保する(Windows Update 等の計画メンテナンス時にも認証を継続できる)。(2) エージェントはオンプレミス側から Okta へアウトバウンド HTTPS(ポート 443)で接続し、インバウンドのファイアウォール開放は不要。エージェントと AD(ドメインコントローラー)間はオンプレミス内で LDAP (389)/LDAPS (636)、Kerberos (88/464)、グローバルカタログ (3268/3269)、DNS (53) などの通信が必要(DMZ 配置時はこれらのポート開放を設計する)。(3) インストーラーは既定で「OktaService」サービスアカウントを作成する(Domain Users 相当の権限を継承)。同期対象オブジェクトへの読み取り権限が基本要件。Okta からのパスワードリセット/ロック解除を行う場合は、対象ユーザーへの Reset Password 制御アクセス権と pwdLastSet・lockoutTime 属性への書き込み権限を追加で付与する。Domain Admins への追加は避け、最小権限で構成する。(4) Admin Console の Dashboard(Agents)でエージェントの接続状態を監視する(緑色表示=接続済みで正常)。エージェント停止時の通知や、System Log のエージェント関連イベントの監視も併用する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 2 台以上・別サーバー配置と、委任認証の単一障害点回避という理由を述べている",
+            "points": 3,
+            "mustInclude": ["2 つ以上のエージェント", "別々のサーバーに配置"],
+            "acceptableAlternatives": ["高可用性/フェイルオーバー", "委任認証時のサインイン障害防止"],
+            "scoringGuide": "台数+配置+理由=3点。台数と配置のみ=2点。「複数入れる」程度=1点。1 台でよいとした場合=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) アウトバウンド 443 のみでインバウンド開放不要という Okta 方向の要件を述べている",
+            "points": 3,
+            "mustInclude": ["アウトバウンド HTTPS (443)", "インバウンド開放は不要"],
+            "acceptableAlternatives": ["エージェント→AD 間の LDAP/Kerberos 等のポートへの言及(補足として)"],
+            "scoringGuide": "方向+ポート+インバウンド不要=3点。443 のみ言及=2点。方向の誤り(Okta からインバウンド接続が必要等)=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) OktaService 既定アカウントと、パスワードリセットに必要な追加権限(Reset Password + pwdLastSet / lockoutTime への書き込み)を述べている",
+            "points": 3,
+            "mustInclude": ["既定のサービスアカウント(OktaService)", "パスワードリセットには追加権限が必要"],
+            "acceptableAlternatives": ["Reset Password 制御アクセス権", "pwdLastSet / lockoutTime 属性への Write", "最小権限(Domain Admins を避ける)"],
+            "scoringGuide": "既定アカウント+具体的な追加権限=3点。追加権限の必要性のみ(具体名なし)=2点。「Domain Admins を付与する」を推奨として記述=0〜1点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) Admin Console ダッシュボードでのエージェント正常性監視に言及している",
+            "points": 1,
+            "mustInclude": ["Dashboard(Agents)での状態確認"],
+            "acceptableAlternatives": ["緑色表示が正常を示す", "System Log の監視"],
+            "scoringGuide": "言及あり=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「AD のパスワードが Okta クラウドに保存される」等、委任認証アーキテクチャに関する重大な誤りを含む場合", "points": -2 }
+        ],
+        "gradingInstructions": "アーキテクチャの方向性(アウトバウンドのみ・複数エージェント・最小権限)という 3 つの設計原則が押さえられているかを重視する。ポート番号の網羅は要求しない(443 と、AD 側で LDAP/Kerberos 系が必要という理解があれば十分)。",
+        "commonMistakes": [
+          "同一サーバーに複数エージェントを入れて HA と考える",
+          "Okta からのインバウンド接続用にポート開放が必要と考える",
+          "サービスアカウントに Domain Admins を推奨してしまう"
+        ]
+      },
+      "sources": [
+        { "title": "Install multiple Okta Active Directory agents (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-multiple.htm" },
+        { "title": "Configure DMZ server ports for Active Directory integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-dmzports.htm" },
+        { "title": "About Okta service account permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-about-service-account.htm" }
+      ],
+      "tags": ["ad-agent", "architecture", "high-availability", "service-account"]
+    },
+    {
+      "id": "OCA-WR-002",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "delegated-auth-flow",
+      "difficulty": "advanced",
+      "question": "AD の委任認証(Delegated Authentication)が有効な org で、ユーザーが Okta のサインインページにユーザー名とパスワードを入力してから認証が完了するまでの流れを、登場するコンポーネント(ブラウザ、Okta、AD エージェント、ドメインコントローラー)を挙げて順に説明してください。また、(a) パスワードはどこに保存されるか、(b) この構成の障害点と対策、(c) 認証遅延を調査する際に使える System Log の情報、にも言及してください。",
+      "modelAnswer": "フロー: ①ユーザーがブラウザで Okta サインインページに AD の資格情報(ユーザー名/パスワード)を入力する。②Okta は資格情報を保存せず、検証要求を接続済みの AD エージェント(アウトバウンド 443 の接続を通じて)に渡す。③AD エージェントはオンプレミスでドメインコントローラーに対して資格情報を検証する。④検証結果がエージェントから Okta へ返され、成功であれば Okta はポリシー評価(MFA 等)を経てセッションを確立する。JIT が有効なら初回サインイン時にユーザー作成・属性更新も行われる。(a) パスワードは AD にのみ保存され、Okta クラウドには保存されない(検証のたびに AD で確認する)。(b) 障害点は AD エージェントとドメインコントローラー。エージェントが全停止、または DC に到達できないと Okta サインイン自体が失敗するため、エージェントを複数サーバーに配置し(2 台以上)、DC の冗長化と合わせて可用性を確保する。エージェントの稼働は Admin Console のダッシュボードで監視する。(c) System Log の委任認証イベントに記録される delAuthTimeSpentAtAgent(エージェントでの処理時間)と delAuthTimeSpentAtDomainController(DC での処理時間)のメトリクス(ミリ秒)を確認すると、遅延がエージェント側か DC 側かを切り分けられる。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "認証フローの順序(ブラウザ→Okta→エージェント→DC→結果返却→セッション確立)を正しく説明している",
+            "points": 4,
+            "mustInclude": ["Okta がエージェントへ検証を委任する", "ドメインコントローラーで検証される", "結果が Okta に返りセッションが確立する"],
+            "acceptableAlternatives": ["JIT による初回作成への言及", "エージェントのアウトバウンド接続経由という表現"],
+            "scoringGuide": "4 コンポーネントの役割と順序が正しい=4点。順序は正しいがコンポーネントが 1 つ欠落=3点。2 つ欠落=2点。Okta 内で検証されると記述=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(a) パスワードは AD のみに保存され Okta には保存されないことを明言している",
+            "points": 2,
+            "mustInclude": ["パスワードは Okta(クラウド)に保存されない"],
+            "acceptableAlternatives": ["AD にのみ存在する", "検証のたびに AD で確認する"],
+            "scoringGuide": "明言あり=2点。曖昧=1点。「Okta にも保存される」=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(b) エージェント/DC が障害点であること、複数エージェント配置等の対策を述べている",
+            "points": 2,
+            "mustInclude": ["エージェント停止時に Okta サインインが失敗し得る", "複数エージェントによる冗長化"],
+            "acceptableAlternatives": ["DC の冗長化", "ダッシュボードでの監視"],
+            "scoringGuide": "障害点+対策=2点。片方=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(c) delAuth のタイミングメトリクス(エージェント/DC の処理時間)に言及している",
+            "points": 2,
+            "mustInclude": ["System Log の委任認証タイミング情報(エージェント側と DC 側の処理時間)"],
+            "acceptableAlternatives": ["delAuthTimeSpentAtAgent / delAuthTimeSpentAtDomainController"],
+            "scoringGuide": "メトリクス名または「両側の処理時間が記録される」という内容=2点。System Log を見るとだけ記述=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「委任認証では AD パスワードのハッシュが Okta に同期される」等、パスワード同期(Password Sync)機能と混同した場合", "points": -2 }
+        ],
+        "gradingInstructions": "フローの説明(C1)は文章でも番号付きステップでもよい。方向(Okta→エージェントは、エージェントが張ったアウトバウンド接続を通じて指示が流れる)の厳密な表現までは要求しないが、「Okta がクラウド内で完結して検証する」という理解は 0 点とする。",
+        "commonMistakes": [
+          "委任認証とパスワード同期の混同",
+          "エージェント障害の影響(サインイン不可)を過小評価する",
+          "タイミングメトリクスの存在を知らない"
+        ]
+      },
+      "sources": [
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" },
+        { "title": "Install multiple Okta Active Directory agents (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-multiple.htm" }
+      ],
+      "tags": ["delegated-authentication", "authentication-flow", "troubleshooting"]
+    },
+    {
+      "id": "OCA-WR-003",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "jit-provisioning-explained",
+      "difficulty": "intermediate",
+      "question": "Active Directory の JIT(Just-In-Time)プロビジョニングについて、(1) JIT が行うこと(いつ・何が起こるか)、(2) JIT の前提条件、(3) アクティベーションメールの扱い、(4) JIT と定期インポートを併用する理由、を説明してください。",
+      "modelAnswer": "(1) JIT は、ユーザーが委任認証(または Desktop SSO)で初めて Okta にサインインしたタイミングで、AD の情報をもとに Okta ユーザーアカウントを自動作成しアクティベートする。また、既存ユーザーについてもサインイン時や管理者によるプロファイルの読み込み/更新時に AD から属性・ステータスの更新が反映される。(2) 前提条件は委任認証が有効であること(委任認証が無効の場合、Okta ユーザーの作成は一括インポートによるしかない)。JIT はソースディレクトリの User Creation & Matching 設定を無視して動作する。また JIT の対象は新規 Okta ユーザーであり、既にインポートで確認(Confirm)済みのユーザーは JIT ではアクティベートされない。(3) JIT が有効な場合、ユーザーにアクティベーションメールは送信されない。ユーザーは特別な招待フローなしに、既存の AD 資格情報でサインインすれば利用開始できる。(4) JIT はサインインしたユーザーだけを作成・更新するため、全ユーザーの網羅や、サインインしないユーザーの情報更新・グループ情報の取り込み・AD 側での無効化の反映には定期(スケジュール)インポートが必要。両者を併用することで、即時性(JIT)と網羅性・整合性(定期インポート)を両立できる。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 初回サインイン時のアカウント自動作成・アクティベート(および属性更新)を説明している",
+            "points": 3,
+            "mustInclude": ["初回サインイン時に Okta アカウントが自動作成される"],
+            "acceptableAlternatives": ["サインイン時・プロファイル更新時の属性更新", "Desktop SSO でも発火する"],
+            "scoringGuide": "作成+アクティベート(+更新)=3点。作成のみ=2点。タイミング(サインイン時)の説明がない=1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) 委任認証が前提であることを述べている",
+            "points": 3,
+            "mustInclude": ["委任認証が有効であることが必要"],
+            "acceptableAlternatives": ["委任認証なしでは一括インポートでしか作成できない", "User Creation & Matching 設定を無視する", "確認済みユーザーは対象外"],
+            "scoringGuide": "委任認証の前提=2点、追加の正しい仕様(設定無視/対象外条件)1 つ以上で+1点(最大 3 点)。前提の言及なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) アクティベーションメールが送信されないことを述べている",
+            "points": 2,
+            "mustInclude": ["アクティベーションメールは送信されない"],
+            "acceptableAlternatives": ["招待メールなしで AD 資格情報でそのまま利用開始できる"],
+            "scoringGuide": "明言あり=2点。なし=0点。「メールが送られる」=0点(C3 全体)。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) JIT の限界(サインインしたユーザーのみ)と定期インポートの役割(網羅・グループ・無効化反映)を対比している",
+            "points": 2,
+            "mustInclude": ["JIT はサインインしたユーザーにしか作用しない"],
+            "acceptableAlternatives": ["定期インポートで全体の整合性・グループ・無効化を反映する"],
+            "scoringGuide": "対比が明確=2点。片側のみ=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「JIT はスケジュール実行される」等、JIT をバッチ処理として説明した場合", "points": -2 }
+        ],
+        "gradingInstructions": "JIT の本質(サインインをトリガーとするイベントドリブンな作成・更新)が理解できているかを軸に採点する。C2 の追加仕様は 1 つ言及されていれば十分。",
+        "commonMistakes": [
+          "JIT と定期インポートの役割の混同",
+          "JIT ユーザーにアクティベーションメールが送られると誤解する",
+          "委任認証なしで JIT が動くと考える"
+        ]
+      },
+      "sources": [
+        { "title": "Add and update users with Active Directory Just-In-Time provisioning (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-add-update-JIT.htm" }
+      ],
+      "tags": ["jit", "delegated-authentication", "import"]
+    },
+    {
+      "id": "OCA-WR-004",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "import-strategy",
+      "difficulty": "advanced",
+      "question": "AD から Okta へのユーザーインポートを設計します。(1) フルインポートとインクリメンタルインポートの違いと使い分け、(2) インポートされたユーザーと既存 Okta ユーザーのマッチング(User Creation & Matching)の仕組み(完全一致と部分一致の例を含む)、(3) 確認(Confirm)とアクティベーションの自動化オプション、(4) 誤った大量無効化などの事故を防ぐための考慮点、を説明してください。",
+      "modelAnswer": "(1) フルインポートはスコープ内の全オブジェクトを毎回評価するため完全な整合が取れるが、時間とリソースを消費する。インクリメンタルインポートは前回以降に変更されたオブジェクトのみを処理するため高速で、頻繁なスケジュール実行に向く。運用では、日常はインクリメンタル(または短い間隔のスケジュール)、初回・大規模変更後・不整合疑い時にフルインポートという併用が基本。(2) インポート時、マッチングルールに基づいて「新規ユーザーとして作成するか、既存 Okta ユーザーに紐付けるか」が判定される。完全一致の例: username や email が既存ユーザーと一致。部分一致の例: first name + last name が一致(email 等は異なる)。一致の種類に応じて、自動で確認(auto-confirm)するか、管理者がインポート結果画面で手動確認するかを構成できる。(3) 「一致した既存ユーザーへの自動確認」や「新規ユーザーの自動確認・自動アクティベート」を有効化すると、インポート後の手作業を減らせる。無効の場合は、インポート結果からユーザーを確認・アクティベートする手動ステップが必要。(4) 事故防止: ソース側(AD の OU 構成や接続)の問題で大量のユーザーが「削除された」と誤認識されると、大量無効化が起こり得る。インポート前のスコープ(OU)設定の確認、テスト org や少数 OU での試行、インポート結果のレビュー(手動確認の活用)、Super Admin がインポートで無効化されないという保護の理解、System Log/インポート結果の監視といった対策を組み合わせる。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) フル/インクリメンタルの違い(全件 vs 差分)と使い分けを説明している",
+            "points": 3,
+            "mustInclude": ["フル=全件、インクリメンタル=前回以降の変更分"],
+            "acceptableAlternatives": ["日常は差分・定期、フルは初回や整合性確保時という使い分け"],
+            "scoringGuide": "違い+使い分け=3点。違いのみ=2点。逆に説明=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) マッチングルールの目的と、完全一致(username/email)・部分一致(first+last name)の例を挙げている",
+            "points": 3,
+            "mustInclude": ["既存ユーザーとの一致判定という目的", "完全一致と部分一致の区別"],
+            "acceptableAlternatives": ["username / email / 姓+名 の具体例"],
+            "scoringGuide": "目的+両方の例=3点。目的+片方の例=2点。目的のみ=1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 自動確認・自動アクティベートのオプションと手動確認の関係を説明している",
+            "points": 2,
+            "mustInclude": ["自動確認(auto-confirm)または自動アクティベートの設定が存在する"],
+            "acceptableAlternatives": ["無効時はインポート結果画面での手動確認が必要"],
+            "scoringGuide": "自動化オプション+手動時の挙動=2点。片方=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 大量無効化などの事故防止の考慮点を 2 つ以上挙げている",
+            "points": 2,
+            "mustInclude": ["スコープ確認・段階的試行・結果レビューなどの予防策"],
+            "acceptableAlternatives": ["Super Admin はインポートで無効化されない", "System Log/インポート結果の監視", "インポートセーフガードの概念"],
+            "scoringGuide": "2 つ以上=2点。1 つ=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「インクリメンタルインポートの方が常に安全で、フルインポートは不要」という誤った結論を提示した場合", "points": -1 }
+        ],
+        "gradingInstructions": "マッチング(C2)は本試験の頻出概念。用語(User Creation & Matching)の正確さより、「新規作成か既存紐付けかを一致条件で決め、確認プロセスを挟める」という構造の理解を評価する。",
+        "commonMistakes": [
+          "マッチングと属性マッピングの混同",
+          "確認(Confirm)ステップの存在を知らない",
+          "フルインポートの必要性(整合性確保)を説明できない"
+        ]
+      },
+      "sources": [
+        { "title": "Configure Active Directory import and account settings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-configure-import.htm" },
+        { "title": "Manage Active Directory users and groups (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-users-groups.htm" },
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["import", "matching", "confirmation", "safeguards"]
+    },
+    {
+      "id": "OCA-WR-005",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "password-policy-interplay",
+      "difficulty": "advanced",
+      "question": "AD 委任認証を使用する org で、パスワードポリシーとアカウントロックアウトをどのように設計すべきか説明してください。含めるべき内容: (1) AD ソースユーザーのパスワード有効期限・複雑性はどちら(AD / Okta)のポリシーが実質的に支配するか、(2) Okta 側のロックアウトしきい値と AD 側のロックアウトしきい値の推奨関係とその理由、(3) Okta のみをソースとするユーザー(クラウドユーザー)が混在する場合の考慮点。",
+      "modelAnswer": "(1) AD ソースユーザーのパスワードは AD に保存され AD で検証されるため、複雑性・有効期限などのパスワードルールは実質的に AD のドメインパスワードポリシーが支配する。Okta 側のパスワードポリシーでは AD ソースユーザー向けに有効期限設定(Password expires after N days)は表示されず、有効期限情報は AD からインポートされる。(2) Okta のロックアウト失敗許容回数は AD 側のロックアウトしきい値の半分以下に設定することが推奨される。理由: Okta 側で先にロックさせることで、攻撃や誤入力による失敗が AD アカウント自体のロックアウト(オンプレミスのファイル共有・業務システムまで巻き込む障害)に達する前に止められる。Okta 側のロックは Okta の Unlock 操作や自動アンロックで復旧でき、影響範囲を Okta サインインに限定できる。(3) クラウドユーザー(Okta がソース)には Okta のパスワードポリシー(複雑性、common password check、履歴、有効期限、ロックアウト)がフルに適用される。AD ユーザーとクラウドユーザーが混在する場合は、ポリシーの適用対象(グループ)を分けてそれぞれに適した設定を行い、ヘルプデスク手順も「AD ユーザーのパスワード変更は AD ポリシー準拠(Okta からのリセットは AD に書き込まれる)」「クラウドユーザーは Okta ポリシー準拠」と区別して整備する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) AD ソースユーザーは AD のパスワードポリシーが実質支配し、有効期限が AD から来る(Okta 側に有効期限設定が出ない)ことを説明している",
+            "points": 4,
+            "mustInclude": ["AD ソースユーザーのパスワードルールは AD 側ポリシーが支配する"],
+            "acceptableAlternatives": ["有効期限は AD からインポートされる", "Okta 側で有効期限設定が表示されない"],
+            "scoringGuide": "支配関係+有効期限の扱い=4点。支配関係のみ=3点。「Okta ポリシーが AD を上書きする」=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Okta のロックアウトを AD の半分以下にする推奨と、AD アカウントロック防止という理由を述べている",
+            "points": 3,
+            "mustInclude": ["Okta のロックアウトしきい値を AD より低く(半分以下に)設定する"],
+            "acceptableAlternatives": ["AD 側アカウントロックの防止という理由", "オンプレミス業務への影響回避"],
+            "scoringGuide": "推奨値+理由=3点。低くする方向のみ(半分の言及なし)+理由=2点。方向が逆=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) クラウドユーザーには Okta ポリシーがフル適用され、混在時はグループ別ポリシー等での設計が必要と述べている",
+            "points": 3,
+            "mustInclude": ["Okta ソースのユーザーには Okta のパスワードポリシーが適用される"],
+            "acceptableAlternatives": ["グループごとのポリシー分離", "運用手順の区別"],
+            "scoringGuide": "適用関係+混在時の設計=3点。適用関係のみ=2点。区別なし=0〜1点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「委任認証でも Okta の複雑性設定が AD パスワードに強制される」という誤り", "points": -2 }
+        ],
+        "gradingInstructions": "どちらのポリシーが「どのユーザー集合に」効くかの対応関係を最重視する。Okta からの AD パスワードリセットが AD に書き込まれる(その際 AD の複雑性要件を満たす必要がある)ことへの言及は加点対象の正しい補足として C1 の判断材料にしてよい。",
+        "commonMistakes": [
+          "AD ユーザーとクラウドユーザーのポリシー適用の混同",
+          "ロックアウトの推奨関係(半分以下)を逆に覚えている"
+        ]
+      },
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" },
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" }
+      ],
+      "tags": ["password-policy", "lockout", "ad-sourced", "design"]
+    },
+    {
+      "id": "OCA-WR-006",
+      "type": "written",
+      "domain": "ad-integration",
+      "topic": "group-strategy",
+      "difficulty": "intermediate",
+      "question": "AD 統合済みの org におけるグループ戦略を説明してください。(1) AD ソースグループと Okta グループの管理面での違い、(2) 「複数の AD グループのメンバーを 1 つの Okta グループに集約してアプリ割り当てに使う」構成の実現方法とメリット、(3) グループに管理者ロールを割り当てる場合の Group Rule に関する制約、の 3 点を含めること。",
+      "modelAnswer": "(1) AD ソースグループはメンバーシップの source of truth が AD にあり、Okta 上では読み取り専用(変更は AD 側で行い、インポート/同期で反映)。Okta グループは Okta 内で作成・管理でき、手動割り当てや Group Rule による自動化が可能。(2) Group Rule の条件に「対象 AD グループのメンバーであること」を指定し、アクションで Okta グループに追加する。複数の AD グループを OR 条件(または複数ルール)で 1 つの Okta グループへ集約できる。メリット: アプリ割り当てやポリシー適用の対象を Okta グループに一本化でき、AD 側の組織構造が変わっても Okta 側の割り当て設計を保てる。AD でのメンバー変更は同期後にルールが自動追随する。(3) Group Rule は管理者ロールが付与されたグループへのユーザー割り当てには使用できず、また Group Rule のターゲットになっているグループには管理者権限を付与できない。管理者ロール用のグループはルールによる自動化の対象外とし、手動またはガバナンスプロセスで管理する必要がある(権限昇格の防止)。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) AD ソースグループは Okta 上で読み取り専用(AD 側で管理)、Okta グループは Okta で管理という違いを説明している",
+            "points": 3,
+            "mustInclude": ["AD ソースグループのメンバーシップは AD 側で管理(Okta では編集不可)"],
+            "acceptableAlternatives": ["Okta グループは手動/ルールで管理できる"],
+            "scoringGuide": "両者の対比=3点。片側のみ=1〜2点。逆=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Group Rule で AD グループメンバーを条件に Okta グループへ集約する方法を説明している",
+            "points": 3,
+            "mustInclude": ["Group Rule の条件に AD グループのメンバーシップを使う"],
+            "acceptableAlternatives": ["複数 AD グループ→単一 Okta グループのマッピング"],
+            "scoringGuide": "方法が具体的=3点。「ルールを使う」のみ=1〜2点。Group Push を挙げた=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) メリット(割り当ての一本化、AD 変更への自動追随)を述べている",
+            "points": 2,
+            "mustInclude": ["アプリ割り当て・ポリシー適用先の一本化または自動追随"],
+            "acceptableAlternatives": ["AD 構造変更への耐性"],
+            "scoringGuide": "メリット 1 つ以上=2点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) admin ロール付きグループと Group Rule の相互制約を説明している",
+            "points": 2,
+            "mustInclude": ["Group Rule で admin グループへ割り当てできない"],
+            "acceptableAlternatives": ["ルールのターゲットグループに admin 権限を付与できない", "権限昇格防止という理由"],
+            "scoringGuide": "制約の言及=2点。曖昧=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Group Push(Okta→アプリ方向)を AD グループの集約手段として説明した場合", "points": -2 }
+        ],
+        "gradingInstructions": "方向の理解(AD→Okta はインポート+ルール、Okta→アプリは Group Push)が混乱していないかに注意して採点する。",
+        "commonMistakes": [
+          "Group Rule と Group Push の方向の混同",
+          "AD ソースグループを Okta で直接編集できると考える"
+        ]
+      },
+      "sources": [
+        { "title": "Import groups from Active Directory (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-import-groups.htm" },
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["ad-groups", "group-rules", "group-strategy"]
+    },
+    {
+      "id": "OCA-WR-007",
+      "type": "written",
+      "domain": "profile-sourcing",
+      "topic": "hr-as-source-design",
+      "difficulty": "advanced",
+      "question": "Workday を人事システムとして利用する企業が「HR driven プロビジョニング(HR as a source)」を構成します。既存の Active Directory も残ります。(1) Workday をプロファイルソースとする場合の入社(オンボーディング)の流れ、(2) Workday と AD の 2 つのソースが存在する場合の Okta の動作(プロファイル全体のソーシングと優先順位)、(3) 「ほとんどの属性は Workday、業務メールアドレスだけは AD をソースにしたい」場合に使う機能、(4) 退職(オフボーディング)がどのように伝播するか、を説明してください。",
+      "modelAnswer": "(1) 入社処理が Workday で完了すると、Workday(プロファイルソース)から Okta にユーザーが作成され、プロファイル属性が取り込まれる。Okta では属性(部署・拠点など)に基づく Group Rule でグループに自動追加され、グループのアプリ割り当てにより AD アカウントの作成(Okta→AD への To App プロビジョニング)やダウンストリーム SaaS のアカウント作成まで自動化できる。(2) プロファイルソースは複数構成でき、Profile Sources ページで優先順位を設定する。ただし、ある時点で 1 人のユーザーのプロファイル(全体)のソースになれるのは 1 つだけで、ユーザーがどのソースに割り当てられているかと優先順位により適用ソースが決まる。(3) 属性単位でソースを変えたい場合は attribute-level sourcing を使用する。Profile Editor のマッピング設定で特定属性(業務メール)のソースを AD に指定し、他の属性は Workday をソースのままにできる。ソースが管理する属性は Okta 上で読み取り専用となる。(4) Workday で退職処理が行われると、ソースからの更新により Okta ユーザーが無効化され、Deactivate Users を有効にしたアプリ(AD を含む)へデプロビジョニングが伝播してアカウントが無効化される。これにより退職者のアクセスが人手を介さず一括で遮断される(Super Admin はインポートによる無効化から保護される点にも留意)。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) Workday→Okta のユーザー作成と、Group Rule / 割り当てによるダウンストリーム自動化(AD 作成含む)を流れとして説明している",
+            "points": 3,
+            "mustInclude": ["Workday から Okta にユーザーが作成される", "グループ/割り当てを介したダウンストリームのプロビジョニング"],
+            "acceptableAlternatives": ["Okta→AD の To App プロビジョニングで AD アカウント作成", "Group Rule による自動グループ化"],
+            "scoringGuide": "作成+自動化の流れ=3点。作成のみ=1〜2点。方向の誤り=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) 複数ソースの優先順位と「1 ユーザーのプロファイルのソースは同時に 1 つ」の原則を説明している",
+            "points": 2,
+            "mustInclude": ["ユーザーのプロファイル(全体)のソースはある時点で 1 つ"],
+            "acceptableAlternatives": ["優先順位の構成"],
+            "scoringGuide": "原則+優先順位=2点。どちらか=1点。なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) attribute-level sourcing を挙げ、属性単位のソース指定と読み取り専用化を説明している",
+            "points": 3,
+            "mustInclude": ["attribute-level sourcing(属性レベルソーシング)"],
+            "acceptableAlternatives": ["属性ごとに異なるソースを指定できる", "ソース管理属性は Okta で読み取り専用"],
+            "scoringGuide": "機能名+動作=3点。機能の説明はあるが名称なし=2点。誤った機能=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 退職の伝播(ソース→Okta 無効化→アプリのデプロビジョニング)を説明している",
+            "points": 2,
+            "mustInclude": ["Workday の退職処理が Okta の無効化につながる", "アプリ(AD 含む)へのデプロビジョニングの伝播"],
+            "acceptableAlternatives": ["Deactivate Users 機能", "Super Admin の保護"],
+            "scoringGuide": "両段階=2点。片方=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「Workday と AD が同時に同一ユーザーのプロファイル全体のソースになる」という誤り", "points": -2 }
+        ],
+        "gradingInstructions": "エンドツーエンド(HR→Okta→ダウンストリーム)のデータと権限の流れを描けているかを評価する。細かい Workday 統合オプション(Workday 側の設定)は採点対象外。",
+        "commonMistakes": [
+          "ソーシング(To Okta)とプロビジョニング(To App)の方向の混同",
+          "attribute-level sourcing を知らず「できない」と回答する"
+        ]
+      },
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" },
+        { "title": "About attribute-level sourcing (Okta Help Center)", "url": "https://help.okta.com/en-us/Content/Topics/users-groups-profiles/usgp-about-attribute-sourcing.htm" },
+        { "title": "Manage profile and attribute sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-sourcing-main.htm" }
+      ],
+      "tags": ["hr-as-a-source", "workday", "attribute-level-sourcing", "offboarding"]
+    },
+    {
+      "id": "OCA-WR-008",
+      "type": "written",
+      "domain": "write-back",
+      "topic": "write-back-design",
+      "difficulty": "intermediate",
+      "question": "「ユーザーが Okta のプロファイルで更新した携帯電話番号を、Active Directory と Salesforce にも自動反映したい」という要件があります。(1) この「書き戻し(write-back)」を実現するために各統合(AD、Salesforce)で必要な設定、(2) 属性がどの経路で流れるか(マッピングの方向)、(3) この構成で注意すべき点(ソーシングとの関係)を説明してください。",
+      "modelAnswer": "(1) AD 統合・Salesforce 統合それぞれの Provisioning 設定で To App 方向の機能(Update User Attributes)を有効化する。AD への書き込みにはサービスアカウントに対象属性への書き込み権限が必要。Salesforce はプロビジョニング対応の OIN 統合として API 資格情報を構成しておく。(2) 属性の流れ: ユーザー(または管理者・ソース)が Okta ユーザープロファイルの携帯電話番号を更新 → Profile Editor で構成した Okta→AD、Okta→Salesforce の属性マッピング(mobilePhone → 対応するアプリ属性)に従い、To App プロビジョニングが変更を各アプリへ push する。マッピングは「Apply on create and update」にしておくことで、作成時だけでなく更新時にも反映される。(3) 注意点: 携帯電話番号のソースがどこかを明確にすること。もし AD がその属性のソース(attribute-level sourcing で AD 管理)になっていると、Okta 上では読み取り専用となり、ユーザーは Okta で編集できない(この場合、編集可能にするには当該属性のソースを Okta にする)。また、同一アプリに対して「そのアプリをソースにする設定」と「そのアプリへ書き込む設定」を併用すると、双方向同期による上書き競合(レースコンディション)のリスクがあると公式に注意されているため、属性単位でどちらの方向に流すかを設計して重複させないことが重要。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 両統合で To App の Update User Attributes(プロビジョニング)を有効化する必要性を説明している",
+            "points": 3,
+            "mustInclude": ["To App のプロビジョニング(属性更新)の有効化"],
+            "acceptableAlternatives": ["AD サービスアカウントの書き込み権限", "Salesforce の API 資格情報"],
+            "scoringGuide": "両統合について言及=3点。片方または一般論=2点。SSO 設定のみで実現できるとした=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Okta→アプリ方向の属性マッピングと更新時反映(create and update)の流れを説明している",
+            "points": 3,
+            "mustInclude": ["Okta からアプリ方向へのマッピングに従って更新が伝播する"],
+            "acceptableAlternatives": ["Apply on create and update", "Profile Editor / Provisioning ページのマッピング"],
+            "scoringGuide": "方向+更新時反映=3点。方向のみ=2点。方向が逆=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 属性のソースとの関係(ソース管理属性は Okta で編集不可 → 編集可能にする設計)に言及している",
+            "points": 2,
+            "mustInclude": ["属性のソースが外部だと Okta で編集できない"],
+            "acceptableAlternatives": ["attribute-level sourcing の調整", "当該属性のソースを Okta にする"],
+            "scoringGuide": "言及あり=2点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) 双方向同期(ソーシング+書き込みの併用)のリスクに言及している",
+            "points": 2,
+            "mustInclude": ["同一アプリでソーシングと書き込みを併用すると競合リスクがある"],
+            "acceptableAlternatives": ["上書き・レースコンディション", "属性単位で方向を一方向に設計する"],
+            "scoringGuide": "言及あり=2点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「書き戻しは Okta ではできない」という誤った結論", "points": -3 }
+        ],
+        "gradingInstructions": "「どの属性が・どちらの方向に・何の設定によって」流れるかが具体的に書けているかを評価する。ユーザー自身が編集するためには当該属性が Okta 管理である必要がある、という論点(C3)が本問の応用ポイント。",
+        "commonMistakes": [
+          "To Okta と To App の方向の混同",
+          "ソース管理属性を Okta で編集できる前提で設計してしまう"
+        ]
+      },
+      "sources": [
+        { "title": "Manage profile and attribute sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-sourcing-main.htm" },
+        { "title": "About attribute mappings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-attribute-mappings.htm" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["write-back", "attribute-mapping", "to-app", "sourcing"]
+    }
+  ]
+}

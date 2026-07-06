@@ -1,0 +1,428 @@
+{
+  "meta": {
+    "fileId": "pro-written-01",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Written questions Part 1 (Use Cases 1-4)",
+    "examSectionJa": "記述問題 パート1(ユースケース1〜4対応)",
+    "examWeight": "記述問題は実技(hands-on)ユースケースの理解度を言語化して確認するための補強教材",
+    "questionType": "written",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。採点は rubric に厳密に従うこと。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 7
+  },
+  "questions": [
+    {
+      "id": "OCP-WR-001",
+      "type": "written",
+      "domain": "user-management",
+      "topic": "user-lifecycle-status",
+      "difficulty": "intermediate",
+      "question": "Okta のユーザーアカウントステータスについて、次の 3 点を説明してください。(1) 管理者がユーザーを作成してからユーザーが利用開始するまでに通る典型的なステータス遷移(3 つのステータス名を順に)、(2) Suspended と Deactivated の違い(アプリ割り当てとパスワードの扱いに言及すること)、(3) Locked out が発生する原因と復旧方法を 2 つ。",
+      "modelAnswer": "(1) 管理者がユーザーを作成すると、アクティベーション開始前は「Staged」となる。アクティベーションを開始(アクティベーションメール送信)すると「Pending user action」となり、ユーザーがメール検証やパスワード設定を完了すると「Active」になる(遷移: Staged → Pending user action → Active)。なお、管理者がパスワードを設定して検証を省略した場合などは直接 Active になるパターンもある。(2) Suspended は管理者が明示的に一時停止した状態で、ユーザーは Okta(アプリ、Dashboard、Admin Console)にサインインできないが、アプリ割り当ては維持され、プロファイルの更新も可能。復帰(Unsuspend)すれば元の状態に戻る。一方 Deactivated(API では Deprovisioned)は無効化された状態で、すべてのアプリ割り当てが削除され、パスワードも完全に削除される。再アクティベートしても割り当て・パスワードは自動では復元されない。(3) Locked out はポリシーで定義されたサインイン失敗回数の上限を超えた場合に発生する。復旧方法には、管理者によるUnlock 操作、パスワードポリシーで構成した一定時間経過後の自動アンロック、(構成していれば)ユーザー自身によるセルフサービスアンロックがある。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) ステータス遷移を正しい順序で 3 つ挙げている",
+            "points": 3,
+            "mustInclude": ["Staged", "Pending user action", "Active"],
+            "acceptableAlternatives": ["Provisioned(Pending user action の API 名として言及した場合は可)", "ステージド/アクティブなどの日本語表記"],
+            "scoringGuide": "3 つすべて正しい名称かつ正しい順序=3点。名称は正しいが順序の誤りが 1 箇所、または 1 つ欠落=2点。2 つ以上欠落・誤り=0〜1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Suspended の特徴(サインイン不可だがアプリ割り当て維持・プロファイル更新可・可逆)を述べている",
+            "points": 2,
+            "mustInclude": ["サインイン不可", "アプリ割り当ては維持される"],
+            "acceptableAlternatives": ["割り当てに影響しない", "Unsuspend で復帰できる"],
+            "scoringGuide": "サインイン不可+割り当て維持の両方=2点。片方のみ=1点。どちらもなし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) Deactivated の特徴(アプリ割り当て削除・パスワード完全削除)を述べている",
+            "points": 3,
+            "mustInclude": ["アプリ割り当てが削除される", "パスワードが完全に削除される"],
+            "acceptableAlternatives": ["Deprovisioned という API 名", "再アクティベートしても自動復元されない"],
+            "scoringGuide": "割り当て削除+パスワード削除の両方=3点。片方のみ=1〜2点(記述の正確さで判断)。どちらもなし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) Locked out の原因(失敗回数超過)と復旧方法 2 つを述べている",
+            "points": 2,
+            "mustInclude": ["サインイン試行の失敗回数超過", "管理者による Unlock"],
+            "acceptableAlternatives": ["自動アンロック(時間経過)", "セルフサービスアンロック"],
+            "scoringGuide": "原因+復旧方法 2 つ=2点。原因+復旧方法 1 つ=1点。原因の言及なし=最大1点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Suspended でアプリ割り当てが削除される、Deactivated が可逆で全データ復元されるなど、状態の効果を逆に記述した場合", "points": -2 },
+          { "description": "存在しないステータス名(例: Frozen、Archived)を事実として記述した場合", "points": -1 }
+        ],
+        "gradingInstructions": "採点は criteria ごとに独立して行い、合計から deductions を差し引く(0 点未満にはしない)。用語は英語表記・日本語表記のどちらも可とするが、Suspended / Deactivated を取り違えている場合は C2・C3 を 0 点とする。模範解答にない正しい補足(例: 直接 Active になるフロー)は加点しないが減点もしない。",
+        "commonMistakes": [
+          "Staged と Pending user action の順序を逆にする",
+          "Deactivated 後の再アクティベートで元の割り当てが戻ると誤解する",
+          "Locked out と Suspended を混同する(Locked out は回数超過による自動、Suspend は管理者の明示操作)"
+        ]
+      },
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" }
+      ],
+      "tags": ["user-lifecycle", "account-status", "suspended", "deactivated"]
+    },
+    {
+      "id": "OCP-WR-002",
+      "type": "written",
+      "domain": "user-management",
+      "topic": "group-rules-design",
+      "difficulty": "intermediate",
+      "question": "あなたの組織では、ユーザープロファイルの department 属性の値に基づいて部門別グループ(例: Sales-Team)へのメンバー追加を自動化したいと考えています。(1) この要件を実現する Okta の機能名と設定手順の概要(作成場所、条件の指定方法、有効化)を説明してください。(2) この機能の運用上の制約・注意点を 3 つ挙げてください。",
+      "modelAnswer": "(1) Group Rule(グループルール)を使用する。Directory > Groups > Rules で Add rule を実行し、条件として基本条件(IF: department equals \"Sales\" のような属性条件)または Okta Expression Language の式を指定し、THEN で追加先グループ(Sales-Team)を指定して保存する。ルールは作成時点では Inactive のため、Activate して有効化する。有効化すると既存ユーザーも含めて評価され、以後は属性変更のたびに自動でメンバーシップが更新される。(2) 制約・注意点の例: ①ルールによって追加されたユーザーは手動でグループから削除できない(外すには属性修正・ルール修正・除外設定・ルール無効化が必要)。②ルールを無効化/削除すると、そのルールが追加したメンバーはグループから削除される。③管理者ロールが付与されているグループへの割り当てには使用できない(また、ルールのターゲットになっているグループには admin 権限を付与できない)。④org あたりのルール数上限は 2,000。⑤基本条件で使えるのは文字列属性のみ。⑥ルールの編集は Super admin / Org admin に限られる。(3 つ以上挙げればよい)",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "機能名として Group Rule(グループルール)を挙げている",
+            "points": 2,
+            "mustInclude": ["Group Rule"],
+            "acceptableAlternatives": ["グループルール", "group rules"],
+            "scoringGuide": "正しい機能名=2点。「動的グループ」など曖昧な表現のみ=1点。誤った機能名(Group Push 等)=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "設定手順の要点(Groups の Rules で作成、属性条件または Expression Language、追加先グループ指定、Activate が必要)を説明している",
+            "points": 3,
+            "mustInclude": ["属性条件(IF)と追加先グループ(THEN)の指定", "作成後に Activate(有効化)が必要"],
+            "acceptableAlternatives": ["Okta Expression Language での条件記述", "Directory > Groups > Rules という場所"],
+            "scoringGuide": "条件指定+追加先指定+Activate の 3 要素=3点。2 要素=2点。1 要素=1点。Activate への言及がない場合は最大 2 点。"
+          },
+          {
+            "id": "C3",
+            "description": "制約・注意点を 3 つ、事実として正しく挙げている",
+            "points": 4,
+            "mustInclude": ["ルールが追加したメンバーは手動削除できない"],
+            "acceptableAlternatives": ["無効化/削除でルール由来のメンバーが外れる", "admin グループには使用不可", "上限 2,000 ルール", "基本条件は文字列属性のみ", "編集は Super/Org admin のみ", "除外(exclude)ユーザー設定が可能"],
+            "scoringGuide": "正しい制約 3 つ以上=4点(うち 1 つは mustInclude の内容またはそれと同等の重要制約であること)。2 つ=2〜3点。1 つ=1点。誤った内容を制約として挙げた場合はその項目を数えない。"
+          },
+          {
+            "id": "C4",
+            "description": "有効化後の動作(既存ユーザーへの適用、属性変更時の自動更新)に言及している",
+            "points": 1,
+            "mustInclude": ["属性変更時に自動でメンバーシップが更新される"],
+            "acceptableAlternatives": ["有効化時に既存ユーザーも評価される"],
+            "scoringGuide": "言及あり=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Group Push(アプリへのグループ連携)と混同した説明をしている場合", "points": -2 }
+        ],
+        "gradingInstructions": "C3 は挙げられた各項目の事実正確性を個別に判定する。公式ドキュメントに反する記述(例: 「手動で自由に削除できる」)は当該項目を 0 カウントとし、deductions の対象になり得る。表現の違い(日本語/英語)は問わない。",
+        "commonMistakes": [
+          "Group Rule と Group Push の混同",
+          "ルール作成だけで自動適用されると考え、Activate に言及しない",
+          "ルール由来メンバーを手動削除できると誤解する"
+        ]
+      },
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["group-rules", "automation", "design"]
+    },
+    {
+      "id": "OCP-WR-003",
+      "type": "written",
+      "domain": "user-management",
+      "topic": "custom-admin-role",
+      "difficulty": "advanced",
+      "question": "ヘルプデスクチームに「特定の 2 つのグループに所属するユーザーに対してのみ、パスワードリセットと Authenticator のリセットを行える」権限を与えたいが、標準ロールでは要件に合いません。カスタム管理者ロールを使ってこの要件を実装する設計を説明してください。構成要素(何と何を定義し、誰に割り当てるか)と、最小権限の原則の観点からこの設計が望ましい理由を含めてください。",
+      "modelAnswer": "カスタム管理者ロールでは、(a) Role(ロール): 実行可能な操作を Permissions の集合として定義する。この要件では「ユーザーのパスワードリセット」「ユーザーの Authenticator(MFA)リセット」に相当する権限のみを含むロールを作成する。(b) Resource Set(リソースセット): 権限の適用対象範囲を定義する。この要件では対象の 2 グループ(に所属するユーザー)をリソースとして指定したリソースセットを作成する。(c) 割り当て: 作成したロールとリソースセットの組み合わせを、ヘルプデスクチームのメンバー(またはヘルプデスク用グループ)に割り当てる。これにより、ヘルプデスク担当者は指定 2 グループのユーザーに対するパスワード/Authenticator リセットのみ実行でき、他のユーザーへの操作、ユーザー作成・削除、アプリやポリシーの管理などは一切できない。標準ロール(例: Help Desk Admin)でも近い運用は可能だが、要件が標準ロールの権限セットと一致しない場合、カスタムロールなら必要な権限だけを必要な対象にだけ与えられる。過剰な権限付与を避けることで、誤操作・内部不正・アカウント侵害時の影響範囲(ブラスト半径)を最小化できるため、最小権限の原則に適合する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "Role(Permissions の集合)を定義することを説明している",
+            "points": 3,
+            "mustInclude": ["必要な操作だけを含む Role / Permissions を定義する"],
+            "acceptableAlternatives": ["パスワードリセット・MFA リセットの権限のみを含むロールを作る"],
+            "scoringGuide": "Role と Permissions の関係+この要件に必要な権限の特定=3点。Role の作成のみで具体的権限に触れない=2点。Role の概念に触れない=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "Resource Set で対象範囲(2 つのグループ)を限定することを説明している",
+            "points": 3,
+            "mustInclude": ["Resource Set", "対象の 2 グループに範囲を限定"],
+            "acceptableAlternatives": ["リソースセット"],
+            "scoringGuide": "Resource Set の用語+2 グループへの限定=3点。範囲限定の概念はあるが用語がない=2点。範囲限定に触れない=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "ロール+リソースセットを管理者(ユーザーまたはグループ)に割り当てるという構成を説明している",
+            "points": 2,
+            "mustInclude": ["ヘルプデスク担当者(またはグループ)への割り当て"],
+            "acceptableAlternatives": ["admin assignment", "バインディング"],
+            "scoringGuide": "割り当ての説明あり=2点。曖昧(「設定する」のみ)=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "最小権限の原則の観点からの理由(過剰権限の回避、影響範囲の最小化)を述べている",
+            "points": 2,
+            "mustInclude": ["必要最小限の権限のみ付与できる"],
+            "acceptableAlternatives": ["誤操作・侵害時の影響を限定できる", "least privilege"],
+            "scoringGuide": "理由が具体的=2点。「安全だから」など抽象的=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Super Admin を付与すればよい等、要件に反する過剰権限の提案を含む場合", "points": -2 }
+        ],
+        "gradingInstructions": "Role / Resource Set / 割り当ての 3 要素構成が読み取れるかを中心に採点する。Okta の画面パス(Security > Administrators)の有無は採点対象外。標準ロール(Help Desk Admin)との比較に言及していれば C4 の判断材料にしてよい。",
+        "commonMistakes": [
+          "Resource Set の概念が抜け、org 全体に権限が及ぶ設計になっている",
+          "Group Admin など標準ロールの説明に終始し、カスタムロールの構成要素を説明しない"
+        ]
+      },
+      "sources": [
+        { "title": "Administrators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Security/Administrators.htm" },
+        { "title": "Standard administrator roles and permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/administrators-admin-comparison.htm" }
+      ],
+      "tags": ["custom-admin-roles", "resource-set", "least-privilege"]
+    },
+    {
+      "id": "OCP-WR-004",
+      "type": "written",
+      "domain": "application-setup",
+      "topic": "oin-saml-integration",
+      "difficulty": "intermediate",
+      "question": "OIN に掲載されている SaaS アプリを SAML 2.0 で Okta と SSO 統合する作業を任されました。アプリ追加から動作確認までの手順の流れを、(1) Okta 側での操作、(2) アプリ(Service Provider)側に設定する情報、(3) アクセス権の付与、(4) 動作確認方法、の 4 段階に分けて説明してください。",
+      "modelAnswer": "(1) Okta 側: Applications > Applications > Browse App Catalog で OIN から対象アプリを検索して追加する。アプリの Sign On タブで SAML 2.0 を選択し、アプリ側で必要となる設定値やベンダー固有の手順(Setup Instructions)を確認する。アプリによってはサブドメイン等の SP 固有値を Okta 側に入力する。(2) SP 側: Okta が IdP であることを SP に登録するため、IdP メタデータ(IdP Single Sign-On URL、IdP Issuer / Entity ID、署名検証用 X.509 証明書。メタデータ XML の URL でも可)をアプリの SSO 設定画面に設定する。(3) アクセス権: アプリの Assignments タブで、対象ユーザーまたはグループ(推奨)をアプリに割り当てる。割り当てられたユーザーの End-User Dashboard にアプリアイコンが表示される。(4) 動作確認: テストユーザーで End-User Dashboard からアプリアイコンをクリックし、SAML SSO でアプリにサインインできることを確認する(IdP-initiated)。可能なら SP 側の URL からのサインイン(SP-initiated)も確認する。問題がある場合は System Log で SSO イベントの成否を確認する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) OIN カタログからのアプリ追加と Sign On(SAML)設定への言及",
+            "points": 2,
+            "mustInclude": ["OIN(App Catalog)からアプリを追加する"],
+            "acceptableAlternatives": ["Browse App Catalog", "Sign On タブで SAML を構成"],
+            "scoringGuide": "追加+SAML 設定確認=2点。追加のみ=1点。OIN に触れない=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) SP 側に渡す IdP 情報(SSO URL / Issuer / 証明書またはメタデータ)を具体的に挙げている",
+            "points": 3,
+            "mustInclude": ["IdP の SSO URL", "X.509 証明書"],
+            "acceptableAlternatives": ["IdP メタデータ(XML/URL)一式という表現(この場合は個別列挙不要で満点可)", "Issuer / Entity ID"],
+            "scoringGuide": "メタデータ一式または(SSO URL+証明書)以上=3点。1 要素のみ=1〜2点。SP に何を渡すか不明=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) Assignments でユーザー/グループを割り当てることを説明している",
+            "points": 2,
+            "mustInclude": ["ユーザーまたはグループをアプリに割り当てる"],
+            "acceptableAlternatives": ["Assignments タブ", "グループ割り当て推奨"],
+            "scoringGuide": "割り当ての説明=2点。曖昧=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) テストユーザーでの SSO 確認と、失敗時の System Log 確認に言及している",
+            "points": 3,
+            "mustInclude": ["ダッシュボード(または SP)からのサインイン確認"],
+            "acceptableAlternatives": ["System Log でイベントを確認", "IdP-initiated / SP-initiated の両方の確認"],
+            "scoringGuide": "サインイン確認+System Log(または両フロー確認)=3点。サインイン確認のみ=2点。確認方法なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "SP 側に Okta の管理者資格情報や API トークンを渡すなど、セキュリティ上誤った手順を含む場合", "points": -3 }
+        ],
+        "gradingInstructions": "手順の粒度は問わないが、4 段階それぞれに対応する内容があるかを確認する。メタデータの個別名称(ACS URL は SP→Okta 方向の設定であるため、SP 側に設定する情報として ACS URL を挙げていたら誤り。ただし「Okta 側に SP の ACS URL を設定する」という文脈なら正しい)に注意して採点する。",
+        "commonMistakes": [
+          "IdP メタデータと SP メタデータ(ACS URL / Audience URI)の方向を混同する",
+          "割り当て(Assignments)を忘れ、テストでアプリが表示されない",
+          "動作確認手順を書かない"
+        ]
+      },
+      "sources": [
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" },
+        { "title": "Add app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/apps/apps-overview-add-apps.htm" },
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" }
+      ],
+      "tags": ["saml", "oin", "sso-setup"]
+    },
+    {
+      "id": "OCP-WR-005",
+      "type": "written",
+      "domain": "application-setup",
+      "topic": "provisioning-setup",
+      "difficulty": "intermediate",
+      "question": "SSO 統合済みのアプリに対して、Okta からのユーザープロビジョニング(自動アカウント作成・更新・無効化)を有効化することになりました。(1) 設定の流れ(どのタブで何を有効化するか、接続に必要なもの)、(2) 「To App」で有効化できる代表的な 3 機能とそれぞれの動作、(3) 設定後にプロビジョニングが正しく動作していることを確認する方法を 2 つ、説明してください。",
+      "modelAnswer": "(1) アプリの Provisioning タブで API Integration を構成する。アプリ側の管理者権限で取得した API 資格情報(API トークンや OAuth 認可など、アプリにより異なる)を入力して接続をテスト・保存し、その後 To App の各機能を有効化する。(2) To App の代表的機能: ① Create Users — Okta でユーザーをアプリに割り当てたときに、アプリ側にアカウントを自動作成する。② Update User Attributes — Okta 側のプロファイル属性の変更を、マッピングに従ってアプリ側アカウントに自動反映する。③ Deactivate Users — Okta でユーザーの割り当て解除や Deactivate を行ったときに、アプリ側アカウントを無効化する(オフボーディングの自動化)。(3) 確認方法: ①テストユーザーをアプリに割り当て、アプリ側の管理画面にアカウントが作成されたか確認する。② System Log でプロビジョニングイベント(ユーザー作成・更新・無効化の成功/失敗)を確認する。③アプリの Assignments 画面やダッシュボードのタスクにエラーが出ていないか確認する。(2 つ以上)",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) Provisioning タブで API 接続(資格情報)を構成してから機能を有効化する流れを説明している",
+            "points": 3,
+            "mustInclude": ["Provisioning タブ", "API 資格情報による接続(API Integration)"],
+            "acceptableAlternatives": ["API トークン/管理者資格情報/OAuth などアプリ固有の資格情報", "Test API Credentials"],
+            "scoringGuide": "タブ+API 接続の両方=3点。片方のみ=1〜2点。SSO 設定と混同=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Create Users / Update User Attributes / Deactivate Users の 3 機能と動作を説明している",
+            "points": 4,
+            "mustInclude": ["Create Users(割り当て時にアプリ側アカウント作成)", "Update User Attributes(属性変更の同期)", "Deactivate Users(割り当て解除・無効化時にアプリ側を無効化)"],
+            "acceptableAlternatives": ["Sync Password を 4 つ目として言及(加点はしないが正しい)"],
+            "scoringGuide": "3 機能すべて名称+動作=4点。2 機能=2〜3点。1 機能=1点。機能名だけで動作説明がない場合は各 0.5 扱いで切り捨て。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 確認方法を 2 つ(アプリ側での実確認、System Log、Assignments/タスクのエラー確認など)挙げている",
+            "points": 3,
+            "mustInclude": ["アプリ側でのアカウント作成確認または System Log でのイベント確認"],
+            "acceptableAlternatives": ["Assignments 画面のエラー表示", "Dashboard のタスク", "Import/プロビジョニングエラーの通知"],
+            "scoringGuide": "妥当な確認方法 2 つ=3点。1 つ=1〜2点。なし=0点。「ユーザーに聞く」のような非技術的手段のみ=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "To App と To Okta の方向を逆に説明している場合", "points": -2 }
+        ],
+        "gradingInstructions": "機能名は英語表記(Create Users 等)でも日本語訳でも可。ただし動作の説明が伴っているかを重視する。SCIM への言及は加点しないが正しい文脈なら減点もしない。",
+        "commonMistakes": [
+          "SSO(Sign On タブ)とプロビジョニング(Provisioning タブ)の設定を混同する",
+          "Deactivate Users を「Okta 側のユーザーが消える」と誤解する(正しくはアプリ側アカウントの無効化)",
+          "確認方法を書かない"
+        ]
+      },
+      "sources": [
+        { "title": "Provision applications (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Provisioning/lcm/lcm-provision-application.htm" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["provisioning", "to-app", "api-integration"]
+    },
+    {
+      "id": "OCP-WR-006",
+      "type": "written",
+      "domain": "offboarding",
+      "topic": "offboarding-flow",
+      "difficulty": "intermediate",
+      "question": "従業員の退職に伴うオフボーディングを Okta で実施します。(1) ユーザーを Deactivate した場合に Okta 側で起こること(2 点以上)、(2) プロビジョニング(Deactivate Users)が有効なアプリと SSO のみのアプリとでアプリ側アカウントの扱いがどう異なるか、(3) 退職者が完全にアクセスできなくなったことを確認する方法、をそれぞれ説明してください。",
+      "modelAnswer": "(1) Deactivate により、ユーザーは Okta にサインインできなくなり、すべてのアプリ割り当てが削除され、パスワードは完全に削除される。ユーザーは一覧の Deactivated フィルタで表示され、再アクティベートしない限り認証は一切成立しない(必要に応じて Clear User Sessions で既存セッションの失効も行う)。(2) Deactivate Users(To App デプロビジョニング)が有効なアプリでは、Okta の無効化に連動してアプリ側アカウントも自動的に無効化される。一方 SSO のみ(プロビジョニング未設定)のアプリでは、Okta 経由の SSO はできなくなるが、アプリ側にアカウント自体は残るため、アプリがローカルパスワードなど別の認証手段を持つ場合はアクセスが残るリスクがあり、アプリ側での手動無効化が必要になる。(3) 確認方法: 対象ユーザーのステータスが Deactivated であること、割り当て済みアプリ一覧が空になったことを確認し、System Log でデプロビジョニングイベントの成功を確認する。プロビジョニング対象アプリはアプリ側管理画面でアカウントが無効化されたことを確認する。テストとしてユーザーの資格情報でサインインを試み、拒否されることを確認してもよい。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) Deactivate の効果を 2 点以上(サインイン不可/割り当て削除/パスワード完全削除)正しく挙げている",
+            "points": 3,
+            "mustInclude": ["サインイン不可", "アプリ割り当ての削除またはパスワードの完全削除"],
+            "acceptableAlternatives": ["Deprovisioned ステータスになる", "Clear User Sessions の併用"],
+            "scoringGuide": "2 点以上=3点。1 点のみ=1点。誤りを含む(可逆で全部戻る等)=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) プロビジョニング有効アプリ(自動無効化)と SSO のみアプリ(アカウント残存・手動対応)を対比している",
+            "points": 4,
+            "mustInclude": ["Deactivate Users 有効ならアプリ側アカウントが自動で無効化される", "SSO のみのアプリではアプリ側にアカウントが残る"],
+            "acceptableAlternatives": ["残存アカウントはローカル認証でアクセスされ得るリスク", "アプリ側での手動無効化が必要"],
+            "scoringGuide": "両者の対比が明確=4点。片側のみ正確=2点。対比なし・混同=0〜1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 確認方法(ステータス確認、System Log、アプリ側確認、サインインテスト等)を具体的に挙げている",
+            "points": 3,
+            "mustInclude": ["System Log の確認またはアプリ側でのアカウント状態確認"],
+            "acceptableAlternatives": ["ステータス Deactivated の確認", "サインイン試行による確認"],
+            "scoringGuide": "2 つ以上の具体的方法=3点。1 つ=2点。抽象的(「確認する」のみ)=0〜1点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「SSO のみのアプリでもアプリ側アカウントは自動削除される」と記述した場合", "points": -2 }
+        ],
+        "gradingInstructions": "C2 が本問の核心。プロビジョニングの有無によるオフボーディング完全性の違いを理解しているかを最重視する。Workflows などによる高度な自動化への言及は正しければ加点対象外だが誤りでなければ減点しない。",
+        "commonMistakes": [
+          "SSO を切ればアプリ側のアカウントも消えると誤解する",
+          "セッションのクリアに触れず、既存セッションでのアクセス残存を見落とす"
+        ]
+      },
+      "sources": [
+        { "title": "Deactivate and delete user accounts (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?type=oie&id=ext-usgp-deactivate-user-account" },
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["offboarding", "deprovisioning", "security"]
+    },
+    {
+      "id": "OCP-WR-007",
+      "type": "written",
+      "domain": "security-enforcement",
+      "topic": "policy-framework",
+      "difficulty": "advanced",
+      "question": "Okta Identity Engine の認証ポリシーフレームワークについて説明してください。(1) Global Session Policy と Authentication Policy それぞれの役割と評価されるタイミングの違い、(2) 「機密性の高い経理アプリにだけ、毎回フィッシング耐性のある要素での再認証を要求し、他のアプリは通常の 2 要素のままにする」という要件を、この 2 種類のポリシーをどう使い分けて実装するか、を述べてください。",
+      "modelAnswer": "(1) Global Session Policy は、ユーザーが Okta org にサインインして Okta セッションを確立する際の条件(誰が・どこから・どの要素でサインインできるか、セッションの有効期間・アイドル時間)を制御する org レベルのポリシーで、Okta へのサインイン時に評価される。Authentication Policy は、個々のアプリへアクセスする際の追加の認証要件(要素の数・種類、デバイス条件、再認証の頻度など)を定義するアプリレベルのポリシーで、アプリアクセスのたびに評価される。ユーザーは両方の要件を満たす必要がある。(2) 実装: 他のアプリには既定の共有 Authentication Policy(任意の 2 要素)を維持する。経理アプリ用に専用の Authentication Policy を新規作成(または複製)し、経理アプリだけをそのポリシーに割り当てる。そのポリシーのルールで「Phishing-resistant(フィッシング耐性)要素(FIDO2 WebAuthn / Okta FastPass 等)を要求」し、再認証頻度を「Every sign-in attempt(毎回)」に設定する。共有ポリシーを直接変更すると全アプリに影響するため、専用ポリシーを作ることが重要。Global Session Policy は org 全体のサインイン条件として維持し、アプリ固有の要件は Authentication Policy 側で実装する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) Global Session Policy の役割(Okta セッション確立の条件・セッション制御、org レベル、Okta サインイン時に評価)を説明している",
+            "points": 3,
+            "mustInclude": ["Okta(org)へのサインイン/セッション確立を制御する"],
+            "acceptableAlternatives": ["セッション有効期間・アイドル時間の制御", "org レベル/グループ単位"],
+            "scoringGuide": "役割+評価タイミング=3点。役割のみ=2点。Authentication Policy と役割が逆=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(1) Authentication Policy の役割(アプリごとの認証要件、アプリアクセス時に評価)と両方を満たす必要があることを説明している",
+            "points": 3,
+            "mustInclude": ["アプリ(アクセス)ごとの認証要件を定義する"],
+            "acceptableAlternatives": ["app sign-on policy という旧称", "両ポリシーの要件を両方満たす必要がある"],
+            "scoringGuide": "役割+評価タイミング(+両方満たす)=3点。役割のみ=2点。混同=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) 経理アプリ専用の Authentication Policy を作成し、そのアプリのみに適用するという設計を述べている(共有ポリシー直接変更の回避)",
+            "points": 2,
+            "mustInclude": ["専用ポリシーを作成して対象アプリに割り当てる"],
+            "acceptableAlternatives": ["共有ポリシーを変更すると他アプリに影響するため避ける"],
+            "scoringGuide": "専用ポリシー化=2点。共有ポリシーのルール追加でグループ条件により実質防護する等の代替設計も、影響範囲を正しく論じていれば 2 点。影響範囲の考慮なし=0〜1点。"
+          },
+          {
+            "id": "C4",
+            "description": "(2) ルール内容としてフィッシング耐性要素の要求と毎回の再認証を指定している",
+            "points": 2,
+            "mustInclude": ["Phishing-resistant 要素(WebAuthn / FastPass 等)の要求", "再認証頻度を毎回にする"],
+            "acceptableAlternatives": ["Every sign-in attempt", "FIDO2"],
+            "scoringGuide": "両方=2点。片方=1点。どちらもなし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Global Session Policy をアプリ単位のポリシーと説明するなど、2 つのポリシーの役割を逆転して説明した場合", "points": -3 }
+        ],
+        "gradingInstructions": "OIE のポリシーフレームワーク理解を測る最重要問題。C1/C2 の役割の対応関係が正しいことを最初に確認し、逆転している場合は C1・C2 を 0 点とし deduction も適用する。Classic Engine の Sign-On Policy 用語(アプリサインオンポリシー)で説明していても、概念の対応が正しければ減点しない。",
+        "commonMistakes": [
+          "2 つのポリシーの役割を逆に覚えている",
+          "共有既定ポリシーを直接編集して全アプリに影響を与える設計にしてしまう",
+          "再認証頻度(re-authentication frequency)の設定に言及しない"
+        ]
+      },
+      "sources": [
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" },
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" },
+        { "title": "Add an authentication policy rule (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/add-app-sign-on-policy-rule.htm" }
+      ],
+      "tags": ["policy-framework", "global-session-policy", "authentication-policy", "phishing-resistant"]
+    }
+  ]
+}

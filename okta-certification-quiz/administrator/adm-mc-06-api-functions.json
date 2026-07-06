@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "fileId": "adm-mc-06-api-functions",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "API Functions (API tokens, rate limits)",
+    "examSectionJa": "API 機能(API トークン、レート制限)",
+    "examWeight": "旧 Hands-On 試験 Part I の API Functions ドメイン(6%)に対応。Performance 試験でも管理者ロール・トークン運用の理解として必須",
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 4
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-060",
+      "type": "single-choice",
+      "domain": "api-functions",
+      "topic": "api-token-permissions",
+      "difficulty": "intermediate",
+      "question": "Okta の API トークンの権限について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "トークンは作成した管理者の権限を継承し、その管理者の権限が変わるとトークンの権限も変わる" },
+        { "id": "B", "text": "トークンは常に Super Admin 相当の権限を持つ" },
+        { "id": "C", "text": "トークンの権限は作成時に固定され、作成者の権限変更の影響を受けない" },
+        { "id": "D", "text": "トークンには権限の概念がない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "API トークンは作成者の権限を継承します。公式ドキュメントには「ユーザーの権限が変わればトークンの権限も変わる」と明記されています。したがって、権限が縮小された管理者のトークンは実行できる操作も縮小されます。B は誤りで、トークンの権限は作成者次第です。C・D も誤りです。この特性のため、権限が変動しないサービスアカウントでのトークン管理が推奨されます。",
+      "sources": [
+        { "title": "API tokens / API security (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/api.htm" }
+      ],
+      "tags": ["api-token", "permissions"]
+    },
+    {
+      "id": "OCA-MC-061",
+      "type": "single-choice",
+      "domain": "api-functions",
+      "topic": "api-token-expiry",
+      "difficulty": "intermediate",
+      "question": "Okta の API トークンの有効期限に関する仕様として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "トークンは API リクエストのたびに有効期間が更新され、30 日間使用されないと失効して再利用できなくなる" },
+        { "id": "B", "text": "トークンは発行から 24 時間で必ず失効する" },
+        { "id": "C", "text": "トークンは無期限で、手動で無効化するまで永久に有効である" },
+        { "id": "D", "text": "トークンは毎週日曜日にリセットされる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "API トークンはスライディング方式の有効期限を持ち、使用のたびに 30 日の有効期間が更新されます。30 日以上使用されないトークンは失効(revoke)し、再利用できません。また、作成者が無効化(Deactivate)されるとトークンも拒否されます。定期的に使用されるトークンは事実上継続して使えるため C と混同しやすいですが、「30 日間未使用で失効」という仕様が正しい記述です。B・D は誤りです。",
+      "sources": [
+        { "title": "API tokens / API security (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/api.htm" }
+      ],
+      "tags": ["api-token", "expiration", "lifecycle"]
+    },
+    {
+      "id": "OCA-MC-062",
+      "type": "single-choice",
+      "domain": "api-functions",
+      "topic": "api-token-service-account",
+      "difficulty": "advanced",
+      "question": "自動化スクリプトで使用していた API トークンが突然拒否されるようになりました。調べると、トークンを作成した管理者が退職して Deactivate されていました。この事象の説明と再発防止策として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "トークンは作成者がアクティブな場合のみ有効であり、無効化されたユーザーのトークンは拒否される。再発防止には、無効化されない専用のサービスアカウントでトークンを作成・管理する" },
+        { "id": "B", "text": "トークンの文字列が長すぎたことが原因である" },
+        { "id": "C", "text": "偶然の一致であり、作成者の状態はトークンに影響しない" },
+        { "id": "D", "text": "退職者のアカウントを再アクティベートし続けるのが唯一の解決策である" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "公式ドキュメントに「トークンは作成ユーザーがアクティブな場合のみ有効。無効化されたユーザーが発行したトークンは拒否される」と明記されています。Okta は、無効化されることがなく権限も変動しないサービスアカウントを用いたトークン管理を推奨しています。B・C は誤り。D は退職者アカウントの放置というセキュリティ上危険な運用であり適切な対策ではありません。",
+      "sources": [
+        { "title": "API tokens / API security (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/api.htm" }
+      ],
+      "tags": ["api-token", "service-account", "operational-risk"]
+    },
+    {
+      "id": "OCA-MC-063",
+      "type": "multiple-select",
+      "domain": "api-functions",
+      "topic": "rate-limits",
+      "difficulty": "advanced",
+      "question": "Okta API のレート制限に関する記述として正しいものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "レート制限の上限を超えたリクエストには HTTP 429 (Too Many Requests) が返され、クォータがリセットされるまで拒否される" },
+        { "id": "B", "text": "Admin Console で作成した API トークンには、既定で各 API 上限の 50% がトークン単位の上限として設定され、トークンごとに調整できる" },
+        { "id": "C", "text": "レート制限は存在せず、無制限にリクエストできる" },
+        { "id": "D", "text": "レート制限の使用状況は確認する手段が提供されていない" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "レート制限超過時は HTTP 429 が返却されます(A)。また、Admin Console で作成された API トークンには既定で各 API 上限の 50% がトークン単位の上限として設定され、個別に調整可能です(B)。制限はエンドポイントをグループ化した「バケット」単位で管理され、契約内容や DynamicScale アドオンで上限が変わります。使用状況はレスポンスヘッダー(X-Rate-Limit 系)、管理者ダッシュボード、System Log で監視できるため C・D は誤りです。大量処理の設計ではレート制限の考慮(バックオフ、ページネーション)が必須です。",
+      "sources": [
+        { "title": "Rate limits overview (Okta Developer)", "url": "https://developer.okta.com/docs/reference/rate-limits/" },
+        { "title": "API tokens / API security (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/api.htm" }
+      ],
+      "tags": ["rate-limits", "http-429", "api-token"]
+    }
+  ]
+}

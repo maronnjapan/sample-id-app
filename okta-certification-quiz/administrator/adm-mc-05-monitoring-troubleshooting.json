@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "fileId": "adm-mc-05-monitoring-troubleshooting",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Part II: Monitoring and Troubleshooting (System Log filtering, reports, agent health, delegated authentication metrics)",
+    "examSectionJa": "パートII: 監視とトラブルシューティング(System Log フィルタリング、レポート、エージェント監視、委任認証メトリクス)",
+    "examWeight": 20,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 5
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-055",
+      "type": "single-choice",
+      "domain": "monitoring",
+      "topic": "syslog-mfa-filter",
+      "difficulty": "advanced",
+      "question": "System Log で「MFA による認証の成功イベント」を抽出したい。高度な検索式として最も適切なものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "eventType eq \"user.authentication.auth_via_mfa\" and outcome.result eq \"SUCCESS\"" },
+        { "id": "B", "text": "SELECT * FROM syslog WHERE mfa = true" },
+        { "id": "C", "text": "eventType = mfa-success" },
+        { "id": "D", "text": "outcome.result eq SUCCESS(イベントタイプの指定は不可能)" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "System Log の高度な検索では、eventType や outcome.result などの属性に対して eq などの演算子を用いた式で絞り込みます。MFA 認証イベントは user.authentication.auth_via_mfa で、成功のみに絞るには outcome.result eq \"SUCCESS\" を and で結合します。特定の要素(factor)まで絞る場合はイベントの debugContext/target の情報も活用します。B は SQL、C は構文誤り(= ではなく eq、値は引用符付き)、D はイベントタイプ指定が可能なので誤りです。",
+      "sources": [
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["system-log", "mfa", "search-expression"]
+    },
+    {
+      "id": "OCA-MC-056",
+      "type": "single-choice",
+      "domain": "monitoring",
+      "topic": "syslog-retention",
+      "difficulty": "intermediate",
+      "question": "Okta System Log のイベントデータが Okta 内で参照可能な期間(保持期間)として、公式ドキュメントに記載されているものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "90 日" },
+        { "id": "B", "text": "無期限" },
+        { "id": "C", "text": "24 時間" },
+        { "id": "D", "text": "7 年" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "System Log のイベントデータは 90 日間参照できます。90 日を超えて監査証跡を保持する要件がある場合は、CSV エクスポートや System Log API・ログストリーミングで SIEM などの外部基盤へ転送・保管する必要があります。B・C・D は誤りです。",
+      "sources": [
+        { "title": "System Log API (Okta Developer)", "url": "https://developer.okta.com/docs/reference/api/system-log/" },
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["system-log", "retention", "audit"]
+    },
+    {
+      "id": "OCA-MC-057",
+      "type": "single-choice",
+      "domain": "monitoring",
+      "topic": "reports",
+      "difficulty": "intermediate",
+      "question": "「SWA で統合されているアプリのうち、SAML に変換できるものを特定したい」場合に使用する Okta のレポートはどれですか?",
+      "choices": [
+        { "id": "A", "text": "SAML Capable Apps レポート" },
+        { "id": "B", "text": "MFA Usage レポート" },
+        { "id": "C", "text": "Okta Password Health レポート" },
+        { "id": "D", "text": "Telephony Usage レポート" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "SAML Capable Apps レポートは、現在 SWA で構成されているが SAML SSO へ変換可能なアプリ統合を特定するためのレポートです。より安全なフェデレーション方式への移行計画に役立ちます。B は Authenticator の登録・利用状況、C は org のパスワード状態の CSV、D は SMS/音声イベントのレポートで、それぞれ用途が異なります。",
+      "sources": [
+        { "title": "Reports (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/report-types.htm" }
+      ],
+      "tags": ["reports", "saml-capable-apps", "swa"]
+    },
+    {
+      "id": "OCA-MC-058",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "agent-health",
+      "difficulty": "intermediate",
+      "question": "AD エージェントの稼働状態(接続・正常性)を確認する場所と表示として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Admin Console の Dashboard(Agents)で確認でき、エージェント名の横の緑色の表示が「接続済みで正常」を示す" },
+        { "id": "B", "text": "エージェントの状態は Okta からは一切確認できない" },
+        { "id": "C", "text": "End-User Dashboard に全ユーザー向けに表示される" },
+        { "id": "D", "text": "status.okta.com に自組織のエージェント状態が公開される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "エージェントの正常性は Admin Console のダッシュボード(Agents)で監視でき、緑色の丸はエージェントが接続済みで正常であることを示します。委任認証を使う org ではエージェント全断がサインイン障害に直結するため、日常的な監視ポイントです。B・C・D は誤りです(status.okta.com は Okta サービス自体の稼働状況の公開ページです)。",
+      "sources": [
+        { "title": "Install multiple Okta Active Directory agents (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-multiple.htm" },
+        { "title": "Manage your Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-integration.htm" }
+      ],
+      "tags": ["agent-health", "monitoring", "dashboard"]
+    },
+    {
+      "id": "OCA-MC-059",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "delauth-latency",
+      "difficulty": "advanced",
+      "question": "AD 委任認証のサインインが遅いという報告を受けました。ボトルネックが AD エージェント側かドメインコントローラー側かを切り分けるために利用できる System Log の情報はどれですか?",
+      "choices": [
+        { "id": "A", "text": "delAuthTimeSpentAtAgent と delAuthTimeSpentAtDomainController のタイミングメトリクス(ミリ秒)" },
+        { "id": "B", "text": "ユーザーのプロファイル画像のサイズ" },
+        { "id": "C", "text": "System Log にはタイミング情報は記録されない" },
+        { "id": "D", "text": "ダッシュボードの背景色" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "委任認証イベントには delAuthTimeSpentAtAgent(エージェントでの総処理時間)と delAuthTimeSpentAtDomainController(ドメインコントローラーでの処理時間)がミリ秒単位で記録され(AD エージェント 3.1.0 以降)、遅延の原因がエージェントサーバー側か DC 側かをデータで切り分けられます。B・C・D は誤りです。",
+      "sources": [
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" }
+      ],
+      "tags": ["delegated-authentication", "latency", "system-log", "troubleshooting"]
+    }
+  ]
+}

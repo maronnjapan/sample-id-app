@@ -1,0 +1,437 @@
+{
+  "meta": {
+    "fileId": "adm-written-02",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Written questions Part 2 (Group Push, Workflows, Custom SAML, Behavior Detection, Device Assurance, Monitoring, API)",
+    "examSectionJa": "記述問題 パート2(Group Push、Workflows、カスタム SAML、振る舞い検知、デバイス保証、監視、API)",
+    "examWeight": "Part II(Custom App Integration 30% / Behavior Detection 30% / Device Assurance 20% / Monitoring 20%)+ API 運用の理解を言語化して確認する補強教材",
+    "questionType": "written",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。採点は rubric に厳密に従うこと。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 7
+  },
+  "questions": [
+    {
+      "id": "OCA-WR-009",
+      "type": "written",
+      "domain": "group-push",
+      "topic": "group-push-design",
+      "difficulty": "advanced",
+      "question": "Google Workspace(プロビジョニング構成済み)に対して、Okta のグループを使ってメーリングリスト相当のグループを管理したい。Group Push を使った設計を説明してください。含めるべき内容: (1) Group Push の前提条件と何が push されるか、(2) push 用グループとアプリ割り当て用グループを分けるべき理由(公式の制約)、(3) ターゲットアプリ側でメンバーを直接編集した場合に何が起こるか、(4) push を停止する際に選択できるオプション。",
+      "modelAnswer": "(1) 前提条件はターゲットアプリ(Google Workspace)でプロビジョニングが有効化されていること。Group Push では既存の Okta グループとそのメンバーシップがターゲットアプリへ push され、以後そのグループは Okta 側から管理される(Group Push が Okta 側にグループを作ることはない。方向は Okta→アプリの一方向)。既存のターゲット側グループにリンクすることも、新規作成させることもできる。(2) 公式ドキュメントで「同じグループをアプリ割り当てと Group Push の両方に使うことはサポートされない」とされているため、push 専用のグループを用意する。兼用するとメンバーシップの不整合が発生し得る。(3) push されたグループのメンバーシップの source of truth は Okta 側にあるため、ターゲットアプリ側で直接メンバーを追加・削除すると Okta との同期に不整合(同期の問題)が発生する。メンバー変更は必ず Okta 側のグループで行う。なお、メンバーシップの完全な突き合わせ(reconcile)は Group Push の構成時に行われ、構成時に Okta 側にいないダウンストリームのメンバーは削除される。(4) push の停止(Deactivate / unlink)時には、ターゲットアプリ側のグループを「削除する」か「そのまま残す(以後 Okta の管理外)」かを選択できる。運用移管や統合解除の際はこの選択の影響(グループが消えることによるメール配送やアクセスへの影響)を確認してから実行する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) プロビジョニング有効が前提であること、Okta グループとメンバーシップが Okta→アプリ方向に push され Okta 側から管理されることを説明している",
+            "points": 3,
+            "mustInclude": ["プロビジョニング対応(有効化済み)アプリが前提", "Okta のグループ/メンバーシップをアプリへ push し Okta から管理する"],
+            "acceptableAlternatives": ["Group Push は Okta 側にグループを作らない", "既存グループへのリンク"],
+            "scoringGuide": "前提+方向+管理主体=3点。2 要素=2点。方向が逆(アプリ→Okta)=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) 割り当て用と push 用のグループ分離(公式制約)を理由とともに述べている",
+            "points": 2,
+            "mustInclude": ["同一グループの割り当てと push の兼用はサポートされない"],
+            "acceptableAlternatives": ["push 専用グループを作る", "メンバーシップ不整合の防止"],
+            "scoringGuide": "制約+分離設計=2点。分離の推奨のみ(理由なし)=1点。なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) ターゲット側での直接編集が同期不整合を起こすこと(Okta 側で変更すべきこと)を説明している",
+            "points": 3,
+            "mustInclude": ["ターゲットアプリ側でのメンバー直接編集は同期の問題を起こす"],
+            "acceptableAlternatives": ["メンバー変更は Okta 側で行う", "構成時の reconcile でダウンストリーム側の余分なメンバーが削除される"],
+            "scoringGuide": "不整合+正しい運用=3点。不整合のみ=2点。「アプリ側で編集してよい」=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 停止時の選択肢(ターゲット側グループを削除するか残すか)を挙げている",
+            "points": 2,
+            "mustInclude": ["削除するか残すかを選択できる"],
+            "acceptableAlternatives": ["unlink 後は Okta の管理外になる", "停止前の影響確認"],
+            "scoringGuide": "両オプション=2点。片方のみ・曖昧=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Group Push でアプリ側のグループが Okta にインポートされる、という方向の誤りを含む場合", "points": -2 }
+        ],
+        "gradingInstructions": "「source of truth は Okta」「方向は一方向」という 2 原則の理解を軸に採点する。Google Workspace 固有の画面手順は採点対象外。",
+        "commonMistakes": [
+          "Group Push とグループインポートの方向の混同",
+          "割り当て用グループをそのまま push に使ってしまう設計"
+        ]
+      },
+      "sources": [
+        { "title": "About Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-push.htm" },
+        { "title": "Manage Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-group-push-main.htm" }
+      ],
+      "tags": ["group-push", "design", "constraints"]
+    },
+    {
+      "id": "OCA-WR-010",
+      "type": "written",
+      "domain": "workflows",
+      "topic": "workflows-advanced-lifecycle",
+      "difficulty": "advanced",
+      "question": "「退職者を Okta で無効化した後、30 日間はメールデータ保全のため Google Workspace アカウントを停止状態で保持し、30 日経過後に自動でライセンスを解放(アカウント削除)して、結果を IT チームの Slack チャンネルへ通知したい」という要件があります。(1) 標準のプロビジョニング機能(Deactivate Users)だけではこの要件を満たせない理由、(2) Okta Workflows でこの要件をどう実現するか(フローの構成要素: トリガー、遅延、アクション)、(3) Workflows を使うべきユースケースの一般的な判断基準、を説明してください。",
+      "modelAnswer": "(1) 標準のプロビジョニング(Deactivate Users)は、Okta での無効化・割り当て解除に連動してアプリ側アカウントを即時に無効化するところまでが守備範囲であり、「30 日待ってから削除する」といった時間差処理、「ライセンス解放(削除)」のようなアプリ固有の追加 API 操作、「Slack への通知」のような外部サービス連携は構成できない。(2) Okta Workflows では、①トリガー(Okta イベントカード: User Deactivated 等)でフローを起動し、②組み込みの遅延・スケジューリング機能で 30 日間待機し、③Google Workspace コネクタのアクションカードでアカウント削除(ライセンス解放)を実行し、④Slack コネクタのアクションカードで結果(対象ユーザー、実行日時、成否)を指定チャンネルに投稿する、というフローをノーコードで構築できる。エラー時の分岐やリトライ、実行履歴による監査も可能。(3) 判断基準: 標準機能(プロビジョニング設定・Group Rule 等)で宣言的に実現できるものはまず標準機能で行い、(a) 時間差・スケジュール性のある処理、(b) 複数システムをまたぐ条件分岐やカスタムロジック、(c) 通知・チケット起票など外部 API との連携、(d) アプリ固有の高度な操作(ライセンス操作、データ移管等)が必要な場合に Workflows を採用する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 標準プロビジョニングの守備範囲(即時の無効化まで)と、時間差処理・外部連携ができないことを説明している",
+            "points": 3,
+            "mustInclude": ["標準機能は即時のアカウント無効化までで、遅延実行や通知は構成できない"],
+            "acceptableAlternatives": ["ライセンス解放のようなアプリ固有操作は対象外"],
+            "scoringGuide": "守備範囲+不足点の特定=3点。「できないから Workflows」とだけ記述=1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) トリガー(ユーザー無効化イベント)→遅延(30 日)→アプリ操作→Slack 通知というフロー構成を説明している",
+            "points": 4,
+            "mustInclude": ["無効化イベントをトリガーにする", "30 日の遅延", "Google Workspace への削除アクション", "Slack への通知アクション"],
+            "acceptableAlternatives": ["コネクタ/カードという用語", "エラーハンドリングへの言及"],
+            "scoringGuide": "4 要素すべて=4点。3 要素=3点。2 要素=2点。1 要素=1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) Workflows を使う判断基準(時間差・外部連携・カスタムロジック等)を 2 つ以上挙げている",
+            "points": 3,
+            "mustInclude": ["時間差(遅延・スケジュール)処理", "外部サービス連携または複雑な条件分岐"],
+            "acceptableAlternatives": ["標準機能で足りるものは標準機能を使うという原則"],
+            "scoringGuide": "2 つ以上+標準優先の原則=3点。2 つ=2点。1 つ=1点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「標準の Deactivate Users 設定に遅延日数オプションがある」等、存在しない機能を根拠にした場合", "points": -2 }
+        ],
+        "gradingInstructions": "Workflows の詳細な画面用語(カード名の正確さ)は問わない。イベントドリブン+遅延+コネクタという構成概念が正しければ C2 は満点にできる。",
+        "commonMistakes": [
+          "標準プロビジョニングで全部できると誤解する",
+          "Workflows をスクリプト実行環境(コードを書く場所)と説明する"
+        ]
+      },
+      "sources": [
+        { "title": "Okta Workflows (Okta Help Center)", "url": "https://help.okta.com/wf/en-us/Content/Topics/Workflows/workflows-main.htm" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["workflows", "offboarding", "automation", "advanced-lifecycle"]
+    },
+    {
+      "id": "OCA-WR-011",
+      "type": "written",
+      "domain": "app-integration",
+      "topic": "custom-saml-integration",
+      "difficulty": "advanced",
+      "question": "OIN に存在しない自社開発の Web アプリを、カスタム SAML 2.0 アプリとして Okta に統合します。エンドツーエンドの作業を説明してください。含めるべき内容: (1) アプリ(SP)側から入手する情報と Okta のカスタム SAML アプリウィザードに設定する主要項目、(2) 「firstName + 空白 + lastName」を displayName として送る Attribute Statement の構成(Expression Language の式)、(3) Okta 側から SP 側へ渡す情報、(4) グループベースの割り当てと動作確認の方法。",
+      "modelAnswer": "(1) SP 側から ACS URL(SAML Response を受け取るエンドポイント)と Audience URI(SP Entity ID)を入手し、Applications > Create App Integration > SAML 2.0 のウィザードで設定する。必要に応じて NameID のフォーマットと値(例: userName や email)、Default RelayState なども構成する。(2) ウィザードの Attribute Statements で名前を displayName とし、値に Okta Expression Language の式 user.firstName + \" \" + user.lastName を指定する。これによりアサーションに動的に生成された表示名が含まれる。(3) Okta 側から SP へは IdP メタデータ(IdP Single Sign-On URL、IdP Issuer、X.509 署名証明書。またはメタデータ XML の URL)を渡し、SP 側の SAML 設定に登録してもらう。SP はこの証明書で SAML Response の署名を検証する。(4) 対象ユーザーを含むグループ(必要なら Group Rule で自動化)を作成し、アプリの Assignments でグループを割り当てる。テストユーザーで End-User Dashboard からの IdP-initiated SSO と、アプリ URL からの SP-initiated SSO を確認し、アプリ側で受信した displayName 属性の値が期待どおり(姓名が空白区切りで結合)であることを確認する。問題がある場合は System Log の SSO イベントや SAML トレースでアサーション内容を検証する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) ACS URL と Audience URI (SP Entity ID) を SP から入手して設定することを説明している",
+            "points": 3,
+            "mustInclude": ["ACS URL", "Audience URI (SP Entity ID)"],
+            "acceptableAlternatives": ["NameID フォーマットの構成", "カスタム SAML アプリウィザード(Create App Integration)"],
+            "scoringGuide": "両項目+入手元(SP)=3点。片方=1〜2点。どちらもなし=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Attribute Statement に user.firstName + \" \" + user.lastName という式(または同等の正しい EL)を構成している",
+            "points": 2,
+            "mustInclude": ["user.firstName + \" \" + user.lastName(+ 演算子による連結)"],
+            "acceptableAlternatives": ["String.join 等の正しい代替式"],
+            "scoringGuide": "正しい式=2点。式の形が EL として不正(JS/SQL 風)=0〜1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) IdP メタデータ(SSO URL / Issuer / 証明書)を SP に渡すことを説明している",
+            "points": 2,
+            "mustInclude": ["IdP メタデータ(または SSO URL+証明書)を SP に設定する"],
+            "acceptableAlternatives": ["署名検証のための X.509 証明書"],
+            "scoringGuide": "内容+目的=2点。曖昧=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) グループ割り当てと、SSO+属性値の動作確認(両フローや SAML トレース/System Log)を説明している",
+            "points": 3,
+            "mustInclude": ["グループでの割り当て", "テストユーザーでの SSO 確認と属性値の検証"],
+            "acceptableAlternatives": ["IdP-initiated / SP-initiated の確認", "System Log / SAML トレース"],
+            "scoringGuide": "割り当て+確認(属性まで)=3点。割り当て+SSO 確認のみ=2点。確認なし=0〜1点。"
+          }
+        ],
+        "deductions": [
+          { "description": "ACS URL を「Okta 側が SP に渡す URL」とする等、方向の重大な混同", "points": -2 }
+        ],
+        "gradingInstructions": "SP→Okta(ACS/Audience)と Okta→SP(IdP メタデータ)の情報の流れが正しく整理されているかが本問の核心。式(C2)は引用符や空白の細部より演算子と属性参照の正しさを評価する。",
+        "commonMistakes": [
+          "ACS URL と IdP SSO URL の混同",
+          "Attribute Statement を Profile Editor のマッピングとしか結び付けられない",
+          "動作確認で属性値の検証を省略する"
+        ]
+      },
+      "sources": [
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" },
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" },
+        { "title": "Okta Expression Language overview (Okta Developer)", "url": "https://developer.okta.com/docs/reference/okta-expression-language/" }
+      ],
+      "tags": ["custom-saml", "attribute-statements", "expression-language", "verification"]
+    },
+    {
+      "id": "OCA-WR-012",
+      "type": "written",
+      "domain": "behavior-detection",
+      "topic": "behavior-policy-design",
+      "difficulty": "advanced",
+      "question": "「営業部グループのユーザーが、普段と異なる国から、または物理的に不可能な移動速度でサインインした場合に限り、フィッシング耐性のある要素での追加認証を要求したい」という要件を実装します。(1) Behavior Detection の設定内容(使用する振る舞いの種類と評価の仕組み)、(2) ポリシーへの組み込み方(どのポリシーのどのルール条件に何を設定するか)、(3) この構成の制約(拒否について)、(4) 実装後のテスト方法、を説明してください。",
+      "modelAnswer": "(1) Security > Behavior Detection で「New Country」(直近の成功サインイン履歴 — 既定 10 回 — と比較して新しい国かを判定)と「Velocity」(直近 2 回のサインイン間の距離÷時間で算出される速度が しきい値 — 既定 805 km/h — を超えるかを判定)の振る舞いを使用する(既定で用意されている named behavior を利用または調整)。振る舞いの定義自体にはアクションは含まれない。(2) 営業部アプリ(または Okta 全体なら Global Session Policy、アプリ単位なら該当アプリの Authentication Policy)のルールを追加し、条件で対象グループ(営業部)と Behavior 条件(New Country または Velocity)を指定、アクションで Phishing-resistant な要素(FIDO2 WebAuthn / Okta FastPass)による認証を要求する。ルールはキャッチオールより上の優先順位に配置する。(3) 制約: Behavior 条件のみを理由にアクセスを「拒否」することはできない(正規ユーザーの誤検知による締め出しを防ぐため)。拒否が発生するのは要求された追加認証に失敗した場合である。(4) テスト: テストユーザーを営業部グループに入れ、VPN で普段と異なる国の IP からサインインして追加認証が要求されることを確認する。System Log のサインインイベントの debugContext(behaviors)で New Country=POSITIVE / Velocity=POSITIVE が記録されていること、ポリシー評価の結果が期待どおりであることを確認する。通常の環境からのサインインでは追加認証が発生しないこと(誤検知がないこと)も併せて確認する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) New Country と Velocity の振る舞いと評価の仕組み(履歴との比較/速度のしきい値)を説明している",
+            "points": 3,
+            "mustInclude": ["New Country(過去の成功サインインとの比較)", "Velocity(2 地点間の移動速度)"],
+            "acceptableAlternatives": ["既定値(国=直近 10 回、805 km/h)への言及", "定義にアクションは含まれない"],
+            "scoringGuide": "両方+仕組み=3点。両方の名称のみ=2点。片方=1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) ポリシールールの条件にグループと Behavior を指定し、アクションで phishing-resistant 要素を要求する構成を説明している",
+            "points": 3,
+            "mustInclude": ["ルール条件に Behavior を指定", "グループ条件", "フィッシング耐性要素の要求"],
+            "acceptableAlternatives": ["Global Session Policy / Authentication Policy いずれの選択も可(役割の説明が正しければ)", "キャッチオールより上に配置"],
+            "scoringGuide": "3 要素=3点。2 要素=2点。1 要素=1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) Behavior のみでの拒否ができない制約を述べている",
+            "points": 2,
+            "mustInclude": ["Behavior 条件だけでアクセス拒否はできない"],
+            "acceptableAlternatives": ["拒否は追加認証の失敗時に発生する", "誤検知による締め出し防止という理由"],
+            "scoringGuide": "制約の明言=2点。曖昧=1点。「拒否できる」と記述=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 条件を再現するテストと System Log(behaviors の POSITIVE)での検証を説明している",
+            "points": 2,
+            "mustInclude": ["異なる国/環境を再現してサインインテストする"],
+            "acceptableAlternatives": ["System Log の behaviors(POSITIVE/NEGATIVE)確認", "誤検知がないことの確認"],
+            "scoringGuide": "テスト+ログ検証=2点。テストのみ=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「Behavior Detection が自動的にアカウントをロックする」等、機能を誤って拡大解釈した場合", "points": -2 }
+        ],
+        "gradingInstructions": "「検知(Behavior)とアクション(ポリシー)の分離」という設計思想の理解を最重視する。既定値の数値は加点要素であり、なくても他が正しければ満点に到達できる構成とする(C1 は名称+仕組みで満点可)。",
+        "commonMistakes": [
+          "Behavior の定義だけで制御が発動すると考える",
+          "拒否できない制約を知らない",
+          "テストでの System Log 検証を省略する"
+        ]
+      },
+      "sources": [
+        { "title": "About Behavior Detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/about-behavior-detection.htm" },
+        { "title": "Configure behavior detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/configure-behavior-detection.htm" },
+        { "title": "Behavior Detection System Log events (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/logs-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "adaptive-mfa", "policy-design", "testing"]
+    },
+    {
+      "id": "OCA-WR-013",
+      "type": "written",
+      "domain": "device-assurance",
+      "topic": "device-assurance-design",
+      "difficulty": "advanced",
+      "question": "「Okta ダッシュボードへのアクセスを、最新に近い OS バージョンを満たすデバイスからの Okta FastPass 認証に限定したい(対象: 情報システム部グループ)」という要件を実装します。(1) Device Assurance ポリシーの作成内容と、デバイス情報がどのように収集されるか、(2) Okta Dashboard の Authentication Policy へのルール追加内容(条件・認証要件・Device Assurance の関連付け)、(3) ポリシーに違反したユーザーに何が起こるか(体験)、(4) テスト手順、を説明してください。",
+      "modelAnswer": "(1) Security > Device Assurance Policies で対象プラットフォーム(例: Windows / macOS)ごとにポリシーを作成し、最低 OS バージョン(またはセキュリティパッチ)要件を定義する。デバイス属性は Okta Verify(プラットフォームごとの対応バージョン)がデバイスから収集して Okta に報告するため、ユーザーは少なくとも 1 つの Okta Verify 登録が必要。Device Assurance ポリシーは作成しただけでは適用されず、Authentication Policy のルールに組み込んで初めて評価される。(2) Okta Dashboard アプリの Authentication Policy にルールを追加する。条件: 対象グループ=情報システム部、デバイス状態=Registered、Device Assurance=作成したポリシー(プラットフォーム別に指定)。アクション(認証要件): Okta FastPass を含む phishing-resistant / possession 要素での認証を要求(要件に応じて user verification も要求)。ルールはキャッチオールより上位に配置する。(3) 要件を満たさないデバイス(OS が古い等)のユーザーはアクセスがブロックされ、Device health ページ等で修復(remediation)メッセージ — 例: OS をアップデートしてください — を受け取り、自己解決へ誘導される。(4) テスト: 情シス部のテストユーザーで、(a) 要件を満たすデバイス+Okta Verify(FastPass)でダッシュボードにアクセスでき、(b) 要件未満の OS のデバイス(または Okta Verify 未登録デバイス)ではブロック+修復メッセージが表示されることを確認する。System Log でポリシー評価とデバイス関連イベントも確認する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) プラットフォーム別の Device Assurance ポリシー作成(OS バージョン要件)と、Okta Verify によるデバイス情報収集(登録が必要)を説明している",
+            "points": 3,
+            "mustInclude": ["OS バージョン等の要件を定義した Device Assurance ポリシー", "Okta Verify がデバイス情報を収集(登録が必要)"],
+            "acceptableAlternatives": ["プラットフォームごとに作成", "単体では適用されない"],
+            "scoringGuide": "作成内容+収集方法=3点。片方=1〜2点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Authentication Policy のルールに、グループ条件・Device Assurance の関連付け・FastPass(フィッシング耐性)要求を構成することを説明している",
+            "points": 3,
+            "mustInclude": ["Authentication Policy のルールに Device Assurance を関連付ける", "Okta FastPass(または phishing-resistant 要素)の要求"],
+            "acceptableAlternatives": ["グループ条件", "Registered デバイス条件", "キャッチオールより上位"],
+            "scoringGuide": "関連付け+認証要件+条件=3点。2 要素=2点。1 要素=1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 違反時の体験(ブロック+修復メッセージによる自己解決誘導)を説明している",
+            "points": 2,
+            "mustInclude": ["修復(remediation)メッセージが表示される"],
+            "acceptableAlternatives": ["Device health ページ", "OS 更新等の対処への誘導"],
+            "scoringGuide": "ブロック+修復誘導=2点。ブロックのみ=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 正常系(要件充足デバイスで成功)と異常系(要件未満でブロック)の両方のテストを説明している",
+            "points": 2,
+            "mustInclude": ["要件を満たすデバイスでの成功確認", "満たさないデバイスでのブロック確認"],
+            "acceptableAlternatives": ["System Log の確認"],
+            "scoringGuide": "両系=2点。正常系のみ=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「Device Assurance ポリシーは作成すれば org 全体に自動適用される」という誤り", "points": -2 }
+        ],
+        "gradingInstructions": "「ポリシー定義」と「Authentication Policy への組み込み」の 2 段階構造、および Okta Verify への依存という 2 点が正しく書けているかを軸に採点する。MDM(managed)への言及は要件外だが正しければ減点しない。",
+        "commonMistakes": [
+          "Device Assurance 単体で適用されると考える",
+          "Okta Verify 登録の前提を書き落とす",
+          "異常系のテストを省略する"
+        ]
+      },
+      "sources": [
+        { "title": "Device assurance (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance.htm" },
+        { "title": "Add a device assurance policy (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance-add.htm" },
+        { "title": "Add an authentication policy rule (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/add-app-sign-on-policy-rule.htm" }
+      ],
+      "tags": ["device-assurance", "fastpass", "authentication-policy", "testing"]
+    },
+    {
+      "id": "OCA-WR-014",
+      "type": "written",
+      "domain": "monitoring",
+      "topic": "syslog-analysis",
+      "difficulty": "advanced",
+      "question": "監査対応として次の 2 つの調査を System Log で行います。(1) 「先月、Okta Verify の Push で MFA 認証に成功したイベント」を抽出するアプローチ(使用する検索式の考え方と、要素の特定方法)、(2) 「AD 委任認証のサインインが特定の時間帯に遅い」という報告に対する、System Log を使った原因切り分けの方法。あわせて、(3) System Log のデータ保持期間と、長期保管が必要な場合の対応策を述べてください。",
+      "modelAnswer": "(1) 期間フィルタを先月に設定し、高度な検索式で MFA 認証イベントを絞り込む。例: eventType eq \"user.authentication.auth_via_mfa\" and outcome.result eq \"SUCCESS\"。さらに Okta Verify Push という要素(factor)を特定するには、イベントの詳細(target や debugContext に記録される認証手段の情報)で絞り込み・確認する(UI では検索式に条件を追加するか、イベントを展開して factor 情報を確認する)。抽出結果は CSV でダウンロードして監査資料にする。(2) 委任認証イベントに記録されるタイミングメトリクス delAuthTimeSpentAtAgent(エージェントでの総処理時間)と delAuthTimeSpentAtDomainController(DC での処理時間)を該当時間帯のイベントで確認する。DC 側の時間が支配的であれば AD/DC 側(負荷、GC 参照、ネットワーク)を、エージェント側の時間が大きければエージェントサーバーのリソースや配置を疑う。時間帯の相関(バックアップジョブや一斉ログインとの重なり)や、特定エージェントに偏りがないか(エージェントごとの状態はダッシュボードで確認)も見る。(3) System Log のイベントデータの保持期間は 90 日。監査などでそれ以上の保管が必要な場合は、CSV エクスポートのほか、System Log API やログストリーミングで SIEM・ログ基盤へ継続的に転送して長期保管する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) eventType(auth_via_mfa 等)と outcome.result eq SUCCESS を組み合わせる検索式の考え方を示している",
+            "points": 3,
+            "mustInclude": ["MFA 認証のイベントタイプによる絞り込み", "成功(outcome)の条件"],
+            "acceptableAlternatives": ["user.authentication.auth_via_mfa", "eq / and を使う式の形"],
+            "scoringGuide": "式の考え方(2 条件の組み合わせ)=3点。イベントタイプのみ=2点。フィルタの発想なし=0〜1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(1) 要素(Okta Verify Push)の特定方法(イベント詳細の factor 情報)と結果のエクスポートに言及している",
+            "points": 2,
+            "mustInclude": ["イベント詳細から認証要素を特定する"],
+            "acceptableAlternatives": ["CSV ダウンロード", "target / debugContext"],
+            "scoringGuide": "特定方法+エクスポート=2点。片方=1点。なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) delAuth タイミングメトリクスによるエージェント側/DC 側の切り分けを説明している",
+            "points": 3,
+            "mustInclude": ["エージェント側と DC 側の処理時間メトリクスを比較する"],
+            "acceptableAlternatives": ["delAuthTimeSpentAtAgent / delAuthTimeSpentAtDomainController", "時間帯・エージェント偏りの分析"],
+            "scoringGuide": "メトリクス+切り分けロジック=3点。メトリクス名のみ=2点。「ログを見る」のみ=1点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) 保持期間 90 日と、長期保管のための外部転送(API/ストリーミング/エクスポート)を述べている",
+            "points": 2,
+            "mustInclude": ["90 日の保持期間"],
+            "acceptableAlternatives": ["SIEM への転送", "System Log API / ログストリーミング / CSV"],
+            "scoringGuide": "期間+対応策=2点。片方=1点。期間の誤り=0点(C4 全体)。"
+          }
+        ],
+        "deductions": [
+          { "description": "System Log を管理者が編集・削除できる前提の記述(改ざん可能とする誤り)", "points": -2 }
+        ],
+        "gradingInstructions": "検索式は厳密な構文一致を求めず、属性 eq \"値\" を and で組み合わせる形が示せていれば C1 を満たすとする。C3 は本試験(Administrator)特有の論点なので部分点の判定を厳密に行うこと。",
+        "commonMistakes": [
+          "イベントタイプを知らず時間を掛けて目視で探す前提の回答",
+          "delAuth メトリクスを知らない",
+          "保持期間を無期限と考え長期保管の設計を省略する"
+        ]
+      },
+      "sources": [
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" },
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" },
+        { "title": "System Log API (Okta Developer)", "url": "https://developer.okta.com/docs/reference/api/system-log/" }
+      ],
+      "tags": ["system-log", "audit", "delauth-metrics", "retention"]
+    },
+    {
+      "id": "OCA-WR-015",
+      "type": "written",
+      "domain": "api-functions",
+      "topic": "api-token-governance",
+      "difficulty": "advanced",
+      "question": "自動化(ユーザー管理スクリプト、監査用エクスポート等)のために複数の API トークンを運用している org で、トークンのガバナンス(統制)を設計します。(1) API トークンの権限と作成者の関係(2 つの重要な仕様)、(2) それを踏まえたトークン作成・管理のベストプラクティス、(3) トークンのセキュリティを高める Okta 上の設定、(4) レート制限に関して運用上監視・考慮すべきこと、を説明してください。",
+      "modelAnswer": "(1) 重要仕様①: トークンは作成した管理者の権限を継承し、作成者の権限が変わるとトークンの権限も追随して変わる。重要仕様②: トークンは作成者がアクティブである間のみ有効で、作成者が Deactivate されるとトークンは拒否される。また、30 日間使用されないトークンは自動的に失効する(使用のたびに 30 日の有効期間が更新されるスライディング方式)。(2) ベストプラクティス: 個人アカウントではなく、無効化されることのない専用サービスアカウント(必要な権限を持ち、権限が変動しない)でトークンを作成する。用途ごとにトークンを分離し、命名と棚卸し(不要トークンの Revoke)を定期的に行う。トークン値はシークレット管理基盤に保管し、共有しない。(3) セキュリティ設定: トークンのネットワーク制限(任意の IP / 指定ゾーンのみ / 除外ゾーン)を構成し、想定外の場所からのトークン利用を防ぐ。System Log の「API token created / revoked」イベントやトークン利用の監査を監視に組み込む。(4) レート制限: Admin Console で作成したトークンには既定で各 API 上限の 50% がトークン単位上限として設定される(調整可能)。運用では、429 (Too Many Requests) の発生、レスポンスヘッダーやレート制限ダッシュボード・System Log での使用率を監視し、バッチ処理はページネーションとバックオフを実装して上限に達しない設計にする。複数の自動化が同じバケットを共有して互いに枯渇させないよう、トークン単位上限の調整や実行時間帯の分散も考慮する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 権限の継承・追随と、作成者無効化でトークンが拒否される 2 仕様(+30 日未使用失効)を説明している",
+            "points": 3,
+            "mustInclude": ["作成者の権限を継承し変更に追随する", "作成者の無効化でトークンが無効になる"],
+            "acceptableAlternatives": ["30 日未使用で失効(スライディング)"],
+            "scoringGuide": "2 仕様=3点。1 仕様=1〜2点。どちらもなし=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) サービスアカウントでの作成・用途分離・棚卸しなどのベストプラクティスを 2 つ以上挙げている",
+            "points": 3,
+            "mustInclude": ["専用サービスアカウントでの作成"],
+            "acceptableAlternatives": ["用途ごとの分離", "定期的な棚卸し/Revoke", "シークレット管理"],
+            "scoringGuide": "サービスアカウント+他 1 つ以上=3点。サービスアカウントのみ=2点。個人アカウント運用を推奨=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) ネットワーク制限(IP/ゾーン)と System Log での監査に言及している",
+            "points": 2,
+            "mustInclude": ["トークンのネットワーク(IP/ゾーン)制限"],
+            "acceptableAlternatives": ["API token created/revoked イベントの監視"],
+            "scoringGuide": "制限+監査=2点。片方=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 429 への対応・使用率監視・既定 50% のトークン単位上限(調整可)などレート制限の運用を説明している",
+            "points": 2,
+            "mustInclude": ["429 (Too Many Requests) または使用率の監視"],
+            "acceptableAlternatives": ["トークン既定 50% と調整", "バックオフ/ページネーション設計"],
+            "scoringGuide": "監視+設計上の考慮=2点。片方=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「トークンは Super Admin 権限を常に持つ」「無期限に有効」等の仕様誤認", "points": -2 }
+        ],
+        "gradingInstructions": "仕様(C1)の 2 点は本問の合否を分ける知識。ベストプラクティス(C2)は仕様から論理的に導かれているか(なぜサービスアカウントか)も確認するとよい。OAuth 2.0 ベースのサービスアプリ(API サービス統合)への言及は正しい発展内容として減点しない。",
+        "commonMistakes": [
+          "トークンを個人アカウントで作成し退職時に自動化が停止する事故を想定できない",
+          "レート制限を意識しない全件取得スクリプトを許容する"
+        ]
+      },
+      "sources": [
+        { "title": "API tokens / API security (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/api.htm" },
+        { "title": "Rate limits overview (Okta Developer)", "url": "https://developer.okta.com/docs/reference/rate-limits/" }
+      ],
+      "tags": ["api-token", "governance", "rate-limits", "service-account"]
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+{
+  "meta": {
+    "fileId": "adm-mc-02-profile-sourcing-lifecycle",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Part I: Profiles, Sourcing and Write-Back Concepts (HR as a source, profile/attribute-level sourcing, write-back, lifecycle management, Group Push, Okta Workflows)",
+    "examSectionJa": "パートI: プロファイル・ソーシング・ライトバック(HR をソースとする構成、属性レベルソーシング、書き戻し、ライフサイクル管理、Group Push、Okta Workflows)",
+    "examWeight": 53,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 14
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-019",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "profile-source-definition",
+      "difficulty": "basic",
+      "question": "Okta における「プロファイルソース(Profile Source)」の説明として最も正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーアイデンティティの信頼できる情報源(source of truth)として機能し、ユーザーの作成・更新・無効化のライフサイクルを駆動するアプリまたはディレクトリ" },
+        { "id": "B", "text": "Okta のバックアップデータの保存先" },
+        { "id": "C", "text": "アプリのアイコン画像の取得元" },
+        { "id": "D", "text": "System Log のエクスポート先" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "プロファイルソースはユーザープロファイルの source of truth となる統合(AD、LDAP、Workday などの HR システム等)で、ソース側での作成・変更・無効化が Okta ユーザーのライフサイクルに反映されます。アプリの Provisioning タブでプロファイルソーシングを有効化すると、そのアプリが Profile Sources ページに表示されます。外部ソースを構成しない場合は Okta 自身がすべてのプロファイルのソースです。B・C・D は無関係です。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["profile-sourcing", "source-of-truth"]
+    },
+    {
+      "id": "OCA-MC-020",
+      "type": "multiple-select",
+      "domain": "profile-sourcing",
+      "topic": "profile-source-apps",
+      "difficulty": "intermediate",
+      "question": "Okta のプロファイルソースとして使用できる統合を 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "Workday" },
+        { "id": "B", "text": "Active Directory / LDAP" },
+        { "id": "C", "text": "BambooHR / SuccessFactors などの HR システム" },
+        { "id": "D", "text": "status.okta.com" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "プロファイルソースにできる代表的な統合として、HR システム(Workday、BambooHR、SuccessFactors、UltiPro、Namely)、ディレクトリ(Active Directory、LDAP)、その他(Google Workspace、NetSuite、Salesforce)が公式ドキュメントに列挙されています。HR driven プロビジョニング(HR as a source)は、人事イベント(入社・異動・退職)を起点に Okta とダウンストリームアプリのライフサイクルを自動化する構成です。D はステータス公開ページでありプロファイルソースにはなりません。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["profile-sourcing", "hr-as-a-source", "workday"]
+    },
+    {
+      "id": "OCA-MC-021",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "single-source-per-user",
+      "difficulty": "advanced",
+      "question": "複数のプロファイルソース(例: Workday と Active Directory)が構成されている org での、ユーザープロファイル全体のソーシングについて正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ある時点で 1 人のユーザーのプロファイルのソースになれるのは 1 つだけであり、複数ソースの優先順位を管理者が構成できる" },
+        { "id": "B", "text": "1 人のユーザーのプロファイル全体を常に複数のソースが同時に上書きし合う" },
+        { "id": "C", "text": "プロファイルソースは org 全体で 1 つしか登録できない" },
+        { "id": "D", "text": "ソースの優先順位はアルファベット順で固定されている" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "公式ドキュメントでは「ある時点でユーザーのプロファイルのソースになれるのは 1 つだけ」と明記されています。複数のプロファイルソースが存在する場合は優先順位を構成し、ユーザーの割り当てに応じて適用されるソースが決まります。属性単位で異なるソースを使いたい場合は attribute-level sourcing を使用します。B は誤り(競合はまさに避けるべき状態)。C は誤りで複数登録できます。D のような固定順序はありません。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["profile-sourcing", "priority", "multiple-sources"]
+    },
+    {
+      "id": "OCA-MC-022",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "attribute-level-sourcing",
+      "difficulty": "advanced",
+      "question": "「氏名と部署は Workday から、会社メールアドレスは Active Directory から、個人メールアドレスはユーザー自身が Okta で編集できるようにしたい」という要件を満たす Okta の機能はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Attribute-level sourcing(属性レベルソーシング)" },
+        { "id": "B", "text": "Group Push" },
+        { "id": "C", "text": "ThreatInsight" },
+        { "id": "D", "text": "Device Assurance" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Attribute-level sourcing を使うと、ユーザー属性ごとに異なるプロファイルソースを指定できます。公式ドキュメントでもまさに「氏名・部署は Workday、業務メールは AD、個人メールと表示設定は Okta(ユーザー編集可)」という例が挙げられています。ソースが管理する属性はユーザー・管理者からは Okta 上で変更できず、Okta がソースの属性のみ編集可能になります。なお、プロファイルソーシングが適用されるのは Okta ユーザープロファイルであり、アプリユーザープロファイルには適用されません。B はグループのアプリへの連携、C は不審 IP 対策、D はデバイス状態評価の機能です。",
+      "sources": [
+        { "title": "About attribute-level sourcing (Okta Help Center)", "url": "https://help.okta.com/en-us/Content/Topics/users-groups-profiles/usgp-about-attribute-sourcing.htm" },
+        { "title": "Manage profile and attribute sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-sourcing-main.htm" }
+      ],
+      "tags": ["attribute-level-sourcing", "profile-sourcing"]
+    },
+    {
+      "id": "OCA-MC-023",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "hr-as-source-benefits",
+      "difficulty": "intermediate",
+      "question": "HR システム(例: Workday)をプロファイルソースとする場合に、グループと Group Rule を組み合わせる主なメリットはどれですか?",
+      "choices": [
+        { "id": "A", "text": "HR 由来の属性(部署・役職・拠点など)に基づいてグループメンバーシップとアプリアクセスを自動化でき、入社・異動・退職に伴うアクセス変更が人手なしで追随する" },
+        { "id": "B", "text": "HR システムのライセンス費用が無料になる" },
+        { "id": "C", "text": "グループを使うと Okta のレート制限が撤廃される" },
+        { "id": "D", "text": "Group Rule を使うと MFA が不要になる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "HR as a source 構成では、人事システムの正確な属性が Okta プロファイルに同期されます。その属性を条件にした Group Rule でグループメンバーシップを動的に管理し、グループにアプリ割り当てやポリシーを紐づけることで、入社(アカウント作成+初期アクセス付与)、異動(アクセスの付け替え)、退職(無効化)が自動化されます。B・C・D はいずれも事実ではありません。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" },
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["hr-as-a-source", "group-rules", "lifecycle-automation"]
+    },
+    {
+      "id": "OCA-MC-024",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "import-safeguard-superadmin",
+      "difficulty": "advanced",
+      "question": "プロファイルソースからのインポートによるユーザー無効化に関して、公式ドキュメントに記載されている保護の仕組みはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Super Admin はインポート操作によって無効化できない" },
+        { "id": "B", "text": "インポートではいかなるユーザーも無効化できない" },
+        { "id": "C", "text": "無効化はインポート実行者自身にのみ適用される" },
+        { "id": "D", "text": "保護の仕組みは存在しない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "公式ドキュメントには「Super Admin はインポートによって無効化できない」と記載されています。これは、ソース側の障害や誤設定によるインポートで org の最高権限管理者までロックアウトされる事故を防ぐ保護です。B は誤りで、通常ユーザーはソース側で無効化されればインポート/同期により Okta 側でも無効化され得ます(これがソース駆動のオフボーディングです)。C・D は誤りです。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["import", "safeguard", "super-admin"]
+    },
+    {
+      "id": "OCA-MC-025",
+      "type": "single-choice",
+      "domain": "write-back",
+      "topic": "write-back-concept",
+      "difficulty": "intermediate",
+      "question": "「ユーザーが Okta で更新した携帯電話番号を Active Directory の属性にも反映したい」という要件(ライトバック/書き戻し)を実現する方法はどれですか?",
+      "choices": [
+        { "id": "A", "text": "AD 統合の Provisioning 設定で To App(Okta から AD への)プロビジョニング機能(属性の更新)を有効化し、Okta→AD 方向の属性マッピングを構成する" },
+        { "id": "B", "text": "System Log から AD へ手動で転記する" },
+        { "id": "C", "text": "AD エージェントをアンインストールする" },
+        { "id": "D", "text": "ライトバックは Okta ではいかなる形でも実現できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta からディレクトリ/アプリへのデータ書き戻しは、統合の Provisioning 設定の To App 方向の機能(ユーザー属性の更新など)を有効化し、Okta→ターゲット方向の属性マッピングを構成することで実現します。これにより Okta(または別のソース由来)の最新データがディレクトリやダウンストリームアプリに伝播し、データの一貫性が保たれます。B は運用として破綻し、C・D は誤りです。",
+      "sources": [
+        { "title": "Manage profile and attribute sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-sourcing-main.htm" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["write-back", "to-app", "attribute-mapping"]
+    },
+    {
+      "id": "OCA-MC-026",
+      "type": "single-choice",
+      "domain": "lifecycle-management",
+      "topic": "provisioning-requirements",
+      "difficulty": "intermediate",
+      "question": "Okta Lifecycle Management でアプリへの自動プロビジョニング(アプリへの書き込み)を行うための一般的な要件として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "アプリ側がプロビジョニング API(SCIM または OIN のプロビジョニング対応統合)を提供しており、Okta にその API 資格情報を構成して To App 機能を有効化すること" },
+        { "id": "B", "text": "アプリが SAML SSO に対応してさえいればプロビジョニングも自動で有効になる" },
+        { "id": "C", "text": "Okta の Super Admin 権限をアプリベンダーに譲渡すること" },
+        { "id": "D", "text": "アプリのデータベースに Okta から直接 SQL 接続すること" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "自動プロビジョニングには、アプリ側のプロビジョニングインターフェイス(SCIM 標準または OIN 統合ごとの API)と、Okta 側での API 資格情報の構成・To App 機能(Create/Update/Deactivate 等)の有効化が必要です。Okta のプロビジョニングは SCIM 仕様を利用して クラウド/オンプレミスアプリとの間でアカウント管理操作を行います。SSO(SAML)対応とプロビジョニング対応は別の機能です(B は誤り)。C・D はセキュリティ・アーキテクチャ上あり得ません。",
+      "sources": [
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" },
+        { "title": "Provision applications (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Provisioning/lcm/lcm-provision-application.htm" }
+      ],
+      "tags": ["lifecycle-management", "scim", "provisioning-requirements"]
+    },
+    {
+      "id": "OCA-MC-027",
+      "type": "single-choice",
+      "domain": "group-push",
+      "topic": "group-push-basics",
+      "difficulty": "intermediate",
+      "question": "Okta の Group Push 機能の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "既存の Okta グループとそのメンバーシップを、プロビジョニング対応のサードパーティアプリへ push して、アプリ側のグループを Okta から管理する機能" },
+        { "id": "B", "text": "アプリ側のグループを Okta に取り込んで Okta グループを作成する機能" },
+        { "id": "C", "text": "グループ宛てにプッシュ通知を送信する機能" },
+        { "id": "D", "text": "AD のグループポリシー(GPO)を配布する機能" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Push は Okta のグループ(とメンバーシップ)をプロビジョニング有効なアプリ(Google Workspace、Office 365、Box、Slack など)へ push し、以後そのグループを Okta 側から管理する機能です。公式ドキュメントに「Group Push は Okta 側にグループを作成しない」と明記されており、方向は Okta→アプリの一方向です(B は逆方向でありインポートの説明)。C・D は無関係です。",
+      "sources": [
+        { "title": "About Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-push.htm" },
+        { "title": "Manage Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-group-push-main.htm" }
+      ],
+      "tags": ["group-push", "provisioning"]
+    },
+    {
+      "id": "OCA-MC-028",
+      "type": "multiple-select",
+      "domain": "group-push",
+      "topic": "group-push-constraints",
+      "difficulty": "advanced",
+      "question": "Group Push の運用上の制約・注意点として、公式ドキュメントに記載されているものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "同じグループをアプリ割り当て(assignment)と Group Push の両方に使用することはサポートされない" },
+        { "id": "B", "text": "push されたグループのメンバーシップをターゲットアプリ側で直接変更すると、Okta との同期に不整合が発生する" },
+        { "id": "C", "text": "Group Push は SWA アプリを含むすべてのアプリで利用できる" },
+        { "id": "D", "text": "push したグループは二度と削除・リンク解除できない" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "公式ドキュメントには「同一グループをアプリ割り当てと Group Push の両方に使うことはサポートされない」(A)、「ターゲットアプリ側でグループを変更すると同期の問題が発生する」(B)と明記されており、push 専用のグループを別途用意することが推奨されています。C は誤りで、Group Push はプロビジョニング対応アプリでのみ利用できます。D も誤りで、push の停止時にはターゲット側グループを削除するか残すかを選択できます。",
+      "sources": [
+        { "title": "About Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-push.htm" }
+      ],
+      "tags": ["group-push", "constraints", "best-practice"]
+    },
+    {
+      "id": "OCA-MC-029",
+      "type": "single-choice",
+      "domain": "group-push",
+      "topic": "group-push-rule",
+      "difficulty": "advanced",
+      "question": "Group Push で「名前が特定の文字列に一致するグループを自動的に push する」ルールベースの push について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "グループ名(または名前+説明)の条件でルールを作成して push を自動化できるが、Active Directory への push ではルール方式は利用できない" },
+        { "id": "B", "text": "ルール方式はどのターゲットアプリでも無条件に利用できる" },
+        { "id": "C", "text": "ルール方式では Okta Expression Language で任意の属性条件が指定できる" },
+        { "id": "D", "text": "ルール方式は 1 org につき 1 ルールまでである" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Push には「名前で個別に push」と「ルール(名前や名前+説明の文字列マッチ)で push」の 2 方式があり、公式ドキュメントにはルール方式が Active Directory では利用できないことが記載されています。B は AD の例外があるため誤り。C はルール条件が名前/説明の文字列マッチであり Expression Language ではありません。D のような上限はドキュメントに記載がありません。",
+      "sources": [
+        { "title": "About Group Push (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-push.htm" }
+      ],
+      "tags": ["group-push", "push-by-rule", "active-directory"]
+    },
+    {
+      "id": "OCA-MC-030",
+      "type": "single-choice",
+      "domain": "lifecycle-management",
+      "topic": "profile-source-update-conflict",
+      "difficulty": "advanced",
+      "question": "同一アプリに対して「Profile Source(プロファイルソーシング)」と「Update User Attributes(To App の属性更新)」の両方を有効化する構成について、公式ドキュメントの注意事項として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "マッピングされていない属性の意図しない上書きや、属性更新の競合(レースコンディション)などのリスクがあるため注意が必要である" },
+        { "id": "B", "text": "両方の有効化は常に推奨されるベストプラクティスである" },
+        { "id": "C", "text": "両方を有効化すると自動的に片方が無効になる" },
+        { "id": "D", "text": "この組み合わせは UI 上選択できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "同一アプリで「そのアプリをソースとして Okta を更新する」機能と「Okta からそのアプリへ書き込む」機能を併用すると、双方向同期となるため、マッピング外属性の意図しない上書き、更新順序の競合(レースコンディション)、データ損失のリスクがあると公式ドキュメントで注意喚起されています。構成自体は可能ですが(D は誤り)、リスクを理解した設計が必要であり、常に推奨(B)でも自動無効化(C)でもありません。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" }
+      ],
+      "tags": ["profile-sourcing", "bidirectional-sync", "risk"]
+    },
+    {
+      "id": "OCA-MC-031",
+      "type": "single-choice",
+      "domain": "workflows",
+      "topic": "okta-workflows-use-cases",
+      "difficulty": "intermediate",
+      "question": "標準のライフサイクル管理(プロビジョニング設定)だけでは実現が難しい「退職者を無効化した 30 日後にアプリ側アカウントを削除し、削除結果を Slack に通知する」といった高度な自動化を、ノーコード/ローコードで実現する Okta の機能はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta Workflows" },
+        { "id": "B", "text": "Group Push" },
+        { "id": "C", "text": "Network Zones" },
+        { "id": "D", "text": "Profile Editor" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta Workflows は、Okta 内外のイベントをトリガーに、遅延実行・条件分岐・外部 API 連携(コネクタ)を組み合わせた自動化フローをノーコード/ローコードで構築できる機能で、高度なライフサイクル管理ユースケース(時限的な削除、通知、カスタム連携など)に適しています。標準のプロビジョニング機能は即時の作成/更新/無効化が中心のため、時間差処理や外部通知は Workflows の代表的な出番です。B・C・D では実現できません。",
+      "sources": [
+        { "title": "Okta Workflows (Okta Help Center)", "url": "https://help.okta.com/wf/en-us/Content/Topics/Workflows/workflows-main.htm" }
+      ],
+      "tags": ["workflows", "advanced-lifecycle", "automation"]
+    },
+    {
+      "id": "OCA-MC-032",
+      "type": "single-choice",
+      "domain": "profile-sourcing",
+      "topic": "sourced-profile-editability",
+      "difficulty": "intermediate",
+      "question": "プロファイルソース(例: Workday)によって管理されている属性について、Okta 上での編集可否として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ソースが管理する属性は Okta 上では読み取り専用となり、変更はソース側で行う必要がある" },
+        { "id": "B", "text": "管理者であれば Okta 上で自由に上書きでき、以後ソースとの同期は自動停止する" },
+        { "id": "C", "text": "エンドユーザーだけが編集できる" },
+        { "id": "D", "text": "編集できるかどうかはランダムに決まる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ソーシングされた属性の真実の源はソース側にあるため、Okta 上では読み取り専用になります。値を変えたい場合はソース(Workday や AD)側で変更し、同期によって Okta へ反映させます。Okta がソースの属性(または attribute-level sourcing で Okta 管理にした属性)のみ Okta 上で編集できます。B・C・D は誤りです。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" },
+        { "title": "About attribute-level sourcing (Okta Help Center)", "url": "https://help.okta.com/en-us/Content/Topics/users-groups-profiles/usgp-about-attribute-sourcing.htm" }
+      ],
+      "tags": ["profile-sourcing", "read-only", "attribute-management"]
+    }
+  ]
+}

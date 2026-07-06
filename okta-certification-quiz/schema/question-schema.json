@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "okta-certification-quiz/question-schema.json",
+  "title": "Okta Certification Quiz Question File",
+  "description": "Okta Certified Professional / Okta Certified Administrator 対策問題ファイルのスキーマ。1ファイル = meta + questions の配列。全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題に sources を必須で持つ。",
+  "type": "object",
+  "required": ["meta", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["fileId", "certification", "certificationId", "examSection", "examSectionJa", "questionType", "language", "generatedAt", "questionCount"],
+      "additionalProperties": true,
+      "properties": {
+        "fileId": { "type": "string", "description": "ファイル識別子(ファイル名と一致)" },
+        "certification": { "type": "string", "enum": ["Okta Certified Professional", "Okta Certified Administrator"] },
+        "certificationId": { "type": "string", "enum": ["professional", "administrator"] },
+        "examSection": { "type": "string", "description": "公式試験ブループリント上のセクション名(英語)" },
+        "examSectionJa": { "type": "string", "description": "セクション名の日本語訳" },
+        "examWeight": { "type": ["number", "string"], "description": "試験に占める割合(%)。複数セクション横断の場合は文字列で説明" },
+        "questionType": { "type": "string", "enum": ["multiple-choice", "written", "mixed"] },
+        "language": { "type": "string", "const": "ja" },
+        "sourcePolicy": { "type": "string" },
+        "generatedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "questionCount": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/multipleChoiceQuestion" },
+          { "$ref": "#/definitions/writtenQuestion" }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "source": {
+      "type": "object",
+      "required": ["title", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "description": "参照ドキュメントのタイトル" },
+        "url": {
+          "type": "string",
+          "pattern": "^https://(help\\.okta\\.com|developer\\.okta\\.com|support\\.okta\\.com|status\\.okta\\.com|certification\\.okta\\.com)/",
+          "description": "Okta 公式ドキュメントの URL のみ許可"
+        },
+        "note": { "type": "string", "description": "参照箇所の補足(任意)" }
+      }
+    },
+    "questionBase": {
+      "type": "object",
+      "required": ["id", "type", "domain", "topic", "difficulty", "question", "sources", "tags"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(OCP|OCA)-(MC|WR)-\\d{3}$",
+          "description": "OCP=Professional / OCA=Administrator, MC=選択問題 / WR=記述問題"
+        },
+        "type": { "type": "string", "enum": ["single-choice", "multiple-select", "written"] },
+        "domain": { "type": "string", "description": "ドメイン識別子(kebab-case)" },
+        "topic": { "type": "string", "description": "トピック識別子(kebab-case)" },
+        "difficulty": { "type": "string", "enum": ["basic", "intermediate", "advanced"] },
+        "question": { "type": "string", "minLength": 20, "description": "問題文(日本語。Okta の UI 用語・技術用語は英語表記を保持)" },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/source" } },
+        "tags": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      }
+    },
+    "choice": {
+      "type": "object",
+      "required": ["id", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-F]$" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "multipleChoiceQuestion": {
+      "allOf": [
+        { "$ref": "#/definitions/questionBase" },
+        {
+          "type": "object",
+          "required": ["choices", "correctAnswerIds", "explanation"],
+          "properties": {
+            "type": { "enum": ["single-choice", "multiple-select"] },
+            "choices": { "type": "array", "minItems": 3, "maxItems": 6, "items": { "$ref": "#/definitions/choice" } },
+            "correctAnswerIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "pattern": "^[A-F]$" },
+              "description": "single-choice は必ず 1 要素、multiple-select は 2 要素以上"
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 50,
+              "description": "正解の根拠と、誤答選択肢がなぜ誤りかの解説"
+            }
+          }
+        }
+      ]
+    },
+    "writtenQuestion": {
+      "allOf": [
+        { "$ref": "#/definitions/questionBase" },
+        {
+          "type": "object",
+          "required": ["modelAnswer", "rubric"],
+          "properties": {
+            "type": { "const": "written" },
+            "modelAnswer": {
+              "type": "string",
+              "minLength": 100,
+              "description": "模範解答(満点となる解答例)"
+            },
+            "rubric": { "$ref": "#/definitions/rubric" }
+          }
+        }
+      ]
+    },
+    "rubric": {
+      "type": "object",
+      "description": "第三者が採点しても結果がぶれないための厳密な採点基準",
+      "required": ["totalPoints", "passingScore", "criteria", "gradingInstructions"],
+      "additionalProperties": false,
+      "properties": {
+        "totalPoints": { "type": "integer", "minimum": 5, "description": "満点。criteria の points 合計と一致すること" },
+        "passingScore": { "type": "integer", "minimum": 1, "description": "合格ライン(この点数以上で合格相当)" },
+        "criteria": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["id", "description", "points", "mustInclude", "scoringGuide"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^C\\d+$" },
+              "description": { "type": "string", "description": "この基準で評価する内容" },
+              "points": { "type": "integer", "minimum": 1 },
+              "mustInclude": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" },
+                "description": "満点に必要な要素(概念・用語)。同義語・言い換えは acceptableAlternatives を参照"
+              },
+              "acceptableAlternatives": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "mustInclude の要素として認める言い換え・同義語"
+              },
+              "scoringGuide": { "type": "string", "description": "満点/部分点/0点の判定ルール(具体的に)" }
+            }
+          }
+        },
+        "deductions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["description", "points"],
+            "additionalProperties": false,
+            "properties": {
+              "description": { "type": "string", "description": "減点対象となる誤り" },
+              "points": { "type": "integer", "maximum": -1, "description": "減点(負の値)" }
+            }
+          },
+          "description": "重大な事実誤認などに対する減点ルール。合計点は 0 点未満にはしない"
+        },
+        "gradingInstructions": { "type": "string", "description": "採点者向けの全体指示(採点手順・判断に迷った場合の扱い)" },
+        "commonMistakes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "受験者がやりがちな誤答パターン(採点時の参考)"
+        }
+      }
+    }
+  }
+}

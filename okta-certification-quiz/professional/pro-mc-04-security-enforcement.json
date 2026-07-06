@@ -1,0 +1,422 @@
+{
+  "meta": {
+    "fileId": "pro-mc-04-security-enforcement",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 4: Security Enforcement",
+    "examSectionJa": "ユースケース4: セキュリティ強化",
+    "examWeight": 38,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 20
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-029",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "authenticator-setup",
+      "difficulty": "basic",
+      "question": "Okta Identity Engine の org で、ユーザーが利用できる認証手段(Okta Verify、Phone など)を有効化・管理する画面はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Security > Authenticators" },
+        { "id": "B", "text": "Security > Networks" },
+        { "id": "C", "text": "Directory > Profile Editor" },
+        { "id": "D", "text": "Applications > Applications" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "認証手段(Authenticator)の追加・有効化・設定は Security > Authenticators で行います。ここで有効化した Authenticator を、Authenticator Enrollment Policy(登録ポリシー)や Global Session Policy / Authentication Policy(利用要件)で参照します。B はネットワークゾーン、C はプロファイル管理、D はアプリ統合管理の画面です。",
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["authenticators", "admin-console"]
+    },
+    {
+      "id": "OCP-MC-030",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "factor-types",
+      "difficulty": "basic",
+      "question": "認証要素(factor)の分類として、「Possession(所持)要素」に該当する認証手段はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta Verify(モバイルアプリの Push 通知)" },
+        { "id": "B", "text": "パスワード" },
+        { "id": "C", "text": "セキュリティ質問" },
+        { "id": "D", "text": "Temporary Access Code(既知の一時コードを口頭共有した場合の知識としての性質)" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta では認証要素を Knowledge(知識: ユーザーが知っているもの)、Possession(所持: ユーザーが持っているもの)、Biometric(生体: ユーザー自身の身体的特徴)に分類します。Okta Verify はスマートフォンという所持物に紐づく Possession 要素です(生体ロック併用時は Biometric 特性も持ち得ます)。パスワード(B)とセキュリティ質問(C)は Knowledge 要素です。",
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["factor-types", "possession", "knowledge", "biometric"]
+    },
+    {
+      "id": "OCP-MC-031",
+      "type": "multiple-select",
+      "domain": "security-enforcement",
+      "topic": "phishing-resistant",
+      "difficulty": "advanced",
+      "question": "「Phishing-resistant(フィッシング耐性)」の特性を持つ認証手段として正しいものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "FIDO2 (WebAuthn) / Passkeys" },
+        { "id": "B", "text": "Okta FastPass(Okta Verify)" },
+        { "id": "C", "text": "SMS によるワンタイムコード" },
+        { "id": "D", "text": "メールによるマジックリンク/OTP" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "Phishing-resistant とは「ユーザーが第三者に共有できてしまう認証データを提供しない」特性です。FIDO2 (WebAuthn)/Passkeys と Okta FastPass は暗号鍵ベースでオリジンにバインドされるためフィッシング耐性があります。SMS(C)やメール(D)の OTP はコードを攻撃者に入力・共有させる中間者フィッシングが成立するため、フィッシング耐性はありません。",
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["phishing-resistant", "webauthn", "fastpass"]
+    },
+    {
+      "id": "OCP-MC-032",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "okta-verify-methods",
+      "difficulty": "intermediate",
+      "question": "Okta Verify が提供する認証方法の組み合わせとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Push 通知、TOTP(6桁コード)、Okta FastPass" },
+        { "id": "B", "text": "SMS、音声通話、メール" },
+        { "id": "C", "text": "セキュリティ質問と PIN" },
+        { "id": "D", "text": "YubiKey OTP と Smart Card" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta Verify は Push 通知(番号チャレンジ含む)、TOTP コード、そしてデバイス登録に基づくパスワードレス/フィッシング耐性認証の Okta FastPass を提供します。B は Phone / Email Authenticator の方式、C は別の Knowledge 系 Authenticator、D はハードウェアトークン系の別 Authenticator です。",
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["okta-verify", "fastpass", "totp", "push"]
+    },
+    {
+      "id": "OCP-MC-033",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "enrollment-policy",
+      "difficulty": "basic",
+      "question": "Authenticator Enrollment Policy(認証手段登録ポリシー)で、各 Authenticator に設定できる登録要件の組み合わせとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Required / Optional / Disabled" },
+        { "id": "B", "text": "Allow / Deny / Audit" },
+        { "id": "C", "text": "High / Medium / Low" },
+        { "id": "D", "text": "Active / Inactive / Pending" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Enrollment Policy では Authenticator ごとに Required(登録必須)、Optional(ユーザーの任意)、Disabled(登録不可)を設定します。ポリシーはグループ単位に作成でき、ルールでいつ登録を求めるかを制御します。B は ThreatInsight などのアクション、C はリスクレベル、D はユーザーステータスに近い用語で、登録要件の設定値ではありません。",
+      "sources": [
+        { "title": "Authenticator enrollment policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/policies/about-mfa-enrollment-policies.htm" }
+      ],
+      "tags": ["enrollment-policy", "required-optional-disabled"]
+    },
+    {
+      "id": "OCP-MC-034",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "enrollment-grace-period",
+      "difficulty": "advanced",
+      "question": "新しい Authenticator を Required にしつつ、一定期間はユーザーが登録をスキップできるようにしたい。Enrollment Policy のどの機能を使用しますか?",
+      "choices": [
+        { "id": "A", "text": "Grace period(猶予期間)を設定し、期限日まで登録プロンプトのスキップを許可する" },
+        { "id": "B", "text": "Authenticator を Disabled にしておき、期限日に手動で Required に変更する" },
+        { "id": "C", "text": "Global Session Policy のセッション有効期間を延長する" },
+        { "id": "D", "text": "対象ユーザーを Suspended にする" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Enrollment Policy の Grace period を使うと、必須 Authenticator の登録を一定条件までスキップ可能にできます。終了日(end date)方式では期限日まで毎日プロンプトが表示され、期限を過ぎるとスキップ不可になります(スキップ回数方式も Early Access で提供)。B は猶予期間中に登録を促せず運用負荷も高い方法です。C・D は登録要件とは無関係です。",
+      "sources": [
+        { "title": "Authenticator enrollment policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/policies/about-mfa-enrollment-policies.htm" }
+      ],
+      "tags": ["enrollment-policy", "grace-period"]
+    },
+    {
+      "id": "OCP-MC-035",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "global-session-policy",
+      "difficulty": "basic",
+      "question": "Okta Identity Engine において、「誰がどのように Okta org へサインインしてセッションを確立できるか(および Okta セッションの有効期間)」を制御するポリシーはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Global Session Policy" },
+        { "id": "B", "text": "Authentication Policy" },
+        { "id": "C", "text": "Authenticator Enrollment Policy" },
+        { "id": "D", "text": "Password Policy" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Global Session Policy は Okta org 自体へのアクセス(Okta セッションの確立)と、その際に要求する要素、セッションの有効期間・アイドル時間などを制御します。Authentication Policy(B)は個々のアプリへアクセスする際の認証要件を定義するアプリレベルのポリシーです。C は Authenticator の登録に関するポリシー、D はパスワードの複雑性・ロックアウトなどの管理です。",
+      "sources": [
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" }
+      ],
+      "tags": ["global-session-policy", "session"]
+    },
+    {
+      "id": "OCP-MC-036",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "gsp-vs-authn-policy",
+      "difficulty": "intermediate",
+      "question": "Global Session Policy と Authentication Policy の関係について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Global Session Policy は Okta サインイン時に、Authentication Policy は各アプリへのアクセス時に評価され、両方の要件を満たす必要がある" },
+        { "id": "B", "text": "Authentication Policy が構成されている場合、Global Session Policy は評価されない" },
+        { "id": "C", "text": "Global Session Policy はアプリごとに 1 つずつ作成する必要がある" },
+        { "id": "D", "text": "2 つのポリシーは同一の設定画面で管理される単一のポリシーである" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "OIE では認証制御が 2 層に分かれています。Global Session Policy がユーザーの Okta セッション確立条件を決め、その上で各アプリへのアクセス時に Authentication Policy が追加の要件(例: 2 要素、フィッシング耐性要素、デバイス条件)を評価します。両者は独立したポリシーで、どちらもパスする必要があります。B のようにどちらかが省略されることはなく、C の Global Session Policy は org レベル(グループ単位に複数作成可)であり、アプリ単位ではありません。",
+      "sources": [
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" },
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" }
+      ],
+      "tags": ["global-session-policy", "authentication-policy", "policy-framework"]
+    },
+    {
+      "id": "OCP-MC-037",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "default-authentication-policy",
+      "difficulty": "intermediate",
+      "question": "新しく追加したアプリ統合(API サービスアプリを除く)に既定で割り当てられる、共有の Authentication Policy のキャッチオールルールが要求する認証要件はどれですか?",
+      "choices": [
+        { "id": "A", "text": "任意の 2 要素(Any two factors)" },
+        { "id": "B", "text": "パスワードのみ" },
+        { "id": "C", "text": "フィッシング耐性要素のみ" },
+        { "id": "D", "text": "認証不要(すべて許可)" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "新規アプリには共有の既定 Authentication Policy が割り当てられ、そのキャッチオールルールは「任意の 2 要素(Any two factors)」でのアクセスを許可します。この共有ポリシーを変更すると、同じポリシーを使用するすべてのアプリ(新規・既存)に影響する点に注意が必要です。B・C・D は既定のルール内容ではありません(プリセットポリシーや独自ポリシーで構成すること自体は可能です)。",
+      "sources": [
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" }
+      ],
+      "tags": ["authentication-policy", "default-policy", "any-two-factors"]
+    },
+    {
+      "id": "OCP-MC-038",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "policy-rule-evaluation",
+      "difficulty": "intermediate",
+      "question": "1 つのポリシーに複数のルールが定義されている場合の評価方法として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "優先順位(Priority)の高い順に評価され、条件に最初に一致したルールが適用される" },
+        { "id": "B", "text": "すべてのルールが評価され、最も厳しい要件が合成されて適用される" },
+        { "id": "C", "text": "ランダムな順序で評価される" },
+        { "id": "D", "text": "作成日時が新しいルールが常に優先される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta のポリシールールは優先順位の上から順に評価され、条件に一致した最初のルールだけが適用されます(first match)。どのルールにも一致しない場合は最下位のキャッチオールルールが適用されます。B のような合成評価は行われません。C・D のような評価順序でもありません。ルールの並び順の設計(具体的な条件ほど上位)が重要です。",
+      "sources": [
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" },
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" }
+      ],
+      "tags": ["policy-evaluation", "priority", "catch-all"]
+    },
+    {
+      "id": "OCP-MC-039",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "catch-all-rule",
+      "difficulty": "intermediate",
+      "question": "Authentication Policy の最下部にあるキャッチオール(Catch-all)ルールについて正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "どのルールにも一致しなかったすべてのユーザー・状況に適用されるルールで、削除はできないが要件の編集は可能" },
+        { "id": "B", "text": "管理者のみに適用される特別なルール" },
+        { "id": "C", "text": "不要であれば削除できる" },
+        { "id": "D", "text": "最初に評価されるルール" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "キャッチオールルールは他のどのルールにも一致しない場合の最終評価先で、ポリシーの安全網として常に最下位に存在します。削除はできませんが、アクション(許可する認証要件、またはアクセス拒否)を編集できます。セキュリティ強化の定石は、キャッチオールを「Deny(拒否)」または厳格な要件にし、明示的なルールで許可対象を定義することです。B・C・D はいずれも誤りです。",
+      "sources": [
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" },
+        { "title": "Add an authentication policy rule (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/add-app-sign-on-policy-rule.htm" }
+      ],
+      "tags": ["catch-all-rule", "authentication-policy"]
+    },
+    {
+      "id": "OCP-MC-040",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "gsp-mfa-rule",
+      "difficulty": "intermediate",
+      "question": "「社外ネットワークからの Okta サインイン時には多要素認証を要求する」という組織全体の要件を実装する場合、最も適切な設定はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Global Session Policy に、ネットワークゾーン条件(社内ゾーン以外)で Password + 別の要素を要求するルールを追加する" },
+        { "id": "B", "text": "各アプリの割り当てを解除する" },
+        { "id": "C", "text": "Password Policy の複雑性要件を強化する" },
+        { "id": "D", "text": "Profile Editor でユーザー属性に MFA フラグを追加する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta org へのサインイン自体に対する組織全体の MFA 要件は Global Session Policy のルールで実装します。ルール条件にネットワークゾーン(例: Not in zone: 社内 IP ゾーン)を指定し、プライマリ要素に加えてセカンダリ要素(MFA)を要求します。B は業務を止めるだけであり、C はパスワード強度の話、D はプロファイル属性の話で MFA 要求とは無関係です。",
+      "sources": [
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" },
+        { "title": "Network zones (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/network/network-zones.htm" }
+      ],
+      "tags": ["global-session-policy", "mfa", "network-zones"]
+    },
+    {
+      "id": "OCP-MC-041",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "password-policy-complexity",
+      "difficulty": "basic",
+      "question": "Okta の Password ポリシー(Password authenticator の設定)で構成できる複雑性要件に含まれないものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "パスワードに絵文字を必須にする" },
+        { "id": "B", "text": "小文字・大文字・数字・記号の要求" },
+        { "id": "C", "text": "ユーザー名や姓・名の一部を含むパスワードの禁止" },
+        { "id": "D", "text": "一般的なパスワード(common password)の使用禁止" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Password authenticator では、小文字/大文字/数字/記号の要求(B)、ユーザー名・名・姓を含む文字列の禁止(C)、約 100 万件の頻出パスワードリストに基づく common password チェック(D)などを構成できます。連続反復文字の制限や Okta Expression Language による禁止ワード設定も可能です。絵文字の必須化(A)という設定は存在しません。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["password-policy", "complexity"]
+    },
+    {
+      "id": "OCP-MC-042",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "password-history",
+      "difficulty": "intermediate",
+      "question": "「直近に使用したパスワードの再利用を禁止する」設定(パスワード履歴)について、Okta で設定可能な範囲として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "直近 1 〜 30 個のパスワードの再利用を禁止できる" },
+        { "id": "B", "text": "直近 1 〜 100 個のパスワードの再利用を禁止できる" },
+        { "id": "C", "text": "履歴は常に直近 5 個で固定されている" },
+        { "id": "D", "text": "パスワード履歴の機能は存在しない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "「Enforce password history for last N passwords」は 1 〜 30 の範囲で設定できます。あわせて最小パスワード有効期間(minimum age)を設定することで、履歴を一気に消化して元のパスワードに戻す行為を防げます。B・C・D は設定範囲・仕様として誤りです。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["password-policy", "password-history"]
+    },
+    {
+      "id": "OCP-MC-043",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "lockout-settings",
+      "difficulty": "intermediate",
+      "question": "Password ポリシーのロックアウト設定でできることとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ロックアウトまでの失敗回数と、一定時間経過後の自動アンロックを設定できる" },
+        { "id": "B", "text": "ロックアウトされたアカウントは必ず Okta サポートのみが解除できる" },
+        { "id": "C", "text": "ロックアウトは無効化できず常に 3 回失敗で発動する" },
+        { "id": "D", "text": "ロックアウト時にアカウントが自動的に Deactivated になる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ロックアウト設定では、ロックアウトまでの失敗試行回数、指定分数経過後の自動アンロック、ユーザーへのロックアウト通知メールなどを構成できます。解除は管理者による Unlock、自動アンロック、または(構成していれば)ユーザーのセルフサービスアンロックで可能であり、B のようにサポート限定ではありません。C の固定回数仕様はなく、D のロックアウトと Deactivated は別のステータスです。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["password-policy", "lockout", "auto-unlock"]
+    },
+    {
+      "id": "OCP-MC-044",
+      "type": "multiple-select",
+      "domain": "security-enforcement",
+      "topic": "sspr",
+      "difficulty": "intermediate",
+      "question": "セルフサービスパスワードリセット(SSPR)でユーザーがリカバリーに使用できる手段として、Password authenticator の設定で構成できるものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "Email" },
+        { "id": "B", "text": "Phone(SMS / 音声通話)" },
+        { "id": "C", "text": "YubiKey OTP" },
+        { "id": "D", "text": "Smart Card" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "パスワードリカバリー手段としては Email、Phone(SMS/音声)、Okta Verify(Push 通知)などを構成でき、追加の本人確認としてセキュリティ質問などを要求することも可能です。YubiKey OTP(C)や Smart Card(D)は認証には使用できますが、Password authenticator のリカバリー手段の設定項目ではありません。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["sspr", "password-recovery", "self-service"]
+    },
+    {
+      "id": "OCP-MC-045",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "sspr-flow",
+      "difficulty": "basic",
+      "question": "SSPR(セルフサービスパスワードリセット)を有効化した場合のユーザー体験として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "サインインページの「Forgot password?」から、構成されたリカバリー手段(メール等)で本人確認を行い、自分でパスワードを再設定できる" },
+        { "id": "B", "text": "ユーザーは管理者に電話しない限りパスワードを変更できない" },
+        { "id": "C", "text": "パスワードリセットのたびにアカウントが Deactivated になる" },
+        { "id": "D", "text": "リセット後のパスワードは Okta が自動生成したものに固定される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "SSPR を有効化すると、ユーザーはサインインページからリカバリーフローを開始し、Email・Phone・Okta Verify Push などで本人確認のうえ新しいパスワードを設定できます。ヘルプデスクへの依存(B)を減らすことが SSPR の主目的です。C・D のような動作はありません。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["sspr", "end-user-experience"]
+    },
+    {
+      "id": "OCP-MC-046",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "authn-policy-conditions",
+      "difficulty": "advanced",
+      "question": "Authentication Policy のルール条件として指定できないものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーの好きな色" },
+        { "id": "B", "text": "ユーザーが所属するグループ" },
+        { "id": "C", "text": "ネットワークゾーン(IP ゾーン)" },
+        { "id": "D", "text": "デバイスの状態(Registered / Managed)" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Authentication Policy のルールでは、グループ/ユーザー(B)、ネットワークゾーン(C)、デバイス状態(登録済み・管理下、プラットフォーム)(D)、リスクレベル、Behavior などの条件を組み合わせて、要求する認証要件(要素数・種類・再認証頻度)を定義できます。A のような任意のプロファイル属性を直接の条件にはできません(属性に基づく制御はグループルールでグループ化してから利用します)。",
+      "sources": [
+        { "title": "Add an authentication policy rule (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/add-app-sign-on-policy-rule.htm" },
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" }
+      ],
+      "tags": ["authentication-policy", "rule-conditions", "device-context"]
+    },
+    {
+      "id": "OCP-MC-047",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "shared-policy-caution",
+      "difficulty": "advanced",
+      "question": "10 個のアプリが 1 つの共有 Authentication Policy を使用しています。このうち 1 つのアプリにだけ、より厳しい認証要件を適用したい場合の正しい対応はどれですか?",
+      "choices": [
+        { "id": "A", "text": "新しい Authentication Policy を作成(または既存ポリシーを複製)し、対象アプリだけをそのポリシーに切り替えてルールを構成する" },
+        { "id": "B", "text": "共有ポリシーのキャッチオールルールを直接厳しくする" },
+        { "id": "C", "text": "対象アプリを削除して再作成する" },
+        { "id": "D", "text": "Global Session Policy を削除する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "共有ポリシーを直接変更すると、そのポリシーを使う 10 個すべてのアプリに影響します(B は影響範囲の観点で誤り)。1 つのアプリにだけ異なる要件を適用するには、専用のポリシーを作成(または複製)してそのアプリに割り当てるのが正しい方法です。C は不要な破壊的操作、D は org 全体のサインイン制御を失わせる誤った操作です。",
+      "sources": [
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" }
+      ],
+      "tags": ["authentication-policy", "shared-policy", "policy-design"]
+    },
+    {
+      "id": "OCP-MC-048",
+      "type": "single-choice",
+      "domain": "security-enforcement",
+      "topic": "network-zones",
+      "difficulty": "intermediate",
+      "question": "Okta のネットワークゾーンの用途として正しくないものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーのパスワード複雑性要件をゾーンごとに変更する" },
+        { "id": "B", "text": "Global Session Policy / Authentication Policy のルール条件として使用する" },
+        { "id": "C", "text": "特定の IP からのアクセスをブロックリストとして拒否する" },
+        { "id": "D", "text": "IdP ルーティングルールの条件として使用する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ネットワークゾーンは IP アドレス・CIDR・地理的位置・ASN などで定義する境界で、Global Session Policy や Authentication Policy のルール条件(B)、ブロックリスト(C)、ルーティングルールや VPN 通知(D)で使用します。パスワードの複雑性要件(A)はパスワードポリシーの設定であり、ゾーン条件で変化させる機能はありません。",
+      "sources": [
+        { "title": "Network zones (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/network/network-zones.htm" }
+      ],
+      "tags": ["network-zones", "policy-conditions"]
+    }
+  ]
+}

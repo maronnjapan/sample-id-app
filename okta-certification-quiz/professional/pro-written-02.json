@@ -1,0 +1,435 @@
+{
+  "meta": {
+    "fileId": "pro-written-02",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Written questions Part 2 (Use Cases 4-6)",
+    "examSectionJa": "記述問題 パート2(ユースケース4〜6対応)",
+    "examWeight": "記述問題は実技(hands-on)ユースケースの理解度を言語化して確認するための補強教材",
+    "questionType": "written",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。採点は rubric に厳密に従うこと。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 7
+  },
+  "questions": [
+    {
+      "id": "OCP-WR-008",
+      "type": "written",
+      "domain": "security-enforcement",
+      "topic": "enrollment-policy-design",
+      "difficulty": "intermediate",
+      "question": "全社員に Okta Verify の登録を必須化し、SMS(Phone)は任意、セキュリティ質問は禁止としたい。ただし移行期間として 30 日間はユーザーが登録をスキップできるようにしたい。この要件を Authenticator Enrollment Policy でどのように実装するか、(1) 事前に必要な設定、(2) ポリシーでの各 Authenticator の設定値、(3) 移行期間の実現方法、(4) ユーザーが実際に登録を促されるタイミング、の 4 点で説明してください。",
+      "modelAnswer": "(1) 事前準備として Security > Authenticators で Okta Verify と Phone を有効化しておく(Authenticator として追加されていなければ追加する)。(2) Authenticator Enrollment Policy(Security > Authenticators > Enrollment タブ)で対象ユーザー(全社員グループまたは Everyone)に適用されるポリシーを作成/編集し、Okta Verify = Required(必須)、Phone = Optional(任意)、Security Question = Disabled(登録不可)に設定する。(3) 移行期間は Grace period(猶予期間)機能で実現する。Okta Verify の登録要件に対して終了日を 30 日後に設定すると、期間中ユーザーは毎日登録を促されつつスキップが可能で、期限後はスキップできなくなり登録が強制される。(4) ユーザーが登録を促されるのは、ポリシーが適用された状態でのサインイン時(登録プロンプトが表示される)や、Global Session Policy / Authentication Policy / Password Policy が要求する要素をユーザーがまだ登録していない場合など。登録は End-User Settings 画面から自発的に行うこともできる。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) Security > Authenticators で対象 Authenticator を有効化しておく事前準備に言及している",
+            "points": 2,
+            "mustInclude": ["Authenticator の有効化(Security > Authenticators)"],
+            "acceptableAlternatives": ["Okta Verify / Phone を org で利用可能にしておく"],
+            "scoringGuide": "言及あり=2点。ポリシー設定のみで有効化に触れない=0〜1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) Required / Optional / Disabled の 3 値を正しく各 Authenticator に対応付けている",
+            "points": 3,
+            "mustInclude": ["Okta Verify = Required", "Phone = Optional", "Security Question = Disabled"],
+            "acceptableAlternatives": ["必須/任意/無効 の日本語表記"],
+            "scoringGuide": "3 つすべて正しい対応=3点。2 つ=2点。1 つ=1点。設定値の概念(Required/Optional/Disabled)自体が出てこない=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) Grace period による移行期間の実現(期限までスキップ可、期限後は強制)を説明している",
+            "points": 3,
+            "mustInclude": ["Grace period(猶予期間)"],
+            "acceptableAlternatives": ["終了日(end date)の設定", "期限後はスキップ不可になる"],
+            "scoringGuide": "Grace period+期限後の挙動=3点。Grace period の名称のみ=2点。手動で後から Required に変える等の代替案のみ=1点(機能を知らないとみなす)。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) 登録が促されるタイミング(サインイン時のプロンプト、ポリシーが要素を要求した時)を説明している",
+            "points": 2,
+            "mustInclude": ["サインイン時に登録を促される"],
+            "acceptableAlternatives": ["他のポリシー(GSP/認証ポリシー/パスワードポリシー)が要求した場合", "Settings からの自発的登録"],
+            "scoringGuide": "具体的なタイミング 1 つ以上=2点。曖昧=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "Enrollment Policy と Authentication Policy(アクセス時の要件)を混同している場合", "points": -2 }
+        ],
+        "gradingInstructions": "Enrollment Policy は「登録」の制御であり、アクセス時の要素要求(Authentication Policy)とは別物である点の理解を確認する。混同がみられる場合は該当 criteria を 0 点にした上で deduction を適用する。",
+        "commonMistakes": [
+          "登録ポリシーと認証ポリシーの混同",
+          "Grace period 機能を知らず、運用でカバーする回答になる",
+          "Disabled(登録不可)と Optional の違いが曖昧"
+        ]
+      },
+      "sources": [
+        { "title": "Authenticator enrollment policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/policies/about-mfa-enrollment-policies.htm" },
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["enrollment-policy", "grace-period", "okta-verify"]
+    },
+    {
+      "id": "OCP-WR-009",
+      "type": "written",
+      "domain": "security-enforcement",
+      "topic": "sspr-configuration",
+      "difficulty": "intermediate",
+      "question": "ヘルプデスクへのパスワードリセット依頼を削減するため、セルフサービスパスワードリセット(SSPR)を導入します。(1) SSPR を構成する場所と主な設定内容(リカバリーに使用できる手段を 2 つ以上)、(2) SSPR のセキュリティを高めるために追加で構成できること、(3) 導入によるヘルプデスク業務への効果、を説明してください。",
+      "modelAnswer": "(1) SSPR は Password authenticator の設定(Security > Authenticators > Password のポリシー/ルール)で構成する。パスワードポリシーのルールでユーザー自身によるパスワードリセットを許可し、リカバリー手段として Email、Phone(SMS/音声通話)、Okta Verify(Push 通知)などを有効化する。ユーザーはサインインページの「Forgot password?」からリカバリーフローを実行できる。(2) セキュリティ強化として、リカバリー時に追加の本人確認(例: セキュリティ質問や、複数の認証手段の組み合わせ)を要求できる。また、リカバリーフローに使う認証手段をよりフィッシングに強いもの(Okta Verify Push)に限定する、リカバリーを許可するネットワーク条件を検討する、アカウントリカバリーに関する System Log イベントを監視する、といった対策が取れる。(3) 効果: パスワード忘れ・期限切れ・ロックアウト起因の問い合わせがユーザー自身で解決されるため、ヘルプデスクのチケット数と対応時間が削減され、ユーザーも待ち時間なく業務復帰できる(セルフサービスアンロックも併用するとさらに効果的)。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 構成場所(Password authenticator / パスワードポリシー)を正しく特定している",
+            "points": 2,
+            "mustInclude": ["Password authenticator(パスワードポリシー)の設定で構成する"],
+            "acceptableAlternatives": ["Security > Authenticators > Password"],
+            "scoringGuide": "正しい場所=2点。「Security 配下」など曖昧=1点。誤った場所(Profile Editor 等)=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "(1) リカバリー手段を 2 つ以上(Email / Phone / Okta Verify Push)挙げている",
+            "points": 3,
+            "mustInclude": ["Email", "Phone(SMS または音声)"],
+            "acceptableAlternatives": ["Okta Verify(Push)を含む 2 つ以上の組み合わせであれば可"],
+            "scoringGuide": "2 つ以上=3点。1 つ=1点。なし=0点。YubiKey や Smart Card をリカバリー手段として挙げた場合はカウントしない。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) セキュリティ強化策(追加の本人確認、手段の限定、監視など)を 1 つ以上挙げている",
+            "points": 3,
+            "mustInclude": ["リカバリー時の追加の本人確認または手段の限定"],
+            "acceptableAlternatives": ["セキュリティ質問の追加要求", "System Log での監視", "Okta アカウント管理ポリシーへの言及"],
+            "scoringGuide": "具体的な強化策 2 つ=3点。1 つ=2点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) ヘルプデスク業務への効果(チケット削減・自己解決)を述べている",
+            "points": 2,
+            "mustInclude": ["問い合わせ(チケット)の削減"],
+            "acceptableAlternatives": ["ユーザーの自己解決・待ち時間削減", "セルフサービスアンロックとの併用"],
+            "scoringGuide": "効果の説明あり=2点。抽象的=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「SSPR ではパスワードが平文でメール送信される」等、事実に反するセキュリティ記述をした場合", "points": -2 }
+        ],
+        "gradingInstructions": "リカバリー手段の名称は日本語(メール、電話)でも可。SSPR の場所を Enrollment Policy と混同していないかに注意。効果(C4)はビジネス観点の説明であり、簡潔でも要点があれば満点としてよい。",
+        "commonMistakes": [
+          "リカバリー手段と MFA 用 Authenticator の区別が曖昧",
+          "SSPR の構成場所を誤る",
+          "セキュリティ強化の観点が抜ける"
+        ]
+      },
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["sspr", "password-recovery", "helpdesk"]
+    },
+    {
+      "id": "OCP-WR-010",
+      "type": "written",
+      "domain": "security-enforcement",
+      "topic": "phishing-resistant-mfa",
+      "difficulty": "advanced",
+      "question": "経営層から「フィッシング攻撃で SMS ワンタイムコードが窃取される事例が増えているため、フィッシング耐性のある MFA へ移行したい」という指示がありました。(1) フィッシング耐性がある認証手段を 2 つ挙げ、なぜ SMS OTP と違ってフィッシングに強いのかを説明してください。(2) 既存ユーザーへ段階的に展開するための Okta 上の設定ステップ(Authenticator の有効化 → 登録の必須化 → アクセス時の強制)を、使用するポリシー名を挙げて説明してください。",
+      "modelAnswer": "(1) フィッシング耐性のある認証手段の例: FIDO2(WebAuthn)/ Passkeys、Okta FastPass(Okta Verify)、Smart Card(PIV)。これらは公開鍵暗号を用い、認証情報(署名)が正規のオリジン(ドメイン)に暗号学的にバインドされるため、偽サイトに誘導されてもユーザーが攻撃者に渡せる「共有可能な認証データ(コード)」が存在しない。一方 SMS OTP はユーザーがコードを読み取り入力する方式のため、リアルタイム中継型フィッシング(AiTM)でコードを窃取・転送されると突破される。(2) 展開ステップ: ①Security > Authenticators で FIDO2 (WebAuthn) や Okta Verify(FastPass 含む)を有効化する。②Authenticator Enrollment Policy で対象グループに対して該当 Authenticator を Required にし、移行期間は Grace period を設定して段階的に登録させる。③Authentication Policy(まずは重要アプリ、最終的に全アプリ)のルールで「Phishing-resistant」な possession 要素を要求する制約を設定する。パイロットグループから始めてルールの適用グループを広げ、System Log で登録状況・認証状況を監視しながら全社展開する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) フィッシング耐性のある手段を 2 つ正しく挙げている(FIDO2/WebAuthn、Okta FastPass、Smart Card 等)",
+            "points": 2,
+            "mustInclude": ["FIDO2 (WebAuthn) または Okta FastPass"],
+            "acceptableAlternatives": ["Passkeys", "Smart Card (PIV)"],
+            "scoringGuide": "正しい手段 2 つ=2点。1 つ=1点。SMS・メール・TOTP を挙げた場合はカウントしない。"
+          },
+          {
+            "id": "C2",
+            "description": "(1) 耐性の理由(共有可能な認証データがない / オリジンへの暗号学的バインド)と SMS OTP の弱点(コードの窃取・中継)を対比して説明している",
+            "points": 3,
+            "mustInclude": ["ユーザーが第三者に渡せる認証データ(コード)が存在しない、またはオリジンにバインドされる"],
+            "acceptableAlternatives": ["公開鍵暗号ベース", "AiTM/リアルタイムフィッシングで OTP は窃取され得る"],
+            "scoringGuide": "耐性の理由+SMS の弱点の対比=3点。片方のみ=1〜2点。理由なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(2) Authenticator の有効化 → Enrollment Policy で Required(+Grace period)という登録面のステップを説明している",
+            "points": 3,
+            "mustInclude": ["Authenticator の有効化", "Enrollment Policy で必須化"],
+            "acceptableAlternatives": ["Grace period による段階導入", "パイロットグループからの展開"],
+            "scoringGuide": "有効化+必須化(+段階導入)=3点。どちらか一方=1〜2点。ポリシー名なしの抽象論=最大 1 点。"
+          },
+          {
+            "id": "C4",
+            "description": "(2) Authentication Policy でアクセス時にフィッシング耐性要素を要求するステップを説明している",
+            "points": 2,
+            "mustInclude": ["Authentication Policy で Phishing-resistant 要素を要求する"],
+            "acceptableAlternatives": ["重要アプリから順に適用", "possession 要素の制約設定"],
+            "scoringGuide": "ポリシー名+要求内容=2点。曖昧=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "SMS OTP や Email OTP をフィッシング耐性ありと分類した場合", "points": -2 }
+        ],
+        "gradingInstructions": "「登録の制御(Enrollment Policy)」と「アクセス時の強制(Authentication Policy)」の 2 段階が揃っているかが合否の分かれ目。技術的理由(C2)は平易な言葉でもよいが、「安全だから」のような同語反復は 0 点。",
+        "commonMistakes": [
+          "登録必須化だけでアクセス時の強制を忘れる(未登録ユーザーは古い要素で認証し続けられる)",
+          "TOTP(Google Authenticator)をフィッシング耐性ありと誤解する"
+        ]
+      },
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" },
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" },
+        { "title": "Authenticator enrollment policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/policies/about-mfa-enrollment-policies.htm" }
+      ],
+      "tags": ["phishing-resistant", "webauthn", "fastpass", "rollout"]
+    },
+    {
+      "id": "OCP-WR-011",
+      "type": "written",
+      "domain": "security-enforcement",
+      "topic": "password-policy-design",
+      "difficulty": "intermediate",
+      "question": "セキュリティ監査の指摘を受けて、Okta のパスワードポリシーを見直します。(1) Password authenticator で構成できる「パスワードの強度に関する設定」を 3 つ以上、(2) 「アカウント保護(攻撃対策)に関する設定」を 2 つ以上挙げ、それぞれ何を防ぐための設定かを説明してください。(3) ポリシーをグループごとに変えたい場合(例: 管理者はより厳格に)はどうすればよいかも述べてください。",
+      "modelAnswer": "(1) 強度に関する設定の例: ①最小文字数 — 短いパスワードの総当たりを防ぐ。②文字種要件(小文字・大文字・数字・記号)— 探索空間を広げる。③ユーザー名・名・姓を含むパスワードの禁止 — 推測されやすいパスワードを防ぐ。④Common password check — 約 100 万件の頻出パスワードリストとの照合により、漏えいリストベースの辞書攻撃・パスワードスプレーに使われがちなパスワードを禁止する。⑤パスワード履歴(直近 1〜30 個の再利用禁止)と最小有効期間 — 使い回し・即時の元パスワード復帰を防ぐ。(2) アカウント保護の設定の例: ①ロックアウト(失敗 N 回でロック、自動アンロック時間、ロックアウト通知メール)— ブルートフォース攻撃を遅延・検知する。②ロックアウト通知 — ユーザー本人が攻撃の兆候に気付ける。(3) パスワードポリシーは複数作成でき、適用対象グループと優先順位を設定できるため、管理者グループ向けにより厳格なポリシー(長い最小文字数、短い有効期限、少ない失敗許容回数など)を作成し、優先順位を上げて適用する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 強度に関する設定を 3 つ以上、目的とともに挙げている",
+            "points": 4,
+            "mustInclude": ["文字種または最小文字数の要件", "common password check または履歴/ユーザー名禁止のいずれか"],
+            "acceptableAlternatives": ["連続反復文字の制限", "Expression Language による禁止ワード", "最小有効期間・有効期限"],
+            "scoringGuide": "正しい設定 3 つ以上+各目的の説明=4点。3 つだが目的が薄い=3点。2 つ=2点。1 つ=1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) アカウント保護の設定(ロックアウト回数・自動アンロック・通知)を 2 つ以上、目的とともに挙げている",
+            "points": 3,
+            "mustInclude": ["ロックアウト(失敗回数)"],
+            "acceptableAlternatives": ["自動アンロック時間", "ロックアウト通知メール", "ブルートフォース対策という目的"],
+            "scoringGuide": "2 つ以上+目的=3点。1 つ=1〜2点。なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) グループ単位のポリシー適用(複数ポリシー+優先順位)を説明している",
+            "points": 3,
+            "mustInclude": ["グループを対象にした別ポリシーの作成"],
+            "acceptableAlternatives": ["優先順位(priority)の設定", "管理者向けにより厳格な値"],
+            "scoringGuide": "複数ポリシー+グループ適用(+優先順位)=3点。「設定を変える」のみで仕組みの説明なし=1点。不可能と回答=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "存在しない設定(絵文字必須等)を事実として挙げた場合", "points": -1 }
+        ],
+        "gradingInstructions": "設定名は UI の正確な文言でなくてよいが、何を制御する設定かが特定できること。目的の説明が「セキュリティのため」のみの場合、その項目は半分の評価とする。",
+        "commonMistakes": [
+          "強度設定とロックアウト設定の区別がつかない",
+          "グループごとのポリシー分離(複数ポリシー+優先順位)を知らない"
+        ]
+      },
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["password-policy", "lockout", "policy-design"]
+    },
+    {
+      "id": "OCP-WR-012",
+      "type": "written",
+      "domain": "troubleshooting",
+      "topic": "signin-troubleshooting-runbook",
+      "difficulty": "advanced",
+      "question": "ヘルプデスク向けに「ユーザーが Okta にサインインできない」場合のトラブルシューティング手順書を作成してください。少なくとも次の要素を含めること: (1) 最初に確認するユーザーアカウントの状態と、状態ごとの対処(3 状態以上)、(2) アカウント状態に問題がない場合に System Log で確認する内容、(3) それでも解決しない場合の確認事項(ポリシー・ネットワーク等)とエスカレーション先。",
+      "modelAnswer": "(1) Directory > People で対象ユーザーを検索し、ステータスを確認する。Locked out → Unlock を実行(必要なら原因の失敗ログイン元も確認)。Suspended → 業務上問題なければ Unsuspend。Deactivated → 正当な理由を確認のうえ必要なら Activate(割り当ては再構成が必要)。Password expired → パスワード更新を案内(または管理者リセット)。Pending user action → アクティベーションメールの再送。(2) System Log で actor(対象ユーザー)や eventType(例: user.session.start)、outcome.result が FAILURE のイベントをフィルタし、失敗理由(reason)を確認する。誤ったパスワード、MFA 失敗、ポリシーによる拒否、ThreatInsight/ゾーンによるブロックなど、失敗の原因がイベントに記録される。(3) ポリシー要因の確認: 対象ユーザーに適用される Global Session Policy / Authentication Policy のルール(ネットワークゾーン条件、必須要素)を確認し、ユーザーのアクセス元(社外ネットワーク、新しい環境)が拒否条件に該当していないか調べる。Authenticator の破損・端末変更が疑われる場合は該当 Authenticator をリセットする。org 全体で発生している場合は status.okta.com で Okta サービス障害を確認する。以上で解決しない場合は、事象・時刻・System Log のイベント情報を添えて Okta Help Center からサポートケースを作成しエスカレーションする。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) 3 つ以上のアカウント状態と、それぞれに対応する正しい対処を対にして挙げている",
+            "points": 4,
+            "mustInclude": ["Locked out → Unlock", "Suspended / Deactivated / Password expired / Pending user action のうち 2 つ以上と正しい対処"],
+            "acceptableAlternatives": ["アクティベーションメール再送", "パスワードリセット"],
+            "scoringGuide": "3 状態以上+正しい対処=4点。2 状態=2〜3点。1 状態=1点。対処が誤っている状態はカウントしない。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) System Log で失敗イベント(対象ユーザーのサインイン失敗と理由)を確認する手順を説明している",
+            "points": 3,
+            "mustInclude": ["System Log で対象ユーザーの失敗イベントと理由を確認する"],
+            "acceptableAlternatives": ["eventType / outcome によるフィルタ", "user.session.start"],
+            "scoringGuide": "確認対象(失敗理由)+絞り込み方法=3点。System Log を見るとだけ記載=1〜2点。言及なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) ポリシー・ネットワーク要因の確認(GSP/認証ポリシーのルール、ゾーン条件、Authenticator の状態)に言及している",
+            "points": 2,
+            "mustInclude": ["適用ポリシーのルール確認またはネットワークゾーン条件の確認"],
+            "acceptableAlternatives": ["Authenticator のリセット", "ThreatInsight/ブロックの可能性"],
+            "scoringGuide": "1 つ以上の具体的確認=2点。曖昧=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(3) エスカレーション(status.okta.com の確認、サポートケース作成)を含めている",
+            "points": 1,
+            "mustInclude": ["サポートケースの作成または status.okta.com の確認"],
+            "acceptableAlternatives": ["Okta Help Center"],
+            "scoringGuide": "言及あり=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「まずユーザーを Deactivate して作り直す」等、破壊的な操作を標準手順として提示した場合", "points": -2 }
+        ],
+        "gradingInstructions": "手順書としての体裁(番号付け等)は採点対象外。状態→対処の対応の正確さ(C1)を最重視する。Deactivated ユーザーの Activate に伴う注意(割り当てが戻らない)への言及は加点しないが好ましい補足として扱う。",
+        "commonMistakes": [
+          "ステータス確認を飛ばして最初からパスワードリセットする手順にする",
+          "System Log の存在に触れない",
+          "Okta サービス側の障害(status.okta.com)という切り分け観点が抜ける"
+        ]
+      },
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" },
+        { "title": "Okta Status", "url": "https://status.okta.com/" },
+        { "title": "How to Create a Support Case (Okta Support)", "url": "https://support.okta.com/help/s/article/How-to-Create-a-Support-Case" }
+      ],
+      "tags": ["troubleshooting", "runbook", "sign-in", "escalation"]
+    },
+    {
+      "id": "OCP-WR-013",
+      "type": "written",
+      "domain": "troubleshooting",
+      "topic": "dashboard-app-missing",
+      "difficulty": "intermediate",
+      "question": "ユーザーから「昨日まで End-User Dashboard に表示されていた経費精算アプリが今日は表示されない」と報告がありました。想定される原因を 3 つ以上挙げ、それぞれの確認方法(Admin Console のどこで何を見るか)を説明してください。",
+      "modelAnswer": "原因と確認方法の例: ①アプリ割り当ての喪失 — ユーザーが個別割り当てを解除された、またはグループ経由の割り当てだった場合にそのグループから外れた。確認: アプリの Assignments タブに対象ユーザーがいるか、ユーザーページの Applications タブ、所属グループ(Groups タブ)を確認する。②Group Rule による意図しないグループ脱退 — ユーザーの属性(例: department)が変更され、Group Rule の条件から外れてグループごとアプリ割り当てを失った。確認: ユーザーのプロファイル属性の変更履歴と該当 Group Rule の条件、System Log でグループメンバーシップ変更イベントを確認する。③アプリ側の表示設定変更 — アプリ設定で「アプリアイコンをユーザーに表示しない」が有効化された。確認: アプリの General/Visibility 設定を確認する。④アプリの無効化 — アプリ統合自体が Deactivate された。確認: Applications 一覧でアプリのステータスを確認する。いずれの場合も System Log(アプリ割り当て解除・グループ変更・アプリ設定変更のイベント)で「昨日から今日の間に何が起きたか」を時系列で特定できる。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "割り当て関連の原因(個別/グループ割り当ての喪失)と確認場所を挙げている",
+            "points": 3,
+            "mustInclude": ["アプリ割り当ての喪失(個別またはグループ)"],
+            "acceptableAlternatives": ["Assignments タブ", "ユーザーの Applications / Groups タブ"],
+            "scoringGuide": "原因+確認場所=3点。原因のみ=2点。なし=0点。"
+          },
+          {
+            "id": "C2",
+            "description": "属性変更→Group Rule 条件から外れたという動的メンバーシップの原因を挙げている",
+            "points": 3,
+            "mustInclude": ["属性変更により Group Rule の条件から外れた"],
+            "acceptableAlternatives": ["グループルールの変更・無効化"],
+            "scoringGuide": "原因+確認方法(属性・ルール・ログ)=3点。原因のみ=2点。なし=0点。"
+          },
+          {
+            "id": "C3",
+            "description": "アプリ側の要因(表示設定、アプリの無効化)を挙げている",
+            "points": 2,
+            "mustInclude": ["アプリの表示設定(hide)またはアプリの無効化"],
+            "acceptableAlternatives": ["Visibility 設定", "アプリ統合の Deactivate"],
+            "scoringGuide": "1 つ以上+確認場所=2点。原因のみ=1点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "System Log による時系列での変更イベント特定に言及している",
+            "points": 2,
+            "mustInclude": ["System Log で変更イベントを確認する"],
+            "acceptableAlternatives": ["割り当て解除・グループ変更・設定変更のイベント"],
+            "scoringGuide": "言及あり=2点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「ブラウザのキャッシュが原因」のような Okta 設定と無関係な原因のみで 3 つを構成した場合", "points": -1 }
+        ],
+        "gradingInstructions": "原因は Okta の構成に起因するものを中心に評価する(ブラウザ要因等は 4 つ目以降の補足なら減点しない)。確認方法が Admin Console 上の具体的な場所を示しているかを重視する。",
+        "commonMistakes": [
+          "グループ経由割り当てと Group Rule の関係を考慮しない",
+          "System Log で「いつ・誰が・何を変えたか」を調べる発想がない"
+        ]
+      },
+      "sources": [
+        { "title": "Assign app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-assign-app-group.htm" },
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" },
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["troubleshooting", "dashboard", "app-assignment", "group-rules"]
+    },
+    {
+      "id": "OCP-WR-014",
+      "type": "written",
+      "domain": "syslog-support",
+      "topic": "system-log-investigation",
+      "difficulty": "advanced",
+      "question": "セキュリティチームから「ユーザー taro.yamada@example.com のアカウントで深夜に不審なサインインがあった可能性がある」と調査依頼を受けました。System Log を使った調査手順を説明してください。含めるべき要素: (1) 対象ユーザー・期間・イベント種別での絞り込み方法(高度な検索式の例を 1 つ以上)、(2) イベントから確認すべき情報(3 つ以上)、(3) 不正アクセスが疑われる場合に直ちに取るべき封じ込めアクション(2 つ以上)、(4) 調査結果の保全方法。",
+      "modelAnswer": "(1) Reports > System Log を開き、期間を対象の深夜時間帯に設定する。高度な検索式で対象ユーザーとイベント種別を絞り込む。例: actor.alternateId eq \"taro.yamada@example.com\" and eventType eq \"user.session.start\"(失敗も含めて追うなら outcome.result の条件を付けず、成功のみなら and outcome.result eq \"SUCCESS\" を追加)。(2) 確認すべき情報の例: ①イベントの outcome(SUCCESS/FAILURE)と失敗理由、②アクセス元 IP アドレスと位置情報(普段と異なる国・都市からのアクセスか。位置情報マップ表示も活用)、③クライアント情報(ブラウザ/OS/デバイスが普段と異なるか)、④MFA の実施状況(どの要素で認証したか、MFA 失敗イベントの有無)、⑤同時間帯の他イベント(パスワード変更、Authenticator の登録、メール変更などの永続化行動)。(3) 封じ込めアクション: ①Clear User Sessions で既存セッションを失効させる、②Expire Password(または管理者によるリセット)で資格情報を無効化する、③必要に応じてアカウントを Suspend する、④不審な登録済み Authenticator をリセットする。(4) 保全: 該当期間の System Log を CSV でダウンロードして証跡として保存する(System Log の保持期間は無限ではないため、速やかにエクスポートする)。調査メモとともにサポートケースやセキュリティインシデント記録に添付する。",
+      "rubric": {
+        "totalPoints": 10,
+        "passingScore": 7,
+        "criteria": [
+          {
+            "id": "C1",
+            "description": "(1) ユーザー・期間・イベント種別での絞り込みと、妥当な検索式の例を示している",
+            "points": 3,
+            "mustInclude": ["対象ユーザーでの絞り込み", "eventType(または同等のイベント種別)での絞り込み"],
+            "acceptableAlternatives": ["actor.alternateId eq \"...\" の式", "user.session.start", "期間指定"],
+            "scoringGuide": "絞り込み 3 要素+式の例=3点。絞り込みの説明のみで式なし=2点。System Log を開く程度=1点。"
+          },
+          {
+            "id": "C2",
+            "description": "(2) 確認すべき情報を 3 つ以上(IP/位置、クライアント、成否と理由、MFA 状況、関連イベント等)挙げている",
+            "points": 3,
+            "mustInclude": ["アクセス元 IP または位置情報", "成否(outcome)"],
+            "acceptableAlternatives": ["クライアント(ブラウザ/OS)", "MFA イベント", "パスワード変更・Authenticator 登録などの関連イベント"],
+            "scoringGuide": "3 つ以上=3点。2 つ=2点。1 つ=1点。"
+          },
+          {
+            "id": "C3",
+            "description": "(3) 封じ込めアクションを 2 つ以上(セッションクリア、パスワード失効/リセット、Suspend、Authenticator リセット)挙げている",
+            "points": 3,
+            "mustInclude": ["Clear User Sessions(セッション失効)", "パスワードの失効/リセットまたは Suspend"],
+            "acceptableAlternatives": ["Authenticator のリセット"],
+            "scoringGuide": "2 つ以上=3点。1 つ=1〜2点。なし=0点。"
+          },
+          {
+            "id": "C4",
+            "description": "(4) CSV エクスポート等による証跡の保全に言及している",
+            "points": 1,
+            "mustInclude": ["CSV ダウンロード(エクスポート)による保存"],
+            "acceptableAlternatives": ["保持期間があるため速やかに保全する"],
+            "scoringGuide": "言及あり=1点。なし=0点。"
+          }
+        ],
+        "deductions": [
+          { "description": "「まずユーザーを Deactivate して削除する」等、調査前の証跡破壊につながる手順を提示した場合", "points": -2 }
+        ],
+        "gradingInstructions": "検索式は構文の完全一致を求めない(eq 演算子と属性パスのイメージが正しければ可)。封じ込め(C3)は Okta 上で即時実行可能なアクションであること。組織のインシデント対応プロセス(CSIRT 連絡等)への言及は減点しないが、Okta 上のアクションが 2 つ未満なら C3 は満点にしない。",
+        "commonMistakes": [
+          "検索式・フィルタの具体性がない",
+          "封じ込めがパスワードリセットのみで、セッション失効を忘れる",
+          "ログの保全(エクスポート)を忘れる"
+        ]
+      },
+      "sources": [
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" },
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" }
+      ],
+      "tags": ["system-log", "incident-investigation", "containment"]
+    }
+  ]
+}

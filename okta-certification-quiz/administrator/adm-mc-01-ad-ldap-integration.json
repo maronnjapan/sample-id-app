@@ -1,0 +1,386 @@
+{
+  "meta": {
+    "fileId": "adm-mc-01-ad-ldap-integration",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Part I: Active Directory Integration (delegated authentication, agents, service accounts, password policies, activation options, AD vs Okta groups)",
+    "examSectionJa": "パートI: Active Directory 統合(委任認証、エージェント、サービスアカウント、パスワードポリシー、アクティベーション、AD グループと Okta グループ)",
+    "examWeight": 47,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 18
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-001",
+      "type": "multiple-select",
+      "domain": "ad-integration",
+      "topic": "ad-agent-capabilities",
+      "difficulty": "basic",
+      "question": "Okta Active Directory (AD) エージェントをインストールして AD 統合を構成することで実現できる機能を 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "委任認証(Delegated Authentication)による AD 資格情報での Okta サインイン" },
+        { "id": "B", "text": "AD ユーザー・グループの Okta へのインポート(プロファイルソーシング)" },
+        { "id": "C", "text": "Just-In-Time (JIT) プロビジョニング" },
+        { "id": "D", "text": "AD ドメインコントローラーの OS 自動アップグレード" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "AD エージェントにより、委任認証(A)、ユーザー・グループのインポートとプロファイルソーシング(B)、委任認証と組み合わせた JIT プロビジョニング(C)のほか、プロビジョニング(書き戻し)、パスワード同期関連機能、Desktop SSO と組み合わせた構成などが実現できます。D のようなドメインコントローラー自体の管理機能はありません。",
+      "sources": [
+        { "title": "Okta Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/directory/ad-agent-main.htm" },
+        { "title": "Manage your Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-integration.htm" }
+      ],
+      "tags": ["ad-agent", "delegated-authentication", "import", "jit"]
+    },
+    {
+      "id": "OCA-MC-002",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "agent-high-availability",
+      "difficulty": "intermediate",
+      "question": "AD 統合の高可用性(HA)とフェイルオーバーを確保するための、Okta が推奨するエージェント構成はどれですか?",
+      "choices": [
+        { "id": "A", "text": "各ドメインに 2 つ以上の AD エージェントを、それぞれ別のサーバーにインストールする" },
+        { "id": "B", "text": "1 台のサーバーに 2 つの AD エージェントをインストールする" },
+        { "id": "C", "text": "AD エージェントは常に 1 つのみで十分である" },
+        { "id": "D", "text": "ドメインコントローラーごとに必ず 5 つのエージェントをインストールする" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "高可用性とフェイルオーバーのため、各ドメインに 2 つ以上の AD エージェントを別々のサーバーにインストールすることが推奨されています。同一サーバーへの複数インストール(B)ではサーバー障害時に全滅するため HA になりません。1 つのみ(C)は単一障害点となり、委任認証を使っている場合はエージェント停止=サインイン不可につながります。D のような台数の固定要件はありません。",
+      "sources": [
+        { "title": "Install multiple Okta Active Directory agents (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-multiple.htm" }
+      ],
+      "tags": ["ad-agent", "high-availability", "failover"]
+    },
+    {
+      "id": "OCA-MC-003",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "agent-connectivity",
+      "difficulty": "intermediate",
+      "question": "Okta AD エージェントと Okta サービス間の通信について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "エージェントから Okta へのアウトバウンド HTTPS (ポート 443) 接続のみで通信し、インバウンドのファイアウォール開放は不要" },
+        { "id": "B", "text": "Okta からエージェントへのインバウンド接続用にポート 8443 を開放する必要がある" },
+        { "id": "C", "text": "エージェントは LDAP (389) で直接インターネット経由で Okta と通信する" },
+        { "id": "D", "text": "VPN トンネルの構築が必須である" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "AD エージェントはオンプレミス側から Okta へアウトバウンドの HTTPS(443)で接続し、ロングポーリングでコマンドを受け取るアーキテクチャです。このためインバウンドポートの開放(B)や VPN(D)は不要で、ファイアウォール設定の変更を最小限に抑えられます。C のように LDAP でインターネットと通信することはありません(LDAP はエージェントと AD 間のオンプレミス内通信です)。",
+      "sources": [
+        { "title": "Okta Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/directory/ad-agent-main.htm" },
+        { "title": "Configure DMZ server ports for Active Directory integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-dmzports.htm" }
+      ],
+      "tags": ["ad-agent", "connectivity", "port-443", "architecture"]
+    },
+    {
+      "id": "OCA-MC-004",
+      "type": "multiple-select",
+      "domain": "ad-integration",
+      "topic": "dmz-ports",
+      "difficulty": "advanced",
+      "question": "DMZ サーバーに AD エージェントを配置する場合、エージェントが Active Directory と通信するために開放が必要となるポートを 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "88 (Kerberos)" },
+        { "id": "B", "text": "389 (LDAP) / 636 (LDAP SSL)" },
+        { "id": "C", "text": "3268 (LDAP グローバルカタログ)" },
+        { "id": "D", "text": "25 (SMTP)" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "DMZ 配置時に AD との通信で必要となるポートには、Kerberos 認証の 88(およびパスワード変更用の 464)、LDAP の 389/636、グローバルカタログの 3268/3269 のほか、DNS (53)、NTP (123)、RPC (135 と動的ポート範囲 49152〜65535)、SMB (445) などがあります。D の SMTP (25) はメール送信用でありAD 統合の要件ではありません。",
+      "sources": [
+        { "title": "Configure DMZ server ports for Active Directory integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-install-dmzports.htm" }
+      ],
+      "tags": ["dmz", "ports", "kerberos", "ldap", "global-catalog"]
+    },
+    {
+      "id": "OCA-MC-005",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "service-account",
+      "difficulty": "intermediate",
+      "question": "AD エージェントのインストール時に、既存のアカウントを指定しない場合に作成される既定のサービスアカウントについて正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "「OktaService」という名前で作成され、Domain Users グループの権限を継承する" },
+        { "id": "B", "text": "「OktaService」という名前で作成され、自動的に Domain Admins に追加される" },
+        { "id": "C", "text": "「Administrator」アカウントがそのまま使用される" },
+        { "id": "D", "text": "サービスアカウントは不要で、匿名で動作する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "インストーラーは既定で「OktaService」というサービスアカウントを作成します。このアカウントは Domain Users グループの権限を継承する通常のドメインアカウントであり、自動的に Domain Admins に追加されることはありません(B は誤り。Domain Admins への追加はオプションであり、最小権限の観点から推奨されません)。C・D のような動作はありません。",
+      "sources": [
+        { "title": "About Okta service account permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-about-service-account.htm" }
+      ],
+      "tags": ["service-account", "oktaservice", "least-privilege"]
+    },
+    {
+      "id": "OCA-MC-006",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "service-account-permissions",
+      "difficulty": "advanced",
+      "question": "Okta から AD ユーザーのパスワードリセットとアカウントロック解除を実行できるようにするには、AD エージェントのサービスアカウントにどの権限が必要ですか?",
+      "choices": [
+        { "id": "A", "text": "Reset Password の制御アクセス権と、pwdLastSet および lockoutTime 属性への書き込み権限" },
+        { "id": "B", "text": "Domain Admins メンバーシップ(これ以外の方法はない)" },
+        { "id": "C", "text": "読み取り権限のみで十分である" },
+        { "id": "D", "text": "Enterprise Admins メンバーシップ" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "パスワードリセット機能には、対象ユーザーオブジェクトに対する Reset Password 制御アクセス権に加え、pwdLastSet(次回ログオン時のパスワード変更制御)と lockoutTime(ロック解除)属性への Write Property 権限が必要です。Domain Admins(B)や Enterprise Admins(D)を付与すれば動作はしますが、最小権限の原則に反するため推奨されず「これ以外の方法はない」も誤りです。読み取りのみ(C)ではインポートはできてもパスワード操作はできません。",
+      "sources": [
+        { "title": "About Okta service account permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-about-service-account.htm" }
+      ],
+      "tags": ["service-account", "password-reset", "permissions", "least-privilege"]
+    },
+    {
+      "id": "OCA-MC-007",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "delegated-authentication",
+      "difficulty": "basic",
+      "question": "AD の委任認証(Delegated Authentication)を有効にした場合の動作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーは AD の資格情報で Okta にサインインでき、パスワードの検証は AD エージェント経由でドメインコントローラーが行う" },
+        { "id": "B", "text": "AD のパスワードがすべて Okta クラウドに複製・保管される" },
+        { "id": "C", "text": "ユーザーは Okta 専用の別パスワードを必ず設定する必要がある" },
+        { "id": "D", "text": "AD が停止していても認証には一切影響しない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "委任認証では、Okta サインイン時に入力された資格情報が AD エージェント経由でオンプレミスのドメインコントローラーに渡されて検証されます。パスワードは Okta 側に保存されません(B は誤り)。ユーザーは AD パスワードをそのまま使うため別パスワード(C)は不要です。検証はオンプレミスで行われるため、AD やエージェントが全断すると Okta サインインに影響します(D は誤り)。だからこそエージェントの冗長化が重要です。",
+      "sources": [
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" }
+      ],
+      "tags": ["delegated-authentication", "password-validation"]
+    },
+    {
+      "id": "OCA-MC-008",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "ad-password-policy",
+      "difficulty": "advanced",
+      "question": "AD を委任認証のソースとしているユーザーのパスワードポリシーについて、正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "パスワードの有効期限は AD 側から取り込まれるため、Okta のパスワードポリシーには AD ソースユーザー向けの「Password expires after N days」設定は表示されない" },
+        { "id": "B", "text": "Okta 側の有効期限設定が AD の設定を常に上書きする" },
+        { "id": "C", "text": "AD ソースのユーザーにはパスワードポリシーという概念が存在しない" },
+        { "id": "D", "text": "パスワードの複雑性は Okta と AD の両方で二重に強制するのが唯一の構成である" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "AD(または LDAP)をソースとするユーザーのパスワード有効期限は AD からインポートされるため、Okta 側ポリシーの有効期限設定は表示されず、実質的なパスワードルールはディレクトリ側のポリシーが主体になります(A が正しい)。B のような上書きはできません。C は誤りで、ディレクトリ側のポリシーが適用されます。D の二重強制は「唯一の構成」ではありません。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["password-policy", "ad-sourced", "expiration"]
+    },
+    {
+      "id": "OCA-MC-009",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "lockout-best-practice",
+      "difficulty": "advanced",
+      "question": "AD 委任認証を使用する org で、アカウントロックアウトに関する Okta のベストプラクティスはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta 側のロックアウト失敗許容回数を、AD 側のロックアウトしきい値の半分以下に設定する" },
+        { "id": "B", "text": "Okta 側のロックアウト回数を AD 側より大きく設定する" },
+        { "id": "C", "text": "ロックアウトは AD 側で無効化する" },
+        { "id": "D", "text": "Okta と AD のロックアウト回数は必ず同一値にする" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta のロックアウト上限をディレクトリ(AD)側の半分以下に設定することがベストプラクティスです。こうすると攻撃や誤入力の失敗はまず Okta 側でロックされ、AD アカウント自体のロックアウト(オンプレミス業務への影響が大きい)を防げます。B だと Okta より先に AD 側がロックされてしまいます。C はセキュリティ低下、D のような同一値の要件はありません。",
+      "sources": [
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["lockout", "best-practice", "delegated-authentication"]
+    },
+    {
+      "id": "OCA-MC-010",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "jit-provisioning",
+      "difficulty": "intermediate",
+      "question": "Active Directory の Just-In-Time (JIT) プロビジョニングについて正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "JIT には委任認証が有効であることが必要で、ユーザーの初回サインイン時に Okta アカウントが自動作成され、アクティベーションメールは送信されない" },
+        { "id": "B", "text": "JIT は委任認証と無関係に動作し、作成されたユーザーにはアクティベーションメールが届く" },
+        { "id": "C", "text": "JIT は既に Okta に存在するユーザーの削除を行う機能である" },
+        { "id": "D", "text": "JIT はグループのみを対象とし、ユーザーは作成しない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "AD の JIT プロビジョニングは、委任認証(または Desktop SSO)による初回サインイン時に Okta ユーザーを自動作成・自動アクティベートする機能で、委任認証が有効であることが前提です。JIT ではアクティベーションメールは送信されません。また JIT はソースディレクトリの User Creation & Matching 設定を無視して動作し、サインイン時や管理者によるプロファイル更新時に属性・ステータスの更新も行います。B・C・D は仕様として誤りです。",
+      "sources": [
+        { "title": "Add and update users with Active Directory Just-In-Time provisioning (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-add-update-JIT.htm" }
+      ],
+      "tags": ["jit", "delegated-authentication", "provisioning"]
+    },
+    {
+      "id": "OCA-MC-011",
+      "type": "multiple-select",
+      "domain": "ad-integration",
+      "topic": "activation-options",
+      "difficulty": "intermediate",
+      "question": "AD をソースとするユーザーを Okta で利用可能(アクティブ)にする方法として正しいものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "スケジュールされた(または手動の)インポートを実行し、ユーザーを確認(Confirm)・アクティベートする(自動確認・自動アクティベート設定も可)" },
+        { "id": "B", "text": "委任認証+JIT により、ユーザーの初回サインイン時に自動作成・アクティベートする" },
+        { "id": "C", "text": "AD ユーザーは Okta では永久に利用できない" },
+        { "id": "D", "text": "ユーザー自身が Okta の Admin Console から自分を登録する" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "AD ソースユーザーの主なアクティベーション経路は、(1) インポート(スケジュール/手動)後の確認・アクティベーション(インポート設定で自動確認・自動アクティベートも構成可能)と、(2) 委任認証+JIT による初回サインイン時の自動作成・アクティベートの 2 つです。C は明らかに誤り。D のようにエンドユーザーが Admin Console を操作することはありません。",
+      "sources": [
+        { "title": "Configure Active Directory import and account settings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-configure-import.htm" },
+        { "title": "Add and update users with Active Directory Just-In-Time provisioning (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-add-update-JIT.htm" }
+      ],
+      "tags": ["activation", "import", "jit"]
+    },
+    {
+      "id": "OCA-MC-012",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "import-types",
+      "difficulty": "intermediate",
+      "question": "AD からのフルインポート(Full Import)とインクリメンタルインポート(Incremental Import)の違いとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "フルインポートはスコープ内のすべてのユーザー・グループを処理し、インクリメンタルインポートは前回のインポート以降に変更のあったオブジェクトのみを処理する" },
+        { "id": "B", "text": "インクリメンタルインポートの方が常に処理対象が多い" },
+        { "id": "C", "text": "フルインポートはグループを対象にできない" },
+        { "id": "D", "text": "両者に違いはなく名前だけが異なる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "フルインポートは対象 OU 配下のすべてのユーザー・グループを毎回評価するため、削除や移動の検出も含め完全な同期ができますが時間がかかります。インクリメンタルインポートは前回以降の変更分のみを取り込むため高速で、定期実行に向きます。ただし一部の変更はフルインポートでないと反映されないケースがあるため、運用では併用が一般的です。B・C・D は事実に反します。",
+      "sources": [
+        { "title": "Configure Active Directory import and account settings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-configure-import.htm" },
+        { "title": "Manage Active Directory users and groups (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-users-groups.htm" }
+      ],
+      "tags": ["import", "full-import", "incremental-import"]
+    },
+    {
+      "id": "OCA-MC-013",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "import-matching",
+      "difficulty": "advanced",
+      "question": "AD からユーザーをインポートする際、「インポートされたユーザーが既存の Okta ユーザーと同一人物か」を判定する仕組みはどれですか?",
+      "choices": [
+        { "id": "A", "text": "マッチングルール(完全一致: username または email / 部分一致: firstName + lastName)に基づいて判定され、一致状況に応じて自動確認または手動確認を構成できる" },
+        { "id": "B", "text": "ユーザーの表示名の見た目で管理者が必ず 1 人ずつ目視判定しなければならない" },
+        { "id": "C", "text": "同一判定は行われず、常に重複ユーザーが作成される" },
+        { "id": "D", "text": "パスワードが同じかどうかで判定される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "インポート時の User Creation & Matching 設定で、完全一致(username / email)や部分一致(first name + last name)のマッチングルールを構成し、一致した既存ユーザーへの自動確認(auto-confirm)や新規ユーザーの自動アクティベートを制御できます。B は自動確認を構成しない場合の手動確認の説明としても「必ず目視」ではなくルール判定が先に行われます。C・D は誤りです。",
+      "sources": [
+        { "title": "Configure Active Directory import and account settings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-configure-import.htm" }
+      ],
+      "tags": ["import", "matching-rules", "confirmation"]
+    },
+    {
+      "id": "OCA-MC-014",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "ad-groups-vs-okta-groups",
+      "difficulty": "intermediate",
+      "question": "AD からインポートされたグループ(AD-sourced group)と Okta で作成したグループ(Okta group)の違いとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "AD ソースグループのメンバーシップは AD 側で管理され、Okta 上で直接編集できない。Okta グループは Okta 上で自由に管理できる" },
+        { "id": "B", "text": "AD ソースグループは Okta 上で自由にメンバーを追加・削除できる" },
+        { "id": "C", "text": "Okta グループはアプリ割り当てに使用できない" },
+        { "id": "D", "text": "AD ソースグループはポリシーの対象として使用できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "AD からインポートされたグループのメンバーシップのソースは AD であり、変更は AD 側で行ってインポート/同期で Okta に反映します(Okta 上では読み取り専用)。Okta グループは Okta で作成・管理し、手動割り当てや Group Rule で運用します。B は誤り。C・D も誤りで、どちらのグループもアプリ割り当てやポリシー条件に使用できます(admin ロール付与などに関する制約は別途あります)。",
+      "sources": [
+        { "title": "Import groups from Active Directory (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-import-groups.htm" },
+        { "title": "Manage Active Directory users and groups (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-users-groups.htm" }
+      ],
+      "tags": ["ad-groups", "okta-groups", "membership"]
+    },
+    {
+      "id": "OCA-MC-015",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "ad-group-to-okta-group",
+      "difficulty": "advanced",
+      "question": "複数の AD グループのメンバーを、アプリ割り当てやポリシー適用に使いやすい 1 つの Okta グループへ自動的にまとめたい。適切な方法はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Group Rule を作成し、対象の AD グループのメンバーであることを条件に Okta グループへ追加する" },
+        { "id": "B", "text": "AD ソースグループのメンバーを Okta 上で手動コピーする" },
+        { "id": "C", "text": "Group Push を使って AD グループを Okta グループに変換する" },
+        { "id": "D", "text": "AD グループを削除して Okta グループを作り直す" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Rule は「特定グループのメンバーである」ことを条件にできるため、複数の AD ソースグループを条件に 1 つの Okta グループへメンバーを自動集約できます(公式ドキュメントでも複数 AD グループ→単一 Okta グループへのマッピングが代表的ユースケースとして挙げられています)。B は同期されず破綻します。C の Group Push は逆方向(Okta グループをプロビジョニング先アプリへ push する機能)です。D は AD 側の運用を破壊します。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" },
+        { "title": "Import groups from Active Directory (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-import-groups.htm" }
+      ],
+      "tags": ["group-rules", "ad-groups", "group-consolidation"]
+    },
+    {
+      "id": "OCA-MC-016",
+      "type": "single-choice",
+      "domain": "ad-integration",
+      "topic": "agentless-dsso",
+      "difficulty": "advanced",
+      "question": "Agentless Desktop Single Sign-On (ADSSO) について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ドメイン参加済み Windows 端末のユーザーを Kerberos によって Okta へサイレント認証させる機能で、オンプレミスに IWA 用 Web サーバーを追加設置せずに実現できる" },
+        { "id": "B", "text": "各クライアント PC に専用のデスクトップエージェントをインストールする必要がある" },
+        { "id": "C", "text": "macOS では概念的に一切実現できない" },
+        { "id": "D", "text": "SAML アプリごとに個別に構成する必要がある" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Agentless DSSO は、AD にサービスアカウント(SPN 設定)を用意し Okta 側で構成することで、ドメイン参加端末のブラウザから Kerberos チケットにより Okta へシームレスにサインインさせる機能です。従来の IWA(Integrated Windows Authentication)Web エージェントサーバーの設置が不要なため「Agentless」と呼ばれます。オンネットワーク判定にはネットワークゾーンを使用し、ブラウザ側の設定(イントラネットゾーン等)が必要です。B のクライアント常駐エージェントは不要、C は誤り(要件を満たせば macOS ブラウザでも動作)、D は Okta org へのサインインの仕組みでありアプリごとの構成ではありません。",
+      "sources": [
+        { "title": "Manage your Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Directory/ad-agent-manage-integration.htm" },
+        { "title": "Okta Active Directory integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/directory/ad-agent-main.htm" }
+      ],
+      "tags": ["agentless-dsso", "kerberos", "desktop-sso"]
+    },
+    {
+      "id": "OCA-MC-017",
+      "type": "single-choice",
+      "domain": "ldap-integration",
+      "topic": "ldap-agent",
+      "difficulty": "intermediate",
+      "question": "Okta LDAP エージェントによる LDAP ディレクトリ統合の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーは LDAP の資格情報で Okta に認証でき、資格情報自体をクラウドに複製する必要がない" },
+        { "id": "B", "text": "LDAP サーバーを Okta クラウド上へ物理移設する必要がある" },
+        { "id": "C", "text": "LDAP 統合ではユーザーのインポートができない" },
+        { "id": "D", "text": "LDAP エージェントは Windows ドメイン参加が必須である" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "LDAP エージェントは AD エージェントと同様の委任認証モデルを LDAP ディレクトリに提供します。ユーザーは既存の LDAP 資格情報で Okta にサインインでき、資格情報はオンプレミスに留まるためセキュリティを維持できます(A が正しい)。ユーザー・グループのインポートやプロファイルソーシングも可能です(C は誤り)。B・D のような要件はありません。",
+      "sources": [
+        { "title": "Okta LDAP integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/directory/ldap-agent-main.htm" },
+        { "title": "Delegated authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/enable_delegated_auth.htm" }
+      ],
+      "tags": ["ldap", "ldap-agent", "delegated-authentication"]
+    },
+    {
+      "id": "OCA-MC-018",
+      "type": "single-choice",
+      "domain": "ldap-integration",
+      "topic": "ldap-interface",
+      "difficulty": "advanced",
+      "question": "LDAP Interface(Okta が提供するクラウド LDAP エンドポイント)を使用してアプリが Okta に対して LDAP 認証を行う場合の注意点として、公式ドキュメントに記載されているものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "LDAP Interface 経由の認証では Okta のグローバルセッション管理設定は適用されない(無効になる)" },
+        { "id": "B", "text": "LDAP Interface はオンプレミスにエージェントを必ず必要とする" },
+        { "id": "C", "text": "LDAP Interface は SAML アプリ専用である" },
+        { "id": "D", "text": "LDAP Interface を使うと Okta のユーザーがすべて読み取り専用になる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "公式ドキュメントには「ユーザーが LDAP Interface で認証する場合、Okta のグローバルセッション管理設定は無効になる」と明記されています。LDAP Interface は LDAP プロトコルを話すレガシーアプリを、エージェントなしで Okta(Universal Directory)に直接バインドさせるクラウドサービスです(B は誤り: オンプレミスの LDAP エージェントとは別物)。C・D は事実ではありません。",
+      "sources": [
+        { "title": "Global session policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm" },
+        { "title": "Okta LDAP integration (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/directory/ldap-agent-main.htm" }
+      ],
+      "tags": ["ldap-interface", "global-session-policy", "session"]
+    }
+  ]
+}

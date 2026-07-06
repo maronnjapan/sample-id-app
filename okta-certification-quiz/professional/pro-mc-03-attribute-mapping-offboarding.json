@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "fileId": "pro-mc-03-attribute-mapping-offboarding",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 3: Attribute Mapping and Offboarding",
+    "examSectionJa": "ユースケース3: 属性マッピングとオフボーディング",
+    "examWeight": 8,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 5
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-024",
+      "type": "single-choice",
+      "domain": "attribute-mapping",
+      "topic": "profile-editor-mapping",
+      "difficulty": "basic",
+      "question": "Okta ユーザープロファイルの属性をアプリ側のユーザープロファイル属性にマッピングする(例: Okta の department をアプリの division に対応付ける)には、どの画面で設定しますか?",
+      "choices": [
+        { "id": "A", "text": "Directory > Profile Editor で対象アプリのユーザープロファイルを開き、Mappings を編集する" },
+        { "id": "B", "text": "Security > Authentication Policies で属性ルールを追加する" },
+        { "id": "C", "text": "Directory > Groups でグループ属性を編集する" },
+        { "id": "D", "text": "Reports > System Log で属性を書き換える" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "属性マッピングは Directory > Profile Editor(対象アプリの User プロファイル > Mappings)で設定します。同じマッピングはアプリの Provisioning タブ(Attribute Mappings)からも編集でき、どちらも同一のマッピング定義を操作します。B は認証要件、C はグループ管理、D はログ閲覧のための画面であり、属性マッピングはできません。",
+      "sources": [
+        { "title": "Map Okta attributes to app attributes in the Profile Editor (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-map-attributes.htm" },
+        { "title": "Map app attributes on the Provisioning page (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-map-attributes-provisioning.htm" }
+      ],
+      "tags": ["attribute-mapping", "profile-editor", "universal-directory"]
+    },
+    {
+      "id": "OCP-MC-025",
+      "type": "single-choice",
+      "domain": "attribute-mapping",
+      "topic": "mapping-apply-timing",
+      "difficulty": "intermediate",
+      "question": "Profile Editor で属性マッピングを設定する際、「Apply mapping on user create and update」を選択した場合の動作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "アプリ側アカウントの作成時と、その後の Okta 側属性更新時の両方でマッピングが適用される" },
+        { "id": "B", "text": "アプリ側アカウントの作成時にのみマッピングが適用され、以後の更新では適用されない" },
+        { "id": "C", "text": "マッピングは保存されるが、手動で実行するまで適用されない" },
+        { "id": "D", "text": "既存ユーザーにのみ適用され、新規ユーザーには適用されない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "「Apply mapping on user create and update」は、アカウント作成時とその後の属性更新時の両方でマッピングを適用します。もう 1 つの選択肢「Apply mapping on user create only」は作成時のみ適用し、以後アプリ側で値が変更されても上書きしたくない属性に使用します(B はこちらの説明)。C・D のような動作モードはありません。",
+      "sources": [
+        { "title": "Map Okta attributes to app attributes in the Profile Editor (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-map-attributes.htm" },
+        { "title": "About attribute mappings (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-attribute-mappings.htm" }
+      ],
+      "tags": ["attribute-mapping", "create-and-update"]
+    },
+    {
+      "id": "OCP-MC-026",
+      "type": "single-choice",
+      "domain": "attribute-mapping",
+      "topic": "expression-language",
+      "difficulty": "intermediate",
+      "question": "アプリに送る表示名として「姓 + 半角スペース + 名」を動的に生成したい。属性マッピングで使用する Okta Expression Language の式として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "user.lastName + \" \" + user.firstName" },
+        { "id": "B", "text": "concat(lastName, firstName)" },
+        { "id": "C", "text": "${user.lastName}%20${user.firstName}" },
+        { "id": "D", "text": "SELECT lastName, firstName FROM user" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta Expression Language では、ユーザー属性は user.<属性名> で参照し、文字列は + 演算子で連結します。したがって user.lastName + \" \" + user.firstName が正解です。B のような concat 関数の書式や、C のようなテンプレート変数、D の SQL は Okta Expression Language の構文ではありません。",
+      "sources": [
+        { "title": "Okta Expression Language overview (Okta Developer)", "url": "https://developer.okta.com/docs/reference/okta-expression-language/" },
+        { "title": "Modify attributes with expressions (Okta Help Center)", "url": "https://help.okta.com/en-us/Content/Topics/users-groups-profiles/usgp-attribute-mappings-expressions.htm" }
+      ],
+      "tags": ["expression-language", "attribute-mapping"]
+    },
+    {
+      "id": "OCP-MC-027",
+      "type": "single-choice",
+      "domain": "offboarding",
+      "topic": "deactivate-user",
+      "difficulty": "intermediate",
+      "question": "退職者のオフボーディングとして Okta 上でユーザーを Deactivate しました。このアプリには「Deactivate Users」のプロビジョニング機能が有効化されています。期待される動作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta のセッション・アプリ割り当てが失われ、アプリ側のアカウントも無効化される" },
+        { "id": "B", "text": "Okta 上のみ無効化され、アプリ側のアカウントは手動で削除するまで有効なまま残る" },
+        { "id": "C", "text": "アプリ側のアカウントだけが無効化され、Okta にはサインインし続けられる" },
+        { "id": "D", "text": "ユーザーは Suspended 状態になり、30 日後に自動的に Deactivated になる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ユーザーを Deactivate すると Okta 上ではすべてのアプリ割り当てが削除されパスワードも完全に削除されます。さらに「Deactivate Users」(To App のデプロビジョニング)が有効なアプリでは、Okta からアプリへ無効化が連携され、アプリ側アカウントも無効化されます。B はプロビジョニング未設定(SSO のみ)のアプリで起こりうる状態で、この前提では誤りです。C・D のような動作はありません。",
+      "sources": [
+        { "title": "Deactivate and delete user accounts (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?type=oie&id=ext-usgp-deactivate-user-account" },
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" }
+      ],
+      "tags": ["offboarding", "deactivation", "deprovisioning"]
+    },
+    {
+      "id": "OCP-MC-028",
+      "type": "single-choice",
+      "domain": "offboarding",
+      "topic": "deactivated-access",
+      "difficulty": "basic",
+      "question": "Deactivated(無効化)されたユーザーが退職後にアプリへアクセスできないことを確認したい。正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "無効化されたユーザーは Okta にサインインできず、End-User Dashboard からアプリへの SSO も実行できない" },
+        { "id": "B", "text": "無効化後もブックマークからであれば Okta 経由の SSO が可能である" },
+        { "id": "C", "text": "無効化されたユーザーもパスワードリセットを行えば再度サインインできる" },
+        { "id": "D", "text": "無効化はユーザーの表示を隠すだけで、認証には影響しない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Deactivated のユーザーは Okta での認証ができなくなり、アプリ割り当ても削除されるため、ダッシュボード経由でも直接アクセス(SP-initiated)でも Okta 経由の SSO は成立しません。B のようにブックマーク経由なら可能ということはありません(認証時点で拒否されます)。C 無効化ユーザーはパスワードリセットの対象になりません(パスワード自体が完全に削除されています)。D は誤りで、無効化は認証を無効にする操作です。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "Deactivate and delete user accounts (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?type=oie&id=ext-usgp-deactivate-user-account" }
+      ],
+      "tags": ["offboarding", "deactivation", "verification"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "fileId": "pro-mc-06-syslog-support",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 6: Syslog and Okta Support",
+    "examSectionJa": "ユースケース6: System Log と Okta サポート",
+    "examWeight": 6,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / status.okta.com / support.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 4
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-057",
+      "type": "single-choice",
+      "domain": "syslog-support",
+      "topic": "system-log-basics",
+      "difficulty": "basic",
+      "question": "Okta org 内で発生したイベント(サインイン成功/失敗、ユーザー作成、ポリシー変更など)をすべて記録し、時系列で検索・フィルタできる機能はどれですか?",
+      "choices": [
+        { "id": "A", "text": "System Log(Reports > System Log)" },
+        { "id": "B", "text": "Profile Editor" },
+        { "id": "C", "text": "Okta Integration Network" },
+        { "id": "D", "text": "Authentication Policy" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "System Log は org のすべてのイベントを記録し、時間・アクター(誰が)・ターゲット(何に対して)・イベントタイプでのフィルタリング、CSV ダウンロード、カテゴリ別のグラフ表示、位置情報マップ表示が可能です。B はプロファイルスキーマ管理、C はアプリカタログ、D は認証要件の定義で、いずれもイベント記録機能ではありません。",
+      "sources": [
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["system-log", "monitoring"]
+    },
+    {
+      "id": "OCP-MC-058",
+      "type": "single-choice",
+      "domain": "syslog-support",
+      "topic": "system-log-search",
+      "difficulty": "intermediate",
+      "question": "System Log で「ユーザーのサインイン(セッション開始)成功イベント」だけを正確に抽出したい。使用する検索条件として最も適切なものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "eventType eq \"user.session.start\" and outcome.result eq \"SUCCESS\"" },
+        { "id": "B", "text": "SELECT * FROM logs WHERE type = login" },
+        { "id": "C", "text": "grep \"login\" /var/log/okta.log" },
+        { "id": "D", "text": "eventType == login-success" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "System Log の高度な検索では、eventType eq \"user.session.start\" のような式(SCIM フィルタ形式の演算子 eq / and 等)を使用して属性ベースでイベントを絞り込めます。outcome.result eq \"SUCCESS\" を組み合わせれば成功イベントのみ抽出できます。B の SQL、C のシェルコマンドは使用できず、D は構文(== や引用符なし)が誤りです。",
+      "sources": [
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["system-log", "search-expression", "event-type"]
+    },
+    {
+      "id": "OCP-MC-059",
+      "type": "single-choice",
+      "domain": "syslog-support",
+      "topic": "okta-status",
+      "difficulty": "basic",
+      "question": "「Okta サービス自体に障害が発生していないか」をリアルタイムで確認できる公式リソースはどれですか?",
+      "choices": [
+        { "id": "A", "text": "status.okta.com(Okta Status ページ)" },
+        { "id": "B", "text": "自組織の System Log" },
+        { "id": "C", "text": "Profile Editor" },
+        { "id": "D", "text": "End-User Dashboard" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta サービス全体の稼働状況・障害情報・メンテナンス情報は status.okta.com で公開されており、サブスクライブして通知を受けることもできます。トラブルシューティングの初動で「自組織の設定問題か、Okta サービス側の問題か」を切り分けるのに有効です。B の System Log は自組織内のイベント記録であり、Okta プラットフォーム全体の障害を報告するものではありません。",
+      "sources": [
+        { "title": "Okta Status", "url": "https://status.okta.com/" },
+        { "title": "Okta Help Center", "url": "https://support.okta.com/help/s/" }
+      ],
+      "tags": ["okta-status", "incident", "support"]
+    },
+    {
+      "id": "OCP-MC-060",
+      "type": "single-choice",
+      "domain": "syslog-support",
+      "topic": "support-case",
+      "difficulty": "basic",
+      "question": "自組織では解決できない問題について Okta のテクニカルサポートへ問い合わせる正式な方法はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta Help Center(support.okta.com)からサポートケースを作成する" },
+        { "id": "B", "text": "status.okta.com のコメント欄に書き込む" },
+        { "id": "C", "text": "OIN からサポートアプリをインストールする" },
+        { "id": "D", "text": "System Log にメッセージを書き込む" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta サポートへの問い合わせは Okta Help Center(support.okta.com)からのサポートケース作成が正式ルートです。Help Center にはナレッジベース記事や Okta Community もあり、既知の問題は自己解決できる場合があります。B の Status ページは稼働状況の公開のみ、C・D のような問い合わせ方法は存在しません。",
+      "sources": [
+        { "title": "How to Create a Support Case (Okta Support)", "url": "https://support.okta.com/help/s/article/How-to-Create-a-Support-Case" },
+        { "title": "Okta Help Center", "url": "https://support.okta.com/help/s/" }
+      ],
+      "tags": ["support-case", "help-center", "community"]
+    }
+  ]
+}

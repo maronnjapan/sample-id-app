@@ -1,0 +1,182 @@
+{
+  "meta": {
+    "fileId": "pro-mc-05-troubleshooting",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 5: Troubleshooting",
+    "examSectionJa": "ユースケース5: トラブルシューティング",
+    "examWeight": 12,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 8
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-049",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "cannot-sign-in",
+      "difficulty": "basic",
+      "question": "ユーザーから「Okta にサインインできない」と問い合わせがありました。管理者として最初に確認すべきことはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Directory > People で対象ユーザーのアカウントステータス(Locked out / Suspended / Deactivated / Password expired 等)を確認する" },
+        { "id": "B", "text": "org のすべてのポリシーを削除する" },
+        { "id": "C", "text": "ユーザーの PC を再起動してもらう" },
+        { "id": "D", "text": "org 全体のパスワードを一括リセットする" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "サインイン不可の一次切り分けは、ユーザーのアカウントステータス確認です。Locked out(試行回数超過)、Suspended、Deactivated、Password expired など、状態ごとに取るべき対処(Unlock、Unsuspend、Activate、パスワードリセット)が異なります。System Log でサインイン失敗イベントの理由を確認するのも有効です。B・D は影響範囲が大きすぎる危険な操作、C は Okta 側の状態を確認する前の対応としては不適切です。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" }
+      ],
+      "tags": ["troubleshooting", "sign-in", "account-status"]
+    },
+    {
+      "id": "OCP-MC-050",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "unlock-user",
+      "difficulty": "basic",
+      "question": "パスワードを連続で間違えて「Locked out」になったユーザーを直ちに復旧させる管理者操作はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーページ(または People 一覧)から Unlock を実行する" },
+        { "id": "B", "text": "ユーザーを Deactivate してから Activate する" },
+        { "id": "C", "text": "ユーザーのプロファイルを削除する" },
+        { "id": "D", "text": "org の Password Policy を無効化する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ロックアウトされたユーザーは管理者による Unlock 操作で直ちに復旧できます(ポリシーで自動アンロックやセルフサービスアンロックを構成することも可能)。B はアプリ割り当てとパスワードが失われる破壊的な操作で不適切です。C はさらに破壊的、D は org 全体のセキュリティを弱める誤った対応です。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["troubleshooting", "locked-out", "unlock"]
+    },
+    {
+      "id": "OCP-MC-051",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "expire-password-clear-sessions",
+      "difficulty": "intermediate",
+      "question": "アカウントの不正利用が疑われるユーザーに対して、「次回サインイン時のパスワード変更を強制」し、かつ「現在の Okta セッションをすべて無効化」したい。適切な操作の組み合わせはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーページで Expire Password(パスワード失効)を実行し、あわせて Clear User Sessions(セッションのクリア)を実行する" },
+        { "id": "B", "text": "ユーザーのプロファイル属性を編集し、グループから外す" },
+        { "id": "C", "text": "ユーザーに口頭でログアウトを依頼する" },
+        { "id": "D", "text": "アプリの割り当てをすべて解除するだけでよい" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "パスワードの失効(Expire Password)により次回サインイン時に変更が強制され、Clear User Sessions により既存の Okta セッションが失効して再認証が必要になります。この 2 つを組み合わせることで、漏えいした資格情報と乗っ取られたセッションの両方を無効化できます。B・D はセッションや資格情報への対処になっておらず、C は技術的統制ではありません。",
+      "sources": [
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" },
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" }
+      ],
+      "tags": ["troubleshooting", "expire-password", "clear-sessions", "incident-response"]
+    },
+    {
+      "id": "OCP-MC-052",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "clear-sessions-scope",
+      "difficulty": "advanced",
+      "question": "「Clear User Sessions」を実行した場合の効果として最も正確な記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーの Okta セッションが無効化され、Okta への再認証が必要になる(既に確立済みの各アプリ側セッションが直ちに切断されるとは限らない)" },
+        { "id": "B", "text": "すべての SaaS アプリ側のローカルセッションも即座に強制切断される" },
+        { "id": "C", "text": "ユーザーのパスワードが削除される" },
+        { "id": "D", "text": "ユーザーのアカウントが Suspended になる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Clear User Sessions は Okta 側のセッションを失効させる操作です。ユーザーが Okta を経由して既に確立したアプリ側のセッションは各アプリのセッション管理に依存するため、即時に切断されるとは限りません(完全な遮断にはアプリ側での対応も必要)。C のパスワード削除は Deactivate の効果、D の Suspended は別の明示的操作です。",
+      "sources": [
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" }
+      ],
+      "tags": ["clear-sessions", "session-management"]
+    },
+    {
+      "id": "OCP-MC-053",
+      "type": "multiple-select",
+      "domain": "troubleshooting",
+      "topic": "app-not-on-dashboard",
+      "difficulty": "intermediate",
+      "question": "ユーザーから「End-User Dashboard に業務アプリが表示されない」と報告がありました。原因として妥当なものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "ユーザー(またはユーザーの所属グループ)がそのアプリに割り当てられていない" },
+        { "id": "B", "text": "アプリの設定でアイコンを End-User Dashboard に表示しない(hide)設定になっている" },
+        { "id": "C", "text": "ユーザーのパスワードが長すぎる" },
+        { "id": "D", "text": "System Log の保持期間が切れた" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "ダッシュボードにアプリが表示される条件は「ユーザーがアプリに割り当てられていること」と「アプリの表示設定(Do not display application icon to users が無効)」です。割り当て漏れ(A)や非表示設定(B)が典型的な原因です。グループ経由の割り当てを想定している場合は、グループメンバーシップ(Group Rule の適用状況)も確認します。C・D はダッシュボード表示とは無関係です。",
+      "sources": [
+        { "title": "Assign app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-assign-app-group.htm" },
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" }
+      ],
+      "tags": ["troubleshooting", "dashboard", "app-assignment"]
+    },
+    {
+      "id": "OCP-MC-054",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "group-rule-not-applied",
+      "difficulty": "intermediate",
+      "question": "「department=Sales のユーザーを Sales-Team グループに追加する」Group Rule を有効化しましたが、あるユーザーがグループに追加されません。原因として最も可能性が低いものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーの Okta セッションが残っている" },
+        { "id": "B", "text": "ユーザーの department 属性値が「Sales」と完全一致していない(例: 余分な空白、大文字小文字の違い)" },
+        { "id": "C", "text": "ルールがまだ Inactive のままである" },
+        { "id": "D", "text": "ルールの条件式が意図した属性を参照していない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Rule は属性値とルール定義に基づいて評価されるため、属性値の不一致(B)、ルールの未有効化(C)、条件式の誤り(D)が典型的な原因です。ユーザーのセッション有無(A)はルール評価に影響しないため、原因として最も可能性が低い選択肢です。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["troubleshooting", "group-rules"]
+    },
+    {
+      "id": "OCP-MC-055",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "remove-rule-managed-member",
+      "difficulty": "advanced",
+      "question": "Group Rule によって誤ったユーザーが「Sales-Team」グループに追加されています。このユーザーをグループから外すための正しいアプローチはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ルールの条件に合致しないようユーザーの属性値を修正するか、ルールの条件(または除外設定)を修正する" },
+        { "id": "B", "text": "グループの People タブから対象ユーザーを手動で Remove する" },
+        { "id": "C", "text": "ユーザーを一度 Deactivate する" },
+        { "id": "D", "text": "グループを削除して作り直す" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Rule によって追加されたメンバーシップは手動で削除できません(B は実行不可)。根本原因である属性値の誤りを修正するか、ルール条件の見直し・対象ユーザーの除外(exclude)設定で対応します。C はユーザーのアクセスすべてを失わせる過剰な操作、D は他のメンバーへの影響が大きく不適切です。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["troubleshooting", "group-rules", "membership"]
+    },
+    {
+      "id": "OCP-MC-056",
+      "type": "single-choice",
+      "domain": "troubleshooting",
+      "topic": "reset-mfa",
+      "difficulty": "basic",
+      "question": "ユーザーがスマートフォンを機種変更し、古い端末の Okta Verify で MFA を完了できなくなりました。管理者が行うべき操作はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーページから該当 Authenticator をリセットし、新しい端末で再登録してもらう" },
+        { "id": "B", "text": "ユーザーアカウントを削除して再作成する" },
+        { "id": "C", "text": "org の MFA を全ユーザーで無効化する" },
+        { "id": "D", "text": "ユーザーの所属グループをすべて解除する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "端末変更で認証手段が使えなくなった場合は、管理者がユーザーページから該当 Authenticator(例: Okta Verify)をリセットし、ユーザーが新端末で再登録するのが正しい手順です。B は破壊的で不要、C は org 全体のセキュリティを損なう対応、D は認証手段と無関係です。",
+      "sources": [
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" },
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" }
+      ],
+      "tags": ["troubleshooting", "mfa-reset", "okta-verify"]
+    }
+  ]
+}

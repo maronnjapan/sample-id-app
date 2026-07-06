@@ -1,0 +1,48 @@
+{
+  "name": "Okta Certification Quiz Bank",
+  "description": "Okta Certified Professional / Okta Certified Administrator 対策問題集(選択問題+記述問題)。全問題は Okta 公式ドキュメント (help.okta.com ほか Okta 公式サイト) を情報源とする。",
+  "version": "1.0.0",
+  "generatedAt": "2026-07-06",
+  "language": "ja",
+  "schema": "schema/question-schema.json",
+  "sourcePolicy": {
+    "primary": "https://help.okta.com/en-us/content/index.htm",
+    "allowedDomains": ["help.okta.com", "developer.okta.com", "support.okta.com", "status.okta.com", "certification.okta.com"],
+    "note": "各問題の sources に根拠ドキュメントの URL を必ず記載。SAML 概念・Expression Language・レート制限・System Log API など developer.okta.com が正典のトピックのみ developer.okta.com を使用。"
+  },
+  "totals": { "questions": 152, "multipleChoice": 123, "written": 29 },
+  "certifications": [
+    {
+      "id": "professional",
+      "name": "Okta Certified Professional",
+      "examFormat": "Performance Exam: 6 つの実技(hands-on)ユースケース / 150 分 / 試験中は Okta Help Center 参照可 / Okta Verify (モバイル) 必須",
+      "totals": { "questions": 74, "multipleChoice": 60, "written": 14 },
+      "files": [
+        { "path": "professional/pro-mc-01-user-management.json", "type": "multiple-choice", "section": "UC1: Account Creation and User Management (26%)", "count": 16, "idRange": "OCP-MC-001..016" },
+        { "path": "professional/pro-mc-02-application-setup.json", "type": "multiple-choice", "section": "UC2: Application Setup with OIN (10%)", "count": 7, "idRange": "OCP-MC-017..023" },
+        { "path": "professional/pro-mc-03-attribute-mapping-offboarding.json", "type": "multiple-choice", "section": "UC3: Attribute Mapping and Offboarding (8%)", "count": 5, "idRange": "OCP-MC-024..028" },
+        { "path": "professional/pro-mc-04-security-enforcement.json", "type": "multiple-choice", "section": "UC4: Security Enforcement (38%)", "count": 20, "idRange": "OCP-MC-029..048" },
+        { "path": "professional/pro-mc-05-troubleshooting.json", "type": "multiple-choice", "section": "UC5: Troubleshooting (12%)", "count": 8, "idRange": "OCP-MC-049..056" },
+        { "path": "professional/pro-mc-06-syslog-support.json", "type": "multiple-choice", "section": "UC6: Syslog and Okta Support (6%)", "count": 4, "idRange": "OCP-MC-057..060" },
+        { "path": "professional/pro-written-01.json", "type": "written", "section": "記述 Part 1 (UC1-UC4)", "count": 7, "idRange": "OCP-WR-001..007" },
+        { "path": "professional/pro-written-02.json", "type": "written", "section": "記述 Part 2 (UC4-UC6)", "count": 7, "idRange": "OCP-WR-008..014" }
+      ]
+    },
+    {
+      "id": "administrator",
+      "name": "Okta Certified Administrator",
+      "examFormat": "Performance Exam: Part I 選択問題 + Part II 4 つの実技ユースケース(Custom App Integration 30% / Behavior Detection 30% / Device Assurance 20% / Monitoring & Troubleshooting 20%)。前提: 有効な Okta Certified Professional 資格",
+      "totals": { "questions": 78, "multipleChoice": 63, "written": 15 },
+      "files": [
+        { "path": "administrator/adm-mc-01-ad-ldap-integration.json", "type": "multiple-choice", "section": "Part I: Active Directory Integration (47%)", "count": 18, "idRange": "OCA-MC-001..018" },
+        { "path": "administrator/adm-mc-02-profile-sourcing-lifecycle.json", "type": "multiple-choice", "section": "Part I: Profiles, Sourcing and Write-Back (53%)", "count": 14, "idRange": "OCA-MC-019..032" },
+        { "path": "administrator/adm-mc-03-sso-app-integration.json", "type": "multiple-choice", "section": "Part II: Custom Application Integration (30%)", "count": 10, "idRange": "OCA-MC-033..042" },
+        { "path": "administrator/adm-mc-04-security-policies.json", "type": "multiple-choice", "section": "Part II: Behavior Detection (30%) / Device Assurance (20%)", "count": 12, "idRange": "OCA-MC-043..054" },
+        { "path": "administrator/adm-mc-05-monitoring-troubleshooting.json", "type": "multiple-choice", "section": "Part II: Monitoring and Troubleshooting (20%)", "count": 5, "idRange": "OCA-MC-055..059" },
+        { "path": "administrator/adm-mc-06-api-functions.json", "type": "multiple-choice", "section": "API Functions (旧 Hands-On 試験 Part I: 6%)", "count": 4, "idRange": "OCA-MC-060..063" },
+        { "path": "administrator/adm-written-01.json", "type": "written", "section": "記述 Part 1 (AD/LDAP・ソーシング・ライフサイクル)", "count": 8, "idRange": "OCA-WR-001..008" },
+        { "path": "administrator/adm-written-02.json", "type": "written", "section": "記述 Part 2 (Group Push・Workflows・SAML・セキュリティ・監視・API)", "count": 7, "idRange": "OCA-WR-009..015" }
+      ]
+    }
+  ]
+}

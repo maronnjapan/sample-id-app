@@ -1,0 +1,262 @@
+{
+  "meta": {
+    "fileId": "adm-mc-04-security-policies",
+    "certification": "Okta Certified Administrator",
+    "certificationId": "administrator",
+    "examSection": "Part II: Behavior Detection / Device Assurance + Security (adaptive MFA, network zones, ThreatInsight, device concepts)",
+    "examSectionJa": "パートII: 振る舞い検知/デバイス保証+セキュリティ(アダプティブ MFA、ネットワークゾーン、ThreatInsight、デバイス概念)",
+    "examWeight": "Part II の Behavior Detection 30% + Device Assurance 20% に対応(旧 Hands-On 試験の Security ドメイン 20% も包含)",
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 12
+  },
+  "questions": [
+    {
+      "id": "OCA-MC-043",
+      "type": "multiple-select",
+      "domain": "behavior-detection",
+      "topic": "behavior-types",
+      "difficulty": "intermediate",
+      "question": "Okta の Behavior Detection で追跡できる「振る舞い(Behavior)」の種類として正しいものを 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "New City / New Country(新しい都市・国からのサインイン)" },
+        { "id": "B", "text": "New Device(新しいデバイスからのサインイン)" },
+        { "id": "C", "text": "Velocity(2 地点間の移動速度が非現実的なサインイン)" },
+        { "id": "D", "text": "New Font(ユーザーの新しいフォント設定)" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "Behavior Detection では、位置系(New City / New State / New Country / New Geo-Location)、デバイス系(New Device)、IP 系(New IP / New ASN)、そして Velocity(直近 2 回のサインイン間の距離と時間から算出する移動速度。既定しきい値 805 km/h)を追跡できます。D のような振る舞いタイプは存在しません。",
+      "sources": [
+        { "title": "About Behavior Detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/about-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "velocity", "new-device"]
+    },
+    {
+      "id": "OCA-MC-044",
+      "type": "single-choice",
+      "domain": "behavior-detection",
+      "topic": "behavior-defaults",
+      "difficulty": "advanced",
+      "question": "Behavior Detection の「New City」の評価方法として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "直近の成功したサインイン試行(既定では 20 回)の履歴と比較して、新しい都市かどうかを判定する(回数はカスタマイズ可能)" },
+        { "id": "B", "text": "ユーザーの自宅住所のプロファイル属性と比較する" },
+        { "id": "C", "text": "都市の判定は常に 1 回前のサインインのみと比較する" },
+        { "id": "D", "text": "New City は判定条件を一切変更できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "New City は直近の成功サインイン(既定 20 回)との比較で判定され、評価対象の試行回数はカスタマイズできます(参考: New State は既定 15 回、New Country は既定 10 回、New IP は既定 50 回)。位置情報は第三者サービスにより週次で更新されます。B のようなプロファイル属性との比較ではなく、C・D も誤りです。",
+      "sources": [
+        { "title": "About Behavior Detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/about-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "new-city", "defaults"]
+    },
+    {
+      "id": "OCA-MC-045",
+      "type": "single-choice",
+      "domain": "behavior-detection",
+      "topic": "behavior-usage",
+      "difficulty": "advanced",
+      "question": "Behavior Detection で定義した振る舞い(例: New Country)を実際のアクセス制御に使う方法として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Security > Behavior Detection で振る舞いを定義し、Global Session Policy や Authentication Policy のルール条件(Behavior)として参照して、該当時に追加の認証(MFA)を要求する" },
+        { "id": "B", "text": "振る舞いの定義だけで自動的にアクセスがブロックされる" },
+        { "id": "C", "text": "System Log の設定画面でアクションを構成する" },
+        { "id": "D", "text": "振る舞いはレポート専用でありポリシーからは参照できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "振る舞いの定義(条件の追跡)とアクションは分離されています。公式ドキュメントにも「振る舞い条件の定義ではアクションを指定しない」とあり、定義した Behavior をポリシールールの条件として参照し、一致時に追加要素を要求する形で使用します。重要な制約として、振る舞い条件のみを理由にアクセスを拒否することはできません(正規ユーザーの締め出し防止のため)。B・C・D は誤りです。",
+      "sources": [
+        { "title": "About Behavior Detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/about-behavior-detection.htm" },
+        { "title": "Configure behavior detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/configure-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "policy-integration", "adaptive-mfa"]
+    },
+    {
+      "id": "OCA-MC-046",
+      "type": "single-choice",
+      "domain": "behavior-detection",
+      "topic": "behavior-syslog",
+      "difficulty": "advanced",
+      "question": "Behavior Detection の評価結果を System Log で確認する方法として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "サインインイベント(user.session.start 等)の詳細(debugContext の behaviors)に、各振る舞いの評価結果(POSITIVE/NEGATIVE)が記録される" },
+        { "id": "B", "text": "Behavior の結果は System Log には一切記録されない" },
+        { "id": "C", "text": "専用の紙のレポートを Okta に郵送請求する" },
+        { "id": "D", "text": "End-User Dashboard に評価結果が表示される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "System Log のサインイン関連イベントの詳細情報(debugContext / debugData 内の behaviors)に、New City=POSITIVE のような形式で各振る舞いの評価結果が記録され、ポリシー動作の検証やチューニングに利用できます。振る舞い検知のテスト(Part II のユースケース)でもこのログ確認が重要です。B・C・D は誤りです。",
+      "sources": [
+        { "title": "Behavior Detection System Log events (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/logs-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "system-log", "debugcontext"]
+    },
+    {
+      "id": "OCA-MC-047",
+      "type": "single-choice",
+      "domain": "device-assurance",
+      "topic": "device-assurance-basics",
+      "difficulty": "intermediate",
+      "question": "Device Assurance ポリシーの説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "OS バージョンやセキュリティパッチなどデバイスのセキュリティ関連属性のセットを定義し、Authentication Policy のルールの一部として評価させる仕組み" },
+        { "id": "B", "text": "デバイスを購入するための社内申請ワークフロー" },
+        { "id": "C", "text": "ユーザーのパスワード強度を評価するポリシー" },
+        { "id": "D", "text": "単体で有効化すれば全アプリに自動適用されるポリシー" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Device Assurance ポリシーは、OS バージョン・セキュリティパッチなどのデバイス属性要件を定義するものです。重要なのは適用方法で、公式ドキュメントに「Authentication Policy(app sign-in policy)のルールに組み込むまで、ユーザー・グループ・デバイスには適用されない」と明記されています(D は誤り)。評価には Okta Verify によるデバイスシグナルの収集が必要です。B・C は無関係です。",
+      "sources": [
+        { "title": "Device assurance (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance.htm" },
+        { "title": "Add a device assurance policy (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance-add.htm" }
+      ],
+      "tags": ["device-assurance", "authentication-policy"]
+    },
+    {
+      "id": "OCA-MC-048",
+      "type": "single-choice",
+      "domain": "device-assurance",
+      "topic": "device-assurance-requirements",
+      "difficulty": "advanced",
+      "question": "Device Assurance ポリシーの評価に参加するためにユーザー側に必要な条件はどれですか?",
+      "choices": [
+        { "id": "A", "text": "少なくとも 1 つの Okta Verify 登録(対応バージョン)があること" },
+        { "id": "B", "text": "デバイスの管理者パスワードを Okta に登録すること" },
+        { "id": "C", "text": "デバイスを Okta 社に郵送して検査を受けること" },
+        { "id": "D", "text": "SMS 認証を無効化すること" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Device Assurance のデバイス属性(OS バージョン等)は Okta Verify が収集・報告するため、ユーザーは対応バージョンの Okta Verify 登録が必要です(プラットフォーム別の最低バージョンが公式ドキュメントに記載されています)。チェックに失敗した場合、ユーザーは Device health ページで修復(remediation)メッセージを受け取ります。B・C・D は事実ではありません。",
+      "sources": [
+        { "title": "Device assurance (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance.htm" }
+      ],
+      "tags": ["device-assurance", "okta-verify", "remediation"]
+    },
+    {
+      "id": "OCA-MC-049",
+      "type": "single-choice",
+      "domain": "device-context",
+      "topic": "fastpass",
+      "difficulty": "intermediate",
+      "question": "Okta FastPass の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta Verify に登録(デバイス登録)されたデバイスによる、パスワードレスかつフィッシング耐性のある認証方式" },
+        { "id": "B", "text": "SMS でコードを高速に送信する機能" },
+        { "id": "C", "text": "パスワードを平文でキャッシュして高速化する機能" },
+        { "id": "D", "text": "VPN の接続速度を上げる機能" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta FastPass は Okta Verify のデバイス登録に基づく認証方式で、デバイスにバインドされた鍵により、パスワードレスでフィッシング耐性のあるサインインを実現します(生体・PIN による user verification も組み合わせ可能)。Device Assurance と組み合わせて「セキュリティ要件を満たす登録済みデバイスのみアクセス許可」という Part II のユースケースが構成できます。B・C・D は誤りです。",
+      "sources": [
+        { "title": "About authenticators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/about-authenticators.htm" },
+        { "title": "Device assurance (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/devices/device-assurance.htm" }
+      ],
+      "tags": ["fastpass", "passwordless", "phishing-resistant"]
+    },
+    {
+      "id": "OCA-MC-050",
+      "type": "single-choice",
+      "domain": "device-context",
+      "topic": "registered-vs-managed",
+      "difficulty": "advanced",
+      "question": "Okta における「Registered(登録済み)デバイス」と「Managed(管理下)デバイス」の違いとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Registered は Okta Verify によって Okta org に登録されたデバイス。Managed はさらにデバイス管理(MDM 等)による管理証明が確認されたデバイスで、Authentication Policy でより強い条件として使用できる" },
+        { "id": "B", "text": "Registered と Managed は完全に同じ意味である" },
+        { "id": "C", "text": "Managed は個人所有デバイスのことを指す" },
+        { "id": "D", "text": "Registered デバイスはポリシー条件として使用できない" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "デバイスが Okta Verify で org に登録されると Registered となり、ポリシー条件「Registered」を満たします。さらに MDM などのデバイス管理の証明(management attestation)が確認されたデバイスは Managed となり、「Registered かつ Managed」というより厳格な条件を Authentication Policy で要求できます。企業管理端末のみに重要アプリへのアクセスを絞る設計に使われます。B・C・D は誤りです。",
+      "sources": [
+        { "title": "Authentication policies (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm" },
+        { "title": "Add an authentication policy rule (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/add-app-sign-on-policy-rule.htm" }
+      ],
+      "tags": ["device-context", "registered", "managed", "device-trust"]
+    },
+    {
+      "id": "OCA-MC-051",
+      "type": "multiple-select",
+      "domain": "network-security",
+      "topic": "network-zone-types",
+      "difficulty": "intermediate",
+      "question": "Okta のネットワークゾーンを定義する際に使用できる要素として正しいものを 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "IP アドレス / CIDR 範囲(ゲートウェイ・プロキシ)" },
+        { "id": "B", "text": "地理的位置(国・地域)" },
+        { "id": "C", "text": "ASN(自律システム番号)" },
+        { "id": "D", "text": "ユーザーの誕生日" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "ネットワークゾーンは、IP アドレス/CIDR(IP ゾーン: ゲートウェイ・プロキシの指定)、地理的位置や IP タイプ・ASN(ダイナミックゾーン)で定義できます。定義したゾーンは Global Session Policy・Authentication Policy・VPN 通知・ルーティングルールの条件やブロックリストとして使用します。D のようなユーザー属性はゾーンの定義要素ではありません。",
+      "sources": [
+        { "title": "Network zones (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/network/network-zones.htm" }
+      ],
+      "tags": ["network-zones", "ip-zone", "dynamic-zone"]
+    },
+    {
+      "id": "OCA-MC-052",
+      "type": "single-choice",
+      "domain": "network-security",
+      "topic": "blocklist-zone",
+      "difficulty": "intermediate",
+      "question": "「特定の国からのアクセスを Okta へのサインイン試行の段階で拒否したい」という要件に最も適した構成はどれですか?",
+      "choices": [
+        { "id": "A", "text": "該当の位置情報を含むダイナミックゾーンを作成し、ブロックリストとして構成する" },
+        { "id": "B", "text": "各ユーザーに手動で「その国に行かないでください」と通知する" },
+        { "id": "C", "text": "Password Policy の複雑性を上げる" },
+        { "id": "D", "text": "System Log の保持期間を延長する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "位置情報(国)ベースのダイナミックゾーンを作成しブロックリストに指定することで、該当国からのリクエストを認証前の段階で拒否できます。ゾーンはポリシー条件としても使えますが、明確に拒否したいトラフィックにはブロックリストゾーンが適しています。B は統制にならず、C・D は要件と無関係です。",
+      "sources": [
+        { "title": "Network zones (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/network/network-zones.htm" }
+      ],
+      "tags": ["network-zones", "blocklist", "geo-blocking"]
+    },
+    {
+      "id": "OCA-MC-053",
+      "type": "single-choice",
+      "domain": "network-security",
+      "topic": "threatinsight",
+      "difficulty": "intermediate",
+      "question": "Okta ThreatInsight の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Okta ネットワーク全体の脅威データに基づき、不審な IP からの認証前のリクエストを検知して「監査(ログのみ)」または「ログして ブロック」できる org レベルのセキュリティ機能" },
+        { "id": "B", "text": "ユーザーの心理状態を分析する機能" },
+        { "id": "C", "text": "アプリのソースコードの脆弱性をスキャンする機能" },
+        { "id": "D", "text": "認証が完了した後にのみ動作する機能" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ThreatInsight はクレデンシャルスタッフィング・ブルートフォース・パスワードスプレーなどに使われる不審 IP からのリクエストを、認証の前段階で評価する org レベルの機能です。アクションは「No action」「Audit(ログのみ)」「Log and block(ログしてブロック)」から選択でき、Okta はログとブロックの併用を推奨しています。信頼できる IP ゾーンを評価対象から除外することも可能です。D は誤り(pre-authentication で動作)、B・C は無関係です。",
+      "sources": [
+        { "title": "Okta ThreatInsight (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/threat-insight/about-threatinsight.htm" }
+      ],
+      "tags": ["threatinsight", "credential-stuffing", "pre-authentication"]
+    },
+    {
+      "id": "OCA-MC-054",
+      "type": "single-choice",
+      "domain": "behavior-detection",
+      "topic": "behavior-policy-testing",
+      "difficulty": "advanced",
+      "question": "「新しい国からのサインイン時のみ MFA を要求する」Authentication Policy ルールを構成しました。このルールが機能しているかをテストする方法として最も適切なものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "VPN 等で通常と異なる国の IP からテストユーザーでサインインし、MFA が要求されること、System Log の behaviors に New Country=POSITIVE が記録されることを確認する" },
+        { "id": "B", "text": "ポリシーを保存できた時点でテストは不要である" },
+        { "id": "C", "text": "org のすべてのユーザーを一度ロックアウトして確認する" },
+        { "id": "D", "text": "パスワードを変更してみる" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Behavior 条件のテストは、実際に条件に該当する状況(異なる国からのアクセスを VPN 等で再現)を作ってサインインし、期待どおり追加認証が要求されるかを確認します。あわせて System Log のサインインイベントの debugContext(behaviors)で New Country の評価が POSITIVE になっていることを確認すると、条件・アクションの両面で検証できます。B は検証の放棄、C は業務影響が大きく不適切、D は無関係です。",
+      "sources": [
+        { "title": "Configure behavior detection (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/configure-behavior-detection.htm" },
+        { "title": "Behavior Detection System Log events (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/behavior-detection/logs-behavior-detection.htm" }
+      ],
+      "tags": ["behavior-detection", "testing", "system-log"]
+    }
+  ]
+}

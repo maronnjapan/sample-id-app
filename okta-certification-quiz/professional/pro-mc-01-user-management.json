@@ -1,0 +1,342 @@
+{
+  "meta": {
+    "fileId": "pro-mc-01-user-management",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 1: Account Creation and User Management",
+    "examSectionJa": "ユースケース1: アカウント作成とユーザー管理",
+    "examWeight": 26,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 16
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-001",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "user-account-status",
+      "difficulty": "basic",
+      "question": "管理者が Admin Console でユーザーを新規作成し、まだアクティベーションフローを開始していません。このユーザーのアカウントステータスとして正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Staged" },
+        { "id": "B", "text": "Pending user action" },
+        { "id": "C", "text": "Active" },
+        { "id": "D", "text": "Suspended" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ユーザーが最初に作成され、アクティベーションフローがまだ開始されていない(または管理者の保留アクションがある)状態は「Staged」です。B の「Pending user action」はアクティベーションが開始されたが、ユーザーがメール検証やパスワード設定を完了していない状態(API 上は Provisioned)を指します。C の「Active」はアクティベーションが完了した状態、D の「Suspended」は管理者が明示的に一時停止した状態であり、いずれも新規作成直後の状態ではありません。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" }
+      ],
+      "tags": ["user-lifecycle", "staged", "account-status"]
+    },
+    {
+      "id": "OCP-MC-002",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "user-account-status",
+      "difficulty": "basic",
+      "question": "Admin Console 上でユーザーのステータスが「Pending user action」と表示されています。この状態の説明として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーはアクティベーションメールを受け取ったが、メール検証またはパスワード設定をまだ完了していない" },
+        { "id": "B", "text": "ユーザーのパスワードが有効期限切れになっている" },
+        { "id": "C", "text": "管理者がユーザーのパスワードリセットを開始した" },
+        { "id": "D", "text": "ユーザーがログイン試行回数の上限を超えてロックされている" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "「Pending user action」(API ステータスでは Provisioned)は、アクティベーションは開始されたものの、ユーザー側の操作(メール検証・パスワード設定など)が完了していない状態です。B は「Password expired」、C は「Password reset」(API では Recovery)、D は「Locked out」に該当し、それぞれ別のステータスとして表示されます。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" }
+      ],
+      "tags": ["user-lifecycle", "pending-user-action", "account-status"]
+    },
+    {
+      "id": "OCP-MC-003",
+      "type": "multiple-select",
+      "domain": "user-management",
+      "topic": "suspend-vs-deactivate",
+      "difficulty": "intermediate",
+      "question": "ユーザーの「Suspended(一時停止)」と「Deactivated(無効化)」の違いに関する記述のうち、正しいものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "Suspended のユーザーはアプリケーション割り当てが維持され、プロファイルの更新も可能である" },
+        { "id": "B", "text": "Deactivated のユーザーはすべてのアプリケーション割り当てが削除され、パスワードは完全に削除される" },
+        { "id": "C", "text": "Suspended のユーザーは End-User Dashboard にはアクセスできるが、Admin Console にはアクセスできない" },
+        { "id": "D", "text": "Deactivated のユーザーを再アクティベートすると、以前のアプリケーション割り当てとパスワードがそのまま復元される" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "Suspended ではユーザーは Okta(アプリ、Admin Console、End-User Dashboard)にサインインできなくなりますが、アプリ割り当ては影響を受けず、プロファイルの更新は引き続き可能です(A は正しい)。Deactivated(API では Deprovisioned)では、すべてのアプリ割り当てが削除され、パスワードは完全に削除されます(B は正しい)。C は誤り: Suspended のユーザーは End-User Dashboard にもアクセスできません。D は誤り: 無効化でアプリ割り当てとパスワードは失われるため、再アクティベートしてもそのまま復元されません。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" }
+      ],
+      "tags": ["user-lifecycle", "suspended", "deactivated"]
+    },
+    {
+      "id": "OCP-MC-004",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "locked-out",
+      "difficulty": "basic",
+      "question": "ユーザーのステータスが「Locked out」になる直接の原因はどれですか?",
+      "choices": [
+        { "id": "A", "text": "パスワードポリシーで定義されたサインイン試行回数の上限を超えた" },
+        { "id": "B", "text": "管理者がユーザーを明示的にロックした" },
+        { "id": "C", "text": "ユーザーが 90 日間サインインしなかった" },
+        { "id": "D", "text": "ユーザーのデバイスが Device Assurance ポリシーに違反した" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "「Locked out」は、ポリシー(パスワードポリシーのロックアウト設定)で定義されたサインイン試行回数の上限をユーザーが超えた場合に発生します。B のような「管理者による明示的なロック」という操作はなく、管理者が行うのは Suspend(一時停止)や Deactivate(無効化)です。C のような未使用期間による自動ロックは既定の動作ではありません。D の Device Assurance 違反はアプリへのアクセス拒否や修復メッセージにつながりますが、アカウントの Locked out ステータスにはなりません。",
+      "sources": [
+        { "title": "About user account status (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-end-user-states.htm" },
+        { "title": "Configure the Password authenticator (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/identity-engine/authenticators/configure-password.htm" }
+      ],
+      "tags": ["user-lifecycle", "locked-out", "password-policy"]
+    },
+    {
+      "id": "OCP-MC-005",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "user-creation",
+      "difficulty": "basic",
+      "question": "Admin Console からユーザーを 1 人ずつ手動で作成する場合の操作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Directory > People > Add person で作成する" },
+        { "id": "B", "text": "Directory > Profile Editor > Add person で作成する" },
+        { "id": "C", "text": "Applications > Users > Add person で作成する" },
+        { "id": "D", "text": "Reports > People > Add person で作成する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ユーザーの手動作成は Directory > People から「Add person」で行います。Profile Editor(B)はユーザータイプや属性(カスタム属性の追加、属性マッピング)を管理する場所であり、ユーザーの作成場所ではありません。C の Applications はアプリ統合の管理、D の Reports はレポート閲覧のためのメニューです。",
+      "sources": [
+        { "title": "Manage users (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-people.htm" }
+      ],
+      "tags": ["user-creation", "admin-console", "directory"]
+    },
+    {
+      "id": "OCP-MC-006",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "custom-attribute",
+      "difficulty": "basic",
+      "question": "すべての Okta ユーザーのプロファイルに「employeeRegion」というカスタム属性を追加したい場合、どこで追加しますか?",
+      "choices": [
+        { "id": "A", "text": "Directory > Profile Editor で Okta ユーザープロファイル(該当ユーザータイプ)を選択し、Add Attribute を実行する" },
+        { "id": "B", "text": "Directory > People で各ユーザーのプロファイルを開き、属性を直接追記する" },
+        { "id": "C", "text": "Directory > Groups で対象グループに属性を追加する" },
+        { "id": "D", "text": "Security > General でカスタム属性を有効化する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "カスタム属性はプロファイルのスキーマ定義として Directory > Profile Editor から対象のユーザータイプ(既定では default の Okta user プロファイル)に対して「Add Attribute」で追加します。追加後に各ユーザーのプロファイル編集画面で値を設定できます。B は値の入力はできても属性(スキーマ)自体の追加はできません。C のグループに属性を追加する機能はカスタムユーザー属性とは別物で、D にはそのような設定はありません。",
+      "sources": [
+        { "title": "Work with user profiles (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-user-profiles-main.htm" },
+        { "title": "Edit user attributes (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-edit-user-attributes.htm" }
+      ],
+      "tags": ["custom-attribute", "profile-editor", "universal-directory"]
+    },
+    {
+      "id": "OCP-MC-007",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "user-types",
+      "difficulty": "intermediate",
+      "question": "「契約社員(Contractor)」用に、通常の従業員とは異なる属性セットを持つプロファイルをユーザーに割り当てたい。Okta のどの機能を使用しますか?",
+      "choices": [
+        { "id": "A", "text": "Profile Editor で新しい User Type(ユーザータイプ)を作成し、ユーザー作成時にそのタイプを指定する" },
+        { "id": "B", "text": "契約社員ごとに個別の Okta org を作成する" },
+        { "id": "C", "text": "Group Rule で契約社員グループに属性を自動追加する" },
+        { "id": "D", "text": "Authentication Policy で契約社員用の属性を定義する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Universal Directory では複数の User Type を定義でき、タイプごとに独立した属性スキーマを持たせられます。ユーザー作成時にユーザータイプを選択することで、契約社員専用の属性セットを持つプロファイルを割り当てられます。B は過剰であり管理も分断されます。C の Group Rule はグループメンバーシップを自動化する機能で、属性スキーマを追加するものではありません。D の Authentication Policy は認証要件を定義するものでプロファイル管理とは無関係です。",
+      "sources": [
+        { "title": "Work with user profiles / user types (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-user-profiles-main.htm" }
+      ],
+      "tags": ["user-type", "profile-editor", "universal-directory"]
+    },
+    {
+      "id": "OCP-MC-008",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "sourced-attributes",
+      "difficulty": "intermediate",
+      "question": "Active Directory からインポートされたユーザーの氏名(firstName / lastName)を Okta の Admin Console 上で直接編集しようとしたところ、編集できませんでした。最も適切な理由はどれですか?",
+      "choices": [
+        { "id": "A", "text": "その属性は AD がプロファイルソースになっており、ソース側(AD)でのみ編集できるため" },
+        { "id": "B", "text": "Okta ではユーザーの氏名は一度作成すると変更できない仕様のため" },
+        { "id": "C", "text": "編集には Okta サポートへの申請が必要なため" },
+        { "id": "D", "text": "ユーザーが Active ステータスの間は属性を編集できないため" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "プロファイルソース(この場合 AD)によって管理されている属性は Okta 側では読み取り専用となり、値の変更はソースである AD 側で行い、インポート/同期によって Okta に反映されます。B・C のような仕様はありません。D も誤りで、Okta がソースであれば Active のユーザーの属性は編集可能です。",
+      "sources": [
+        { "title": "Profile sourcing (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-profile-sourcing.htm" },
+        { "title": "Edit user attributes (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-edit-user-attributes.htm" }
+      ],
+      "tags": ["profile-sourcing", "active-directory", "read-only-attributes"]
+    },
+    {
+      "id": "OCP-MC-009",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "groups",
+      "difficulty": "basic",
+      "question": "Okta org を作成すると自動的に存在し、org 内のすべてのユーザーが所属するグループはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Everyone" },
+        { "id": "B", "text": "All Users" },
+        { "id": "C", "text": "Domain Users" },
+        { "id": "D", "text": "Default Group" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta には既定で「Everyone」グループが存在し、org のすべてのユーザーが自動的に所属します。ポリシーの適用範囲やアプリ割り当てのテストなどで利用されます。B・D という名前の既定グループはありません。C の Domain Users は Active Directory 側のグループであり、Okta の既定グループではありません。",
+      "sources": [
+        { "title": "About groups (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-about-groups.htm" }
+      ],
+      "tags": ["groups", "everyone-group"]
+    },
+    {
+      "id": "OCP-MC-010",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "manual-group-assignment",
+      "difficulty": "basic",
+      "question": "Okta グループ「Sales-Team」に特定のユーザーを手動で追加する操作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Directory > Groups で対象グループを開き、Assign people からユーザーを追加する" },
+        { "id": "B", "text": "Directory > Groups で対象グループを開き、Group Rule を作成する" },
+        { "id": "C", "text": "Applications で対象アプリを開き、Assignments からグループを追加する" },
+        { "id": "D", "text": "Security > Authentication Policies からユーザーをグループに追加する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "手動でのグループメンバー追加は Directory > Groups > 対象グループ > Assign people(または People タブ)から行います。B の Group Rule は属性に基づく自動割り当ての仕組みであり「手動追加」ではありません。C はアプリへのグループ割り当てであり、グループメンバーシップの管理ではありません。D の Authentication Policies は認証要件の設定でありグループ管理機能はありません。",
+      "sources": [
+        { "title": "Assign people to a group (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-assign-group-people.htm" }
+      ],
+      "tags": ["groups", "manual-assignment"]
+    },
+    {
+      "id": "OCP-MC-011",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "group-rules",
+      "difficulty": "intermediate",
+      "question": "ユーザープロファイルの department 属性が「Sales」のユーザーを自動的に「Sales-Team」グループに追加する Group Rule を作成しました。ルールを作成しただけではメンバーが追加されません。次に必要な操作はどれですか?",
+      "choices": [
+        { "id": "A", "text": "ルールを Activate(有効化)する" },
+        { "id": "B", "text": "各ユーザーに再ログインを依頼する" },
+        { "id": "C", "text": "グループを一度削除して再作成する" },
+        { "id": "D", "text": "Okta サポートにルールの承認を依頼する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Rule は作成時点では Inactive であり、Activate して初めて評価・適用されます。有効化すると既存ユーザーも含めて条件が評価され、条件に合致するユーザーがグループに追加されます。以後は属性変更のたびに自動で評価されます。B のユーザーの再ログインは不要です。C・D のような操作は存在しません。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["group-rules", "activation", "automation"]
+    },
+    {
+      "id": "OCP-MC-012",
+      "type": "multiple-select",
+      "domain": "user-management",
+      "topic": "group-rules-limitations",
+      "difficulty": "advanced",
+      "question": "Okta の Group Rule に関する制約として正しいものを 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "Group Rule によって追加されたユーザーを、そのグループから手動で削除することはできない" },
+        { "id": "B", "text": "Group Rule を使って管理者ロールが付与されているグループ(admin グループ)へユーザーを割り当てることはできない" },
+        { "id": "C", "text": "1 つの org に作成できる Group Rule は最大 100 個である" },
+        { "id": "D", "text": "Group Rule の条件には数値型属性しか使用できない" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "ルールによって追加されたメンバーシップはルールが管理するため手動で削除できず、外すには属性値を変える・ルールを修正/無効化するなどの対応が必要です(A は正しい)。また、Group Rule は管理者権限付与に悪用されないよう、admin ロールを付与されたグループへの割り当てには使用できません(B は正しい)。C は誤りで、上限は org あたり最大 2,000 ルールです。D は誤りで、基本条件で使用できるのは文字列(string)属性です。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["group-rules", "limitations", "admin-groups"]
+    },
+    {
+      "id": "OCP-MC-013",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "group-rules-deactivation",
+      "difficulty": "advanced",
+      "question": "アクティブな Group Rule「dept=Sales → Sales-Team」を無効化(Deactivate)した場合の動作として正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "このルールによって Sales-Team に追加されていたユーザーは、グループから削除される" },
+        { "id": "B", "text": "既存のメンバーシップはそのまま残り、以後手動管理に切り替わる" },
+        { "id": "C", "text": "グループ自体が削除される" },
+        { "id": "D", "text": "ルールは無効化できず、削除のみ可能である" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Group Rule を無効化すると、そのルールによって追加されたユーザーはグループから削除されます(ルール管理のメンバーシップはルールとともに失われる)。手動で追加されていたメンバーには影響しません。B のように自動的に手動管理へ移行する動作はありません。C グループ自体は削除されません。D ルールは無効化(Deactivate)が可能で、編集する際も一度無効化してから行います。",
+      "sources": [
+        { "title": "Group rules (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm" }
+      ],
+      "tags": ["group-rules", "deactivation"]
+    },
+    {
+      "id": "OCP-MC-014",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "admin-roles",
+      "difficulty": "intermediate",
+      "question": "ヘルプデスク担当者に「担当グループのユーザーのパスワードリセットと MFA リセット」だけを許可し、ユーザーの作成や削除は許可したくありません。最も適切な標準管理者ロールはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Help Desk Administrator" },
+        { "id": "B", "text": "Super Administrator" },
+        { "id": "C", "text": "Organization Administrator" },
+        { "id": "D", "text": "Application Administrator" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Help Desk Administrator は、割り当てられたスコープ(グループ)内のユーザーに対するパスワードリセット・MFA リセットなどのサポート業務向けの限定的な権限を持ち、ユーザーの作成・削除はできません。最小権限の原則に合致します。B の Super Admin はすべての管理タスクが可能で過剰です。C の Org Admin もユーザー管理全般が可能で過剰です。D の App Admin はアプリ管理向けのロールであり、ユーザーサポート業務には適しません。",
+      "sources": [
+        { "title": "Standard administrator roles and permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/administrators-admin-comparison.htm" }
+      ],
+      "tags": ["admin-roles", "help-desk-admin", "least-privilege"]
+    },
+    {
+      "id": "OCP-MC-015",
+      "type": "single-choice",
+      "domain": "user-management",
+      "topic": "admin-roles",
+      "difficulty": "intermediate",
+      "question": "他の管理者に管理者ロールを割り当てる(admin 権限を付与する)ことができる唯一の標準ロールはどれですか?",
+      "choices": [
+        { "id": "A", "text": "Super Administrator" },
+        { "id": "B", "text": "Organization Administrator" },
+        { "id": "C", "text": "Group Administrator" },
+        { "id": "D", "text": "Read-Only Administrator" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "管理者ロールの割り当て・剥奪(admin の管理)は Super Administrator のみが実行できます。Organization Administrator は多くのユーザー・グループ管理タスクを実行できますが、管理者権限の付与はできません。Group Administrator はスコープ内のグループ管理に限定され、Read-Only Administrator は閲覧のみ可能です。",
+      "sources": [
+        { "title": "Standard administrator roles and permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/administrators-admin-comparison.htm" },
+        { "title": "Administrators (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Security/Administrators.htm" }
+      ],
+      "tags": ["admin-roles", "super-admin"]
+    },
+    {
+      "id": "OCP-MC-016",
+      "type": "multiple-select",
+      "domain": "user-management",
+      "topic": "custom-admin-roles",
+      "difficulty": "advanced",
+      "question": "標準ロールでは要件を満たせないため、カスタム管理者ロールを構成することにしました。カスタム管理者ロールによる権限付与を構成する際に必要となる要素を 2 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "ロールに含める Permissions(権限)のセット" },
+        { "id": "B", "text": "権限の適用対象を定義する Resource Set(リソースセット)" },
+        { "id": "C", "text": "対象ユーザーの Password Policy" },
+        { "id": "D", "text": "対象アプリの Provisioning 設定" }
+      ],
+      "correctAnswerIds": ["A", "B"],
+      "explanation": "カスタム管理者ロールによる権限付与は「Role(実行できる操作 = Permissions の集合)」と「Resource Set(操作対象となるユーザー・グループ・アプリなどのリソース範囲)」を定義し、それらを管理者(ユーザーまたはグループ)に割り当てることで成立します。C の Password Policy や D の Provisioning 設定はカスタムロールの構成要素ではありません。",
+      "sources": [
+        { "title": "Administrators / custom admin roles (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Security/Administrators.htm" },
+        { "title": "Standard administrator roles and permissions (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/security/administrators-admin-comparison.htm" }
+      ],
+      "tags": ["custom-admin-roles", "resource-set", "permissions"]
+    }
+  ]
+}

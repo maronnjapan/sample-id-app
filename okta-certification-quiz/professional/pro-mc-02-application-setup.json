@@ -1,0 +1,161 @@
+{
+  "meta": {
+    "fileId": "pro-mc-02-application-setup",
+    "certification": "Okta Certified Professional",
+    "certificationId": "professional",
+    "examSection": "Use Case 2: Application Setup with OIN",
+    "examSectionJa": "ユースケース2: OIN を使用したアプリケーション設定",
+    "examWeight": 10,
+    "questionType": "multiple-choice",
+    "language": "ja",
+    "sourcePolicy": "全問題は Okta 公式ドキュメント (help.okta.com / developer.okta.com) を情報源とし、各問題の sources に参照 URL を記載する。",
+    "generatedAt": "2026-07-06",
+    "questionCount": 7
+  },
+  "questions": [
+    {
+      "id": "OCP-MC-017",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "oin",
+      "difficulty": "basic",
+      "question": "Okta Integration Network (OIN) の説明として最も正しいものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "SAML・OIDC・SWA・プロビジョニングなどに対応した、事前構築済みアプリ統合のカタログ" },
+        { "id": "B", "text": "Okta org 間を接続するための専用ネットワーク回線" },
+        { "id": "C", "text": "Okta が提供する CDN サービス" },
+        { "id": "D", "text": "オンプレミスアプリ専用のリバースプロキシ" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "OIN は数千の事前構築済みアプリ統合(SSO: SAML/OIDC/SWA、プロビジョニング: SCIM 等)を提供するカタログです。OIN に統合が存在するアプリは、ベンダー固有の設定手順が整備されており少ない手作業で SSO/プロビジョニングを構成できます。B・C・D はいずれも OIN の説明ではありません(オンプレミスアプリへのセキュアアクセスは Okta Access Gateway など別製品の領域です)。",
+      "sources": [
+        { "title": "Add app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/apps/apps-overview-add-apps.htm" }
+      ],
+      "tags": ["oin", "app-integration", "catalog"]
+    },
+    {
+      "id": "OCP-MC-018",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "saml-app-setup",
+      "difficulty": "intermediate",
+      "question": "OIN から SAML 2.0 対応アプリを追加して SSO を構成しています。一般的な構成フローとして、Okta 側からアプリ(Service Provider)側に提供する必要がある情報はどれですか?",
+      "choices": [
+        { "id": "A", "text": "IdP メタデータ(サインイン URL・発行者・X.509 証明書など)" },
+        { "id": "B", "text": "Okta org の Super Admin 資格情報" },
+        { "id": "C", "text": "Okta の API トークン" },
+        { "id": "D", "text": "ユーザー全員のパスワードハッシュ" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "SAML SSO では、IdP である Okta のメタデータ(IdP Single Sign-On URL、IdP Issuer、署名検証用の X.509 証明書)を SP 側に登録することで、SP が Okta からの SAML Response の署名を検証し信頼できるようになります。OIN アプリではこれらの値がアプリの Sign On タブ(Setup Instructions)に表示されます。B・C・D を SP へ渡すことはセキュリティ上あり得ず、SAML の仕組みとも無関係です。",
+      "sources": [
+        { "title": "SAML app integrations (Okta Help Center)", "url": "https://help.okta.com/okta_help.htm?id=ext-apps-about-saml" },
+        { "title": "SAML concepts (Okta Developer)", "url": "https://developer.okta.com/docs/concepts/saml/" }
+      ],
+      "tags": ["saml", "idp-metadata", "sso"]
+    },
+    {
+      "id": "OCP-MC-019",
+      "type": "multiple-select",
+      "domain": "application-setup",
+      "topic": "provisioning-features",
+      "difficulty": "intermediate",
+      "question": "アプリ統合の Provisioning タブで「To App」方向に対して有効化できる、代表的なプロビジョニング機能を 3 つ選択してください。",
+      "choices": [
+        { "id": "A", "text": "Create Users(ユーザー作成)" },
+        { "id": "B", "text": "Update User Attributes(属性更新)" },
+        { "id": "C", "text": "Deactivate Users(ユーザー無効化)" },
+        { "id": "D", "text": "Delete Okta Org(org の削除)" }
+      ],
+      "correctAnswerIds": ["A", "B", "C"],
+      "explanation": "To App(Okta からアプリへの)プロビジョニングでは、Create Users(Okta でのアプリ割り当て時にアプリ側アカウントを作成)、Update User Attributes(Okta 上の属性変更をアプリへ同期)、Deactivate Users(Okta での割り当て解除・無効化時にアプリ側アカウントを無効化)を有効化できます。アプリによっては Sync Password も利用できます。D のような機能は存在しません。",
+      "sources": [
+        { "title": "Provisioning and deprovisioning overview (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Apps/Provisioning_Deprovisioning_Overview.htm" },
+        { "title": "Provision applications (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Provisioning/lcm/lcm-provision-application.htm" }
+      ],
+      "tags": ["provisioning", "to-app", "lifecycle-management"]
+    },
+    {
+      "id": "OCP-MC-020",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "group-assignment",
+      "difficulty": "basic",
+      "question": "アプリケーションへのアクセス権を「Sales-Team」グループのメンバー全員に付与する最も効率的な方法はどれですか?",
+      "choices": [
+        { "id": "A", "text": "アプリの Assignments タブで Assign to Groups を使い、Sales-Team グループを割り当てる" },
+        { "id": "B", "text": "Sales-Team の各メンバーを 1 人ずつアプリに割り当てる" },
+        { "id": "C", "text": "全ユーザーにアプリを割り当ててから、不要なユーザーを個別に外す" },
+        { "id": "D", "text": "System Log でメンバーを確認しながら CSV でアプリに登録する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "グループ単位のアプリ割り当て(Assign to Groups)を使うと、グループへの参加/脱退に応じてアプリのアクセス権も自動的に付与/剥奪され、運用負荷が最小になります。Group Rule と組み合わせれば属性ベースの完全自動化も可能です。B・C・D は手作業が多くスケールせず、割り当て漏れや剥奪漏れの原因になります。",
+      "sources": [
+        { "title": "Assign an app integration to a group (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-assign-app-groups.htm" },
+        { "title": "Assign app integrations (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/users-groups-profiles/usgp-assign-app-group.htm" }
+      ],
+      "tags": ["app-assignment", "groups"]
+    },
+    {
+      "id": "OCP-MC-021",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "assignment-precedence",
+      "difficulty": "advanced",
+      "question": "あるユーザーがグループ経由でアプリに割り当てられており、その後同じアプリに個別(individual)にも割り当てられました。アプリに送られるユーザープロファイル(アプリユーザープロファイル)の属性値について正しい記述はどれですか?",
+      "choices": [
+        { "id": "A", "text": "個別割り当てがグループ割り当てより優先される" },
+        { "id": "B", "text": "グループ割り当てが常に個別割り当てより優先される" },
+        { "id": "C", "text": "両方の割り当てが競合しアプリへのアクセスが失われる" },
+        { "id": "D", "text": "先に作成された割り当てが常に優先される" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "ユーザーが個別とグループの両方で割り当てられている場合、個別割り当て(individually managed)の設定・属性値が優先されます。グループ割り当てのみの場合は、複数グループ間ではアプリの Assignments での優先順位(グループの並び順)で決まります。C のようにアクセスが失われることはなく、D のような「先勝ち」ルールでもありません。",
+      "sources": [
+        { "title": "Assign an app integration to a group (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-assign-app-groups.htm" }
+      ],
+      "tags": ["app-assignment", "precedence", "group-assignment"]
+    },
+    {
+      "id": "OCP-MC-022",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "swa",
+      "difficulty": "intermediate",
+      "question": "SAML や OIDC などのフェデレーションプロトコルに対応していない Web アプリに対して、Okta が SSO を提供するための方式はどれですか?",
+      "choices": [
+        { "id": "A", "text": "Secure Web Authentication (SWA)" },
+        { "id": "B", "text": "SCIM" },
+        { "id": "C", "text": "RADIUS" },
+        { "id": "D", "text": "LDAP Interface" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "SWA はフェデレーション非対応アプリ向けの SSO 方式で、ユーザーのアプリ資格情報を AES-256 で暗号化して安全に保管し、ダッシュボードからのアクセス時に自動入力・送信します。資格情報は管理者が設定するか、初回起動時にユーザー自身が入力できます。B の SCIM はプロビジョニング(アカウント管理)のプロトコル、C の RADIUS は VPN などネットワーク機器の認証、D の LDAP Interface はクラウド LDAP エンドポイントであり、いずれも Web アプリの SSO 方式ではありません。",
+      "sources": [
+        { "title": "Secure Web Authentication (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/content/topics/apps/apps-about-swa.htm" }
+      ],
+      "tags": ["swa", "sso", "credential-vaulting"]
+    },
+    {
+      "id": "OCP-MC-023",
+      "type": "single-choice",
+      "domain": "application-setup",
+      "topic": "verify-provisioning",
+      "difficulty": "intermediate",
+      "question": "Okta からアプリへのプロビジョニング(Create Users)を有効化し、ユーザーをアプリに割り当てました。「ユーザーがアプリ側に正常にプロビジョニングされたこと」を確認する方法として適切でないものはどれですか?",
+      "choices": [
+        { "id": "A", "text": "ユーザーに Okta のパスワードを再設定してもらい、ログインできるか確認する" },
+        { "id": "B", "text": "System Log でプロビジョニング関連イベント(ユーザー作成の成功/失敗)を確認する" },
+        { "id": "C", "text": "アプリ側の管理画面でアカウントが作成されているか確認する" },
+        { "id": "D", "text": "アプリの Assignments タブで対象ユーザーの割り当てとステータスにエラーがないか確認する" }
+      ],
+      "correctAnswerIds": ["A"],
+      "explanation": "Okta パスワードの再設定はプロビジョニングの成否とは無関係であり、確認方法として不適切です(A が正解=不適切なもの)。プロビジョニングの確認は、System Log のイベント(B)、アプリ側でのアカウント作成確認(C)、Okta のアプリ Assignments 上のエラー表示や Dashboard のタスク(D)で行うのが適切です。",
+      "sources": [
+        { "title": "Provision applications (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Provisioning/lcm/lcm-provision-application.htm" },
+        { "title": "System Log (Okta Help Center)", "url": "https://help.okta.com/oie/en-us/Content/Topics/Reports/Reports_SysLog.htm" }
+      ],
+      "tags": ["provisioning", "verification", "system-log"]
+    }
+  ]
+}
